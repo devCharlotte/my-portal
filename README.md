@@ -19,7 +19,7 @@
 ---
 
 <a id="existing-work-features"></a>
-## 업무 포탈 기존 기능
+## 업무 포탈 기능
 
 #### [Work Portal](https://devcharlotte.github.io/my-portal/work/)
 
@@ -31,7 +31,6 @@
 * [Coursework](https://devcharlotte.github.io/my-portal/work/coursework/)
 * [Instructor](https://devcharlotte.github.io/my-portal/work/instructor/)
 
-### Workspace
 
 #### [Workspace](https://devcharlotte.github.io/my-portal/work/workspace/)
 
@@ -64,7 +63,6 @@
   * 같은 카테고리의 탭 그룹화
   * 변경한 탭 이름, 아이콘 및 그룹 상태 복원
 
-### Research
 
 #### [Research](https://devcharlotte.github.io/my-portal/work/research/)
 
@@ -163,7 +161,7 @@
 ---
 
 <a id="existing-game-features"></a>
-## 게임 포탈 기존 기능
+## 게임 포탈 기능
 
 #### [Game Portal](https://devcharlotte.github.io/my-portal/game/)
 
