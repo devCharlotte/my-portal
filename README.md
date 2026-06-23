@@ -76,7 +76,6 @@
   * `hard-full-pipeline.sh` 실행 명령 제공
 * [Research Workspace](https://devcharlotte.github.io/my-portal/work/research/research-workspace/)
   * 연구용 
-### Teaching Assistant
 
 #### [Teaching Assistant](https://devcharlotte.github.io/my-portal/work/teaching-assistant/)
 
@@ -90,7 +89,6 @@
   * 대학교 Portal 
 
 <a id="wellness"></a>
-### Wellness
 
 #### [Wellness](https://devcharlotte.github.io/my-portal/work/wellness/)
 
@@ -123,7 +121,6 @@
   * `AlarmClock.ACTION_SET_ALARM` intent를 사용하는 Android APK 제공
   * Android용 APK
   
-### Newspaper
 
 #### [Newspaper](https://devcharlotte.github.io/my-portal/work/newspaper/)
 
@@ -143,7 +140,6 @@
 * [The Washington Post](https://www.pressreader.com/newspapers/n/the-washington-post)
 * [The Economist (Asia Pacific)](https://www.pressreader.com/magazines/m/the-economist-asia-pacific)
 
-### Coursework
 
 #### [Coursework](https://devcharlotte.github.io/my-portal/work/coursework/)
 
@@ -152,7 +148,6 @@
 * VOCA 및 CodeTalker 발표 자료 열람
 * 암호화된 문서를 비밀번호로 복호화
 
-### Instructor
 
 #### [Instructor](https://devcharlotte.github.io/my-portal/work/instructor/) — Created Jun 23, 2026
 
