@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frequently Used Script Commands</title>
+  <link rel="stylesheet" href="../../shared.css" />
+  <style>
+body { overflow-x: hidden; }
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.55fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+.hero-main {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(24px, 5vw, 46px);
+}
+.hero-main::after {
+  content: "";
+  position: absolute;
+  right: -70px;
+  top: -85px;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255,143,199,0.42), rgba(139,215,255,0.38));
+}
+.eyebrow {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.62);
+  border: 1px solid var(--my-line);
+  color: var(--my-muted);
+  font-size: 0.9rem;
+  margin-bottom: 14px;
+}
+h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: clamp(2.6rem, 8vw, 5.8rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  color: #172033;
+}
+.side-note {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+}
+.side-note .label { color: var(--my-muted); font-size: 0.9rem; }
+.side-note .value { font-size: 2rem; line-height: 1.1; letter-spacing: -0.05em; }
+.command-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.command-card {
+  padding: 22px;
+}
+.command-title {
+  margin: 0 0 12px;
+  font-size: 1.34rem;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: var(--my-ink);
+}
+.command-desc {
+  margin: 0 0 16px;
+  color: var(--my-muted);
+  font-size: 0.96rem;
+  line-height: 1.75;
+}
+.command-block {
+  margin: 0;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(120,144,180,0.18);
+  color: #334155;
+  font-size: clamp(0.92rem, 2.2vw, 1.04rem);
+  line-height: 1.75;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-weight: 850;
+  overflow-x: auto;
+  white-space: pre;
+}
+@media (max-width: 980px) {
+  .hero { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body class="myworkspace-soft">
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← Research</a>
+    <span class="myworkspace-date">Created May 20, 2026</span>
+  </nav>
+  <main class="myworkspace-page">
+    <section class="hero">
+      <div class="myworkspace-card hero-main">
+        <div class="eyebrow">Research · Scripts</div>
+        <h1>Frequently Used Script Commands</h1>
+      </div>
+      <aside class="myworkspace-card side-note">
+        <div class="label">recent command list</div>
+        <div class="value">⌘</div>
+      </aside>
+    </section>
+
+    <section class="command-grid">
+      <article class="myworkspace-card command-card">
+        <h2 class="command-title">Hard full pipeline</h2>
+        <p class="command-desc">Move to the hard workspace and run the full pipeline script.</p>
+        <pre class="command-block"><code>cd "$HOME/jh-ws/hard"
+bash ./hard-full-pipeline.sh</code></pre>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

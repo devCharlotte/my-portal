@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Joon Hee's My Tab Customizer",
+  "short_name": "My Tab Customizer",
+  "description": "Customize the visible tab alias and favicon, then optionally merge tabs into saved categories.",
+  "version": "1.2.0",
+  "minimum_chrome_version": "89",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabGroups"
+  ],
+  "action": {
+    "default_title": "Joon Hee's My Tab Customizer",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

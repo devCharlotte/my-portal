@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoonHee's Bowling Game</title>
+  <style>
+    :root {
+      --bg-1: #eef2f7;
+      --bg-2: #e8edf5;
+      --bg-3: #dde5f0;
+      --ink: #111827;
+      --muted: #5b6472;
+      --soft: #7b8698;
+      --card: rgba(255, 255, 255, 0.62);
+      --card-strong: rgba(255, 255, 255, 0.78);
+      --line: rgba(255, 255, 255, 0.72);
+      --line-soft: rgba(255, 255, 255, 0.42);
+      --accent: #2f6df6;
+      --accent-2: #7b8698;
+      --accent-3: #2f6df6;
+      --danger: #ff6b6b;
+      --good: #34c759;
+      --shadow: 0 24px 60px rgba(74, 92, 128, 0.16);
+      --shadow-md: 0 10px 28px rgba(74, 92, 128, 0.12);
+      --radius: 34px;
+      --radius-lg: 26px;
+      --radius-md: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.95), transparent 24%),
+        radial-gradient(circle at 82% 16%, rgba(255,255,255,0.7), transparent 20%),
+        linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(70px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      width: 280px;
+      height: 280px;
+      top: -40px;
+      right: -50px;
+      background: rgba(190, 214, 255, 0.7);
+    }
+
+    body::after {
+      width: 260px;
+      height: 260px;
+      left: -40px;
+      bottom: -50px;
+      background: rgba(231, 214, 255, 0.55);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: clamp(16px, 3vw, 36px) 0 48px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: clamp(2.1rem, 5vw, 4.8rem);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      color: #0f172a;
+    }
+
+    .title-block p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.65);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.58);
+      box-shadow: var(--shadow-md);
+      color: var(--muted);
+      white-space: nowrap;
+      font-weight: 800;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--card-strong) 0%, var(--card) 100%);
+      backdrop-filter: blur(24px) saturate(1.1);
+      -webkit-backdrop-filter: blur(24px) saturate(1.1);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .game-panel {
+      padding: 16px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.62);
+      box-shadow: var(--shadow-md);
+      min-height: 520px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      padding: 10px 16px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      background: rgba(17, 24, 39, 0.76);
+      box-shadow: 0 14px 34px rgba(74, 92, 128, 0.22);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      text-align: center;
+      max-width: calc(100% - 28px);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(4px);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .control-card {
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.58);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.44);
+      box-shadow: var(--shadow-md);
+    }
+
+    .control-card label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .control-card span {
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1.4fr 0.9fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      border-radius: 18px;
+      min-height: 52px;
+      color: white;
+      box-shadow: 0 8px 20px rgba(82, 96, 129, 0.12);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, filter 0.14s ease, opacity 0.14s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow: 0 12px 24px rgba(82, 96, 129, 0.16);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0) scale(0.99);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .bowl-btn {
+      background: rgba(47, 109, 246, 0.9);
+      font-size: 1.05rem;
+    }
+
+    .reset-btn {
+      background: rgba(255,255,255,0.76);
+      color: var(--ink);
+    }
+
+    .side {
+      display: grid;
+      gap: 14px;
+    }
+
+    .info-card {
+      padding: 18px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(255,255,255,0.58);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat .label {
+      color: var(--soft);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .stat .value {
+      margin-top: 4px;
+      font-size: 1.42rem;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      color: #0f172a;
+    }
+
+    .score-card {
+      padding: 14px;
+    }
+
+    .score-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .frame {
+      min-height: 78px;
+      border: 1px solid rgba(255,255,255,0.58);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.48);
+      overflow: hidden;
+    }
+
+    .frame.active {
+      outline: 3px solid rgba(47, 109, 246, 0.18);
+      background: rgba(255,255,255,0.72);
+    }
+
+    .frame-head {
+      padding: 6px 8px;
+      font-size: 0.72rem;
+      color: var(--soft);
+      font-weight: 800;
+      background: rgba(255,255,255,0.36);
+      text-align: center;
+    }
+
+    .throws {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      border-bottom: 1px solid rgba(255,255,255,0.58);
+      min-height: 25px;
+    }
+
+    .frame.tenth .throws {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .throws div {
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      border-left: 1px solid rgba(255,255,255,0.58);
+      font-size: 0.9rem;
+    }
+
+    .throws div:first-child {
+      border-left: 0;
+    }
+
+    .cum-score {
+      display: grid;
+      place-items: center;
+      min-height: 27px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: #0f172a;
+    }
+
+    .log-card {
+      padding: 16px;
+    }
+
+    .log-title {
+      margin: 0 0 10px;
+      font-weight: 900;
+    }
+
+    .log {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 236px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log-line {
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(255,255,255,0.58);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .help {
+      padding: 16px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.94rem;
+    }
+
+    .help h2 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      color: var(--ink);
+    }
+
+    .help ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    @media (max-width: 920px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .scoreboard {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 12px;
+      }
+
+      .game-panel {
+        padding: 10px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .button-row {
+        grid-template-columns: 1fr;
+      }
+
+      .scoreboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .canvas-wrap {
+        min-height: 410px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared.css" />
+</head>
+<body class="mygame-soft bowling-page">
+  <nav class="mygame-topnav">
+    <a class="mygame-home" href="../../">← my game</a>
+    <span class="mygame-date">Created May 4, 2026</span>
+  </nav>
+
+  <main class="page">
+    <header>
+      <div class="title-block">
+        <h1>JoonHee's Bowling Game</h1>
+        <p>작년 보드게임 갔던 날 오랜만에 볼링장도 가고 짱짱 즐거웠던 날이라 만들어봤음! </br>그 이후로 볼링장도 한 번도 안 갔네...</p>
+        <p>이 게임에서는 스핀도 넣고 매번 스트라이크 치는 프로가 될 수 있지이 히히 </p>
+      </div>
+      <div class="badge">🎳</div>
+    </header>
+
+    <section class="layout">
+      <div class="panel game-panel">
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="gameCanvas" width="900" height="620" aria-label="Bowling lane game canvas"></canvas>
+          <div class="toast" id="toast">Ready</div>
+        </div>
+
+        <div class="controls">
+          <div class="control-card">
+            <label for="aimRange">조준 <span id="aimValue">0</span></label>
+            <input id="aimRange" type="range" min="-100" max="100" value="0" />
+          </div>
+          <div class="control-card">
+            <label for="powerRange">파워 <span id="powerValue">76</span></label>
+            <input id="powerRange" type="range" min="20" max="100" value="76" />
+          </div>
+          <div class="control-card">
+            <label for="spinRange">스핀 <span id="spinValue">0</span></label>
+            <input id="spinRange" type="range" min="-60" max="60" value="0" />
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="bowl-btn" id="bowlBtn">굴리기</button>
+          <button class="reset-btn" id="resetBtn">새 게임</button>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="panel info-card">
+          <div class="stat-grid">
+            <div class="stat">
+              <div class="label">현재 프레임</div>
+              <div class="value" id="frameStat">1 / 10</div>
+            </div>
+            <div class="stat">
+              <div class="label">이번 투구</div>
+              <div class="value" id="rollStat">1구</div>
+            </div>
+            <div class="stat">
+              <div class="label">남은 핀</div>
+              <div class="value" id="pinsStat">10</div>
+            </div>
+            <div class="stat">
+              <div class="label">현재 점수</div>
+              <div class="value" id="scoreStat">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel score-card">
+          <div class="score-title">
+            <span>Score Board</span>
+            <span id="gameStateText">Playing</span>
+          </div>
+          <div class="scoreboard" id="scoreboard"></div>
+        </div>
+
+        <div class="panel log-card">
+          <p class="log-title">Game Log</p>
+          <div class="log" id="log"></div>
+        </div>
+
+        <div class="panel help">
+          <h2>플레이 방법</h2>
+          <ul>
+            <li>마우스나 터치로 레인 위를 누르면 조준이 바뀝니다.</li>
+            <li>파워가 너무 낮으면 핀이 덜 쓰러지고, 너무 높으면 정확도가 흔들립니다.</li>
+            <li>스트라이크는 다음 두 투구, 스페어는 다음 한 투구가 보너스로 반영됩니다.</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const canvasWrap = document.getElementById("canvasWrap");
+    const toast = document.getElementById("toast");
+
+    const aimRange = document.getElementById("aimRange");
+    const powerRange = document.getElementById("powerRange");
+    const spinRange = document.getElementById("spinRange");
+    const aimValue = document.getElementById("aimValue");
+    const powerValue = document.getElementById("powerValue");
+    const spinValue = document.getElementById("spinValue");
+    const bowlBtn = document.getElementById("bowlBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const frameStat = document.getElementById("frameStat");
+    const rollStat = document.getElementById("rollStat");
+    const pinsStat = document.getElementById("pinsStat");
+    const scoreStat = document.getElementById("scoreStat");
+    const scoreboard = document.getElementById("scoreboard");
+    const logEl = document.getElementById("log");
+    const gameStateText = document.getElementById("gameStateText");
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const lane = {
+      leftBottom: 150,
+      rightBottom: 750,
+      leftTop: 330,
+      rightTop: 570,
+      top: 74,
+      bottom: 570
+    };
+
+    const startX = W / 2;
+    const startY = 548;
+    const pinDeckY = 140;
+    const pinSpacingX = 34;
+    const pinSpacingY = 30;
+
+    const basePins = makePinLayout();
+
+    const state = {
+      frames: Array.from({ length: 10 }, () => []),
+      currentFrame: 0,
+      pins: resetPins(),
+      ball: null,
+      animating: false,
+      gameOver: false,
+      logs: []
+    };
+
+    function makePinLayout() {
+      const pins = [];
+      let id = 1;
+      for (let row = 0; row < 4; row++) {
+        const count = row + 1;
+        const y = pinDeckY - row * pinSpacingY;
+        const rowWidth = (count - 1) * pinSpacingX;
+        for (let col = 0; col < count; col++) {
+          pins.push({
+            id: id++,
+            x: W / 2 - rowWidth / 2 + col * pinSpacingX,
+            y,
+            standing: true,
+            wobble: Math.random() * Math.PI * 2
+          });
+        }
+      }
+      return pins;
+    }
+
+    function resetPins() {
+      return basePins.map(pin => ({ ...pin, standing: true, wobble: Math.random() * Math.PI * 2 }));
+    }
+
+    function updateLabels() {
+      aimValue.textContent = Number(aimRange.value) > 0 ? `+${aimRange.value}` : aimRange.value;
+      powerValue.textContent = powerRange.value;
+      spinValue.textContent = Number(spinRange.value) > 0 ? `+${spinRange.value}` : spinRange.value;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1300);
+    }
+
+    function addLog(message) {
+      state.logs.unshift(message);
+      state.logs = state.logs.slice(0, 18);
+      renderLog();
+    }
+
+    function renderLog() {
+      logEl.innerHTML = "";
+      if (state.logs.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "log-line";
+        empty.textContent = "아직 투구 기록이 없습니다.";
+        logEl.appendChild(empty);
+        return;
+      }
+      state.logs.forEach(line => {
+        const div = document.createElement("div");
+        div.className = "log-line";
+        div.textContent = line;
+        logEl.appendChild(div);
+      });
+    }
+
+    function getStandingPins() {
+      return state.pins.filter(pin => pin.standing);
+    }
+
+    function getRollNumberInFrame() {
+      return state.frames[state.currentFrame].length + 1;
+    }
+
+    function isTenthFrameComplete(frame) {
+      const rolls = state.frames[9];
+      if (rolls.length < 2) return false;
+      const [a, b] = rolls;
+      if (a === 10) return rolls.length >= 3;
+      if (a + b === 10) return rolls.length >= 3;
+      return true;
+    }
+
+    function getFlatRolls() {
+      return state.frames.flatMap(frame => frame);
+    }
+
+    function calculateScores() {
+      const rolls = getFlatRolls();
+      const cumulative = Array(10).fill(null);
+      let total = 0;
+      let rollIndex = 0;
+
+      for (let f = 0; f < 10; f++) {
+        if (f < 9) {
+          const r1 = rolls[rollIndex];
+          if (r1 === undefined) break;
+
+          if (r1 === 10) {
+            const b1 = rolls[rollIndex + 1];
+            const b2 = rolls[rollIndex + 2];
+            if (b1 === undefined || b2 === undefined) break;
+            total += 10 + b1 + b2;
+            cumulative[f] = total;
+            rollIndex += 1;
+          } else {
+            const r2 = rolls[rollIndex + 1];
+            if (r2 === undefined) break;
+            if (r1 + r2 === 10) {
+              const bonus = rolls[rollIndex + 2];
+              if (bonus === undefined) break;
+              total += 10 + bonus;
+            } else {
+              total += r1 + r2;
+            }
+            cumulative[f] = total;
+            rollIndex += 2;
+          }
+        } else {
+          const tenth = state.frames[9];
+          if (isTenthFrameComplete()) {
+            total += tenth.reduce((sum, value) => sum + value, 0);
+            cumulative[f] = total;
+          }
+        }
+      }
+
+      return { cumulative, total: cumulative.findLast(value => value !== null) ?? 0 };
+    }
+
+    function formatThrow(frameIndex, rollIndex) {
+      const rolls = state.frames[frameIndex];
+      const value = rolls[rollIndex];
+      if (value === undefined) return "";
+
+      if (frameIndex < 9) {
+        if (rollIndex === 0 && value === 10) return "X";
+        if (rollIndex === 1 && rolls[0] + value === 10) return "/";
+        return value === 0 ? "-" : String(value);
+      }
+
+      const a = rolls[0];
+      const b = rolls[1];
+      if (rollIndex === 0) return value === 10 ? "X" : value === 0 ? "-" : String(value);
+      if (rollIndex === 1) {
+        if (a !== 10 && a + value === 10) return "/";
+        return value === 10 ? "X" : value === 0 ? "-" : String(value);
+      }
+      if (a === 10 && b !== 10 && b + value === 10) return "/";
+      return value === 10 ? "X" : value === 0 ? "-" : String(value);
+    }
+
+    function renderScoreboard() {
+      const { cumulative, total } = calculateScores();
+      scoreboard.innerHTML = "";
+
+      for (let i = 0; i < 10; i++) {
+        const frame = document.createElement("div");
+        frame.className = `frame ${i === 9 ? "tenth" : ""} ${i === state.currentFrame && !state.gameOver ? "active" : ""}`;
+
+        const head = document.createElement("div");
+        head.className = "frame-head";
+        head.textContent = `${i + 1}F`;
+
+        const throws = document.createElement("div");
+        throws.className = "throws";
+        const cells = i === 9 ? 3 : 2;
+        for (let j = 0; j < cells; j++) {
+          const cell = document.createElement("div");
+          cell.textContent = formatThrow(i, j);
+          throws.appendChild(cell);
+        }
+
+        const cum = document.createElement("div");
+        cum.className = "cum-score";
+        cum.textContent = cumulative[i] === null ? "" : cumulative[i];
+
+        frame.appendChild(head);
+        frame.appendChild(throws);
+        frame.appendChild(cum);
+        scoreboard.appendChild(frame);
+      }
+
+      scoreStat.textContent = total;
+      gameStateText.textContent = state.gameOver ? "Finished" : "Playing";
+    }
+
+    function updateStats() {
+      frameStat.textContent = `${Math.min(state.currentFrame + 1, 10)} / 10`;
+      rollStat.textContent = state.gameOver ? "종료" : `${getRollNumberInFrame()}구`;
+      pinsStat.textContent = getStandingPins().length;
+      renderScoreboard();
+      bowlBtn.disabled = state.animating || state.gameOver;
+    }
+
+    function laneXAtY(y, side) {
+      const t = (y - lane.top) / (lane.bottom - lane.top);
+      if (side === "left") return lane.leftTop + (lane.leftBottom - lane.leftTop) * t;
+      return lane.rightTop + (lane.rightBottom - lane.rightTop) * t;
+    }
+
+    function getTargetX() {
+      const aim = Number(aimRange.value) / 100;
+      return W / 2 + aim * 170;
+    }
+
+    function curveXAtProgress(progress, targetX, spin) {
+      const linear = startX + (targetX - startX) * progress;
+      const curve = Math.sin(progress * Math.PI) * spin * 90;
+      return linear + curve;
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = "#eef2f7";
+      ctx.fillRect(0, 0, W, lane.top);
+
+      ctx.strokeStyle = "rgba(17, 24, 39, 0.05)";
+      ctx.lineWidth = 1;
+      for (let x = 40; x < W; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#d9b77f";
+      ctx.beginPath();
+      ctx.moveTo(lane.leftTop, lane.top);
+      ctx.lineTo(lane.rightTop, lane.top);
+      ctx.lineTo(lane.rightBottom, lane.bottom);
+      ctx.lineTo(lane.leftBottom, lane.bottom);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(17, 24, 39, 0.16)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(lane.leftTop, lane.top);
+      ctx.lineTo(lane.leftBottom, lane.bottom);
+      ctx.moveTo(lane.rightTop, lane.top);
+      ctx.lineTo(lane.rightBottom, lane.bottom);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 7; i++) {
+        const ratio = i / 7;
+        ctx.beginPath();
+        ctx.moveTo(lane.leftTop + (lane.rightTop - lane.leftTop) * ratio, lane.top);
+        ctx.lineTo(laneXAtY(lane.bottom, "left") + (laneXAtY(lane.bottom, "right") - laneXAtY(lane.bottom, "left")) * ratio, lane.bottom);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "rgba(17, 24, 39, 0.08)";
+      ctx.fillRect(lane.leftTop + 6, lane.top + 52, lane.rightTop - lane.leftTop - 12, 5);
+
+      ctx.fillStyle = "rgba(17, 24, 39, 0.18)";
+      [0.38, 0.5, 0.62].forEach(ratio => {
+        const x = lane.leftBottom + (lane.rightBottom - lane.leftBottom) * ratio;
+        ctx.beginPath();
+        ctx.arc(x, lane.bottom - 82, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function drawCloud(x, y, r) {
+      ctx.beginPath();
+      ctx.arc(x, y, r * 0.75, 0, Math.PI * 2);
+      ctx.arc(x + r * 0.65, y + 4, r * 0.95, 0, Math.PI * 2);
+      ctx.arc(x + r * 1.36, y, r * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawAimLine() {
+      if (state.animating || state.gameOver) return;
+      const targetX = getTargetX();
+      const spin = Number(spinRange.value) / 60;
+
+      ctx.save();
+      ctx.setLineDash([8, 10]);
+      ctx.strokeStyle = "rgba(47, 109, 246, 0.46)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let i = 0; i <= 40; i++) {
+        const p = i / 40;
+        const y = startY + (pinDeckY - startY) * p;
+        const x = curveXAtProgress(p, targetX, spin);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "rgba(47, 109, 246, 0.75)";
+      ctx.beginPath();
+      ctx.arc(targetX, pinDeckY, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawPins() {
+      state.pins.forEach(pin => {
+        if (!pin.standing) {
+          drawFallenPin(pin.x, pin.y, pin.wobble);
+          return;
+        }
+        drawPin(pin.x, pin.y, 1);
+      });
+    }
+
+    function drawPin(x, y, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      ctx.fillStyle = "rgba(17, 24, 39, 0.14)";
+      ctx.beginPath();
+      ctx.ellipse(0, 19, 11, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fffaf2";
+      ctx.strokeStyle = "rgba(17, 24, 39, 0.18)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(-6, -24);
+      ctx.bezierCurveTo(-15, -13, -10, 2, -13, 15);
+      ctx.quadraticCurveTo(0, 23, 13, 15);
+      ctx.bezierCurveTo(10, 2, 15, -13, 6, -24);
+      ctx.quadraticCurveTo(0, -28, -6, -24);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#d85c5c";
+      ctx.fillRect(-8, -11, 16, 3);
+      ctx.fillRect(-8, -6, 16, 3);
+      ctx.restore();
+    }
+
+    function drawFallenPin(x, y, angle) {
+      ctx.save();
+      ctx.translate(x, y + 14);
+      ctx.rotate(angle);
+      ctx.globalAlpha = 0.55;
+      drawPin(0, 0, 0.84);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+
+    function drawBall() {
+      let x = startX;
+      let y = startY;
+      let radius = 18;
+      let rotation = 0;
+
+      if (state.ball) {
+        const p = state.ball.progress;
+        x = curveXAtProgress(p, state.ball.targetX, state.ball.spin);
+        y = startY + (pinDeckY - startY) * p;
+        radius = 18 - p * 5;
+        rotation = p * Math.PI * 5;
+      }
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+
+      ctx.fillStyle = "rgba(17, 24, 39, 0.16)";
+      ctx.beginPath();
+      ctx.ellipse(4, radius + 7, radius * 0.9, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#2f6df6";
+      ctx.strokeStyle = "rgba(17, 24, 39, 0.18)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.46)";
+      ctx.beginPath();
+      ctx.arc(-7, -7, radius * 0.23, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(15, 23, 42, 0.38)";
+      [[5, -8, 2.5], [10, -2, 2.1], [3, 1, 2]].forEach(([hx, hy, hr]) => {
+        ctx.beginPath();
+        ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function drawFrame() {
+      drawBackground();
+      drawAimLine();
+      drawPins();
+      drawBall();
+      drawHudOnCanvas();
+    }
+
+    function drawHudOnCanvas() {
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
+      roundedRect(ctx, 22, 20, 232, 44, 14);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(17, 24, 39, 0.08)";
+      ctx.stroke();
+      ctx.fillStyle = "#111827";
+      ctx.font = "800 17px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
+      ctx.fillText(`Frame ${Math.min(state.currentFrame + 1, 10)} · Roll ${state.gameOver ? "End" : getRollNumberInFrame()}`, 40, 48);
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
+      roundedRect(ctx, W - 178, 20, 156, 44, 14);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(17, 24, 39, 0.08)";
+      ctx.stroke();
+      ctx.fillStyle = "#111827";
+      ctx.font = "800 17px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
+      ctx.fillText(`Pins ${getStandingPins().length}`, W - 148, 48);
+      ctx.restore();
+    }
+
+    function roundedRect(context, x, y, width, height, radius) {
+      context.beginPath();
+      context.moveTo(x + radius, y);
+      context.lineTo(x + width - radius, y);
+      context.quadraticCurveTo(x + width, y, x + width, y + radius);
+      context.lineTo(x + width, y + height - radius);
+      context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      context.lineTo(x + radius, y + height);
+      context.quadraticCurveTo(x, y + height, x, y + height - radius);
+      context.lineTo(x, y + radius);
+      context.quadraticCurveTo(x, y, x + radius, y);
+      context.closePath();
+    }
+
+    function bowl() {
+      if (state.animating || state.gameOver) return;
+      state.animating = true;
+      bowlBtn.disabled = true;
+
+      const power = Number(powerRange.value);
+      const spin = Number(spinRange.value) / 60;
+      const targetX = getTargetX();
+      const speed = 0.012 + power / 5600;
+
+      state.ball = {
+        progress: 0,
+        targetX,
+        spin,
+        speed,
+        power
+      };
+
+      requestAnimationFrame(animateBall);
+    }
+
+    function animateBall() {
+      if (!state.ball) return;
+      state.ball.progress += state.ball.speed;
+
+      if (state.ball.progress >= 1) {
+        state.ball.progress = 1;
+        drawFrame();
+        resolveThrow();
+        return;
+      }
+
+      drawFrame();
+      requestAnimationFrame(animateBall);
+    }
+
+    function distancePointToSegment(px, py, ax, ay, bx, by) {
+      const dx = bx - ax;
+      const dy = by - ay;
+      const lengthSquared = dx * dx + dy * dy;
+      if (lengthSquared === 0) return Math.hypot(px - ax, py - ay);
+      const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSquared));
+      const cx = ax + t * dx;
+      const cy = ay + t * dy;
+      return Math.hypot(px - cx, py - cy);
+    }
+
+    function resolveThrow() {
+      const ball = state.ball;
+      const impactX = curveXAtProgress(1, ball.targetX, ball.spin);
+      const power = ball.power;
+      const spinAbs = Math.abs(ball.spin);
+      const knockedIds = new Set();
+      const standing = getStandingPins();
+
+      const idealPowerBonus = 1 - Math.min(1, Math.abs(power - 78) / 58);
+      const accuracyPenalty = power > 92 ? (power - 92) / 24 : 0;
+      const hitRadius = 18 + power * 0.19 + idealPowerBonus * 13 - accuracyPenalty * 8;
+
+      standing.forEach(pin => {
+        const pathDistance = distancePointToSegment(pin.x, pin.y, startX, startY, impactX, pinDeckY);
+        const deckDistance = Math.hypot(pin.x - impactX, (pin.y - pinDeckY) * 0.72);
+        const score = Math.max(0, 1 - Math.min(pathDistance, deckDistance) / hitRadius);
+        const chance = score * (0.88 + power / 240) + spinAbs * 0.08 - accuracyPenalty * 0.08;
+        if (chance > 0.52 || Math.random() < chance * 0.55) {
+          knockedIds.add(pin.id);
+        }
+      });
+
+      const firstWave = [...knockedIds]
+        .map(id => state.pins.find(pin => pin.id === id))
+        .filter(Boolean);
+
+      firstWave.forEach(source => {
+        standing.forEach(pin => {
+          if (knockedIds.has(pin.id)) return;
+          const d = Math.hypot(pin.x - source.x, pin.y - source.y);
+          const chainChance = Math.max(0, 1 - d / (54 + power * 0.15)) * (0.54 + power / 240 + spinAbs * 0.15);
+          if (Math.random() < chainChance) knockedIds.add(pin.id);
+        });
+      });
+
+      if (standing.length === 10 && power >= 68 && Math.abs(impactX - W / 2) <= 18 + spinAbs * 11 && Math.random() < 0.56 + power / 260) {
+        state.pins.forEach(pin => knockedIds.add(pin.id));
+      }
+
+      state.pins.forEach(pin => {
+        if (knockedIds.has(pin.id)) {
+          pin.standing = false;
+          pin.wobble = Math.random() * Math.PI * 2;
+        }
+      });
+
+      const knocked = knockedIds.size;
+      applyRoll(knocked);
+
+      state.ball = null;
+      state.animating = false;
+      updateStats();
+      drawFrame();
+    }
+
+    function applyRoll(knocked) {
+      const frameIndex = state.currentFrame;
+      const frame = state.frames[frameIndex];
+      frame.push(knocked);
+
+      const frameNumber = frameIndex + 1;
+      const rollNumber = frame.length;
+      let resultText = `${knocked}핀`;
+      if (knocked === 10 && (frameIndex < 9 || rollNumber === 1 || frame[rollNumber - 2] === 10)) {
+        resultText = "스트라이크";
+      } else if (frameIndex < 9 && rollNumber === 2 && frame[0] + frame[1] === 10) {
+        resultText = "스페어";
+      } else if (frameIndex === 9 && rollNumber >= 2 && frame[rollNumber - 2] !== 10 && frame[rollNumber - 2] + knocked === 10) {
+        resultText = "스페어";
+      }
+
+      addLog(`[Joonhee] ${frameNumber}프레임 ${rollNumber}구 = ${resultText}`);
+      showToast(resultText);
+
+      if (frameIndex < 9) {
+        if (rollNumber === 1 && knocked === 10) {
+          state.currentFrame += 1;
+          window.setTimeout(() => {
+            state.pins = resetPins();
+            updateStats();
+            drawFrame();
+          }, 420);
+          return;
+        }
+
+        if (rollNumber >= 2) {
+          state.currentFrame += 1;
+          window.setTimeout(() => {
+            state.pins = resetPins();
+            updateStats();
+            drawFrame();
+          }, 420);
+          return;
+        }
+      } else {
+        handleTenthFrameAfterRoll();
+        return;
+      }
+    }
+
+    function handleTenthFrameAfterRoll() {
+      const frame = state.frames[9];
+      const rollNumber = frame.length;
+
+      if (rollNumber === 1) {
+        if (frame[0] === 10) {
+          window.setTimeout(() => {
+            state.pins = resetPins();
+            updateStats();
+            drawFrame();
+          }, 420);
+        }
+        return;
+      }
+
+      if (rollNumber === 2) {
+        const [a, b] = frame;
+        if (a === 10) {
+          if (b === 10) {
+            window.setTimeout(() => {
+              state.pins = resetPins();
+              updateStats();
+              drawFrame();
+            }, 420);
+          }
+          return;
+        }
+
+        if (a + b === 10) {
+          window.setTimeout(() => {
+            state.pins = resetPins();
+            updateStats();
+            drawFrame();
+          }, 420);
+          return;
+        }
+
+        finishGame();
+        return;
+      }
+
+      if (rollNumber >= 3) {
+        finishGame();
+      }
+    }
+
+    function finishGame() {
+      state.gameOver = true;
+      const { total } = calculateScores();
+      addLog(`[Game] 최종 점수 = ${total}점`);
+      showToast(`최종 점수 ${total}점`);
+      updateStats();
+    }
+
+    function resetGame() {
+      state.frames = Array.from({ length: 10 }, () => []);
+      state.currentFrame = 0;
+      state.pins = resetPins();
+      state.ball = null;
+      state.animating = false;
+      state.gameOver = false;
+      state.logs = [];
+      addLog("[Game] 새 게임 시작~");
+      updateStats();
+      drawFrame();
+      showToast("새 게임 시작");
+    }
+
+    function setAimFromCanvas(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((clientX - rect.left) / rect.width) * W;
+      const normalized = Math.max(-100, Math.min(100, Math.round(((x - W / 2) / 170) * 100)));
+      aimRange.value = normalized;
+      updateLabels();
+      drawFrame();
+    }
+
+    let pointerDown = false;
+    canvas.addEventListener("pointerdown", event => {
+      if (state.animating || state.gameOver) return;
+      pointerDown = true;
+      canvas.setPointerCapture(event.pointerId);
+      setAimFromCanvas(event.clientX);
+    });
+
+    canvas.addEventListener("pointermove", event => {
+      if (!pointerDown || state.animating || state.gameOver) return;
+      setAimFromCanvas(event.clientX);
+    });
+
+    canvas.addEventListener("pointerup", event => {
+      pointerDown = false;
+      canvas.releasePointerCapture(event.pointerId);
+    });
+
+    [aimRange, powerRange, spinRange].forEach(input => {
+      input.addEventListener("input", () => {
+        updateLabels();
+        drawFrame();
+      });
+    });
+
+    bowlBtn.addEventListener("click", bowl);
+    resetBtn.addEventListener("click", resetGame);
+
+    window.addEventListener("keydown", event => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        bowl();
+      }
+      if (event.key === "ArrowLeft") {
+        aimRange.value = Math.max(-100, Number(aimRange.value) - 5);
+        updateLabels();
+        drawFrame();
+      }
+      if (event.key === "ArrowRight") {
+        aimRange.value = Math.min(100, Number(aimRange.value) + 5);
+        updateLabels();
+        drawFrame();
+      }
+    });
+
+    updateLabels();
+    renderLog();
+    resetGame();
+  </script>
+</body>
+</html>

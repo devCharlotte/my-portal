@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2048 Game</title>
+  <link rel="stylesheet" href="../../shared.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="mygame-soft">
+  <nav class="mygame-topnav">
+    <a class="mygame-home" href="../../">← my game</a>
+    <span class="mygame-date">Created Jan 1, 2025</span>
+  </nav>
+  <div class="page-wrap">
+    <div class="game-container">
+      <h1>JoonHee's 2048 Game</h1>
+      <button id="reset-button">게임판 리셋</button>
+      <div id="game-container"></div>
+      <div id="controls">
+        <button class="control-btn" data-direction="up">↑</button>
+        <div>
+          <button class="control-btn" data-direction="left">←</button>
+          <button class="control-btn" data-direction="down">↓</button>
+          <button class="control-btn" data-direction="right">→</button>
+        </div>
+      </div>
+      <p id="message">방향 버튼을 클릭하여 타일을 이동하세요!</p>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoonHee's Checklist</title>
+  <style>
+    @font-face {
+      font-family: 'GangwonEducationSaeum';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEduSaeeum_OTFMediumA.woff') format('woff');
+      font-weight: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --bg-1: #f5f7fb;
+      --bg-2: #edf2f8;
+      --bg-3: #dfe8f4;
+      --card: rgba(255, 255, 255, 0.66);
+      --card-strong: rgba(255, 255, 255, 0.84);
+      --line: rgba(255, 255, 255, 0.78);
+      --text: #111827;
+      --muted: #5b6472;
+      --soft: #7b8698;
+      --accent: #2f6df6;
+      --danger: #ef4444;
+      --good: #34c759;
+
+      --ta-bg: #ffe0e0;
+      --ta-bg-2: #fff3f3;
+      --ta-main: #ef6b6b;
+      --ta-line: rgba(239, 107, 107, 0.44);
+
+      --lab-bg: #ffe8c9;
+      --lab-bg-2: #fff6e8;
+      --lab-main: #f59e42;
+      --lab-line: rgba(245, 158, 66, 0.44);
+
+      --research-bg: #fff6bf;
+      --research-bg-2: #fffbea;
+      --research-main: #d9a600;
+      --research-line: rgba(217, 166, 0, 0.42);
+
+      --coursework-bg: #eadcff;
+      --coursework-bg-2: #f7f1ff;
+      --coursework-main: #8b5cf6;
+      --coursework-line: rgba(139, 92, 246, 0.42);
+
+      --personal-bg: #ffdff0;
+      --personal-bg-2: #fff2f8;
+      --personal-main: #ec6aa7;
+      --personal-line: rgba(236, 106, 167, 0.42);
+
+      --shadow-lg: 0 24px 60px rgba(74, 92, 128, 0.16);
+      --shadow-md: 0 10px 28px rgba(74, 92, 128, 0.12);
+      --radius-xl: 34px;
+      --radius-lg: 26px;
+      --radius-md: 18px;
+      --item-font-size: 24px;
+      --main-font: 'GangwonEducationSaeum', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family: var(--main-font);
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255,255,255,0.98), transparent 25%),
+        radial-gradient(circle at 82% 13%, rgba(255,255,255,0.78), transparent 22%),
+        radial-gradient(circle at 60% 88%, rgba(255,255,255,0.62), transparent 24%),
+        linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(16px, 3vw, 36px);
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(76px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      width: 300px;
+      height: 300px;
+      top: -52px;
+      right: -56px;
+      background: rgba(190, 214, 255, 0.74);
+    }
+
+    body::after {
+      width: 280px;
+      height: 280px;
+      left: -54px;
+      bottom: -58px;
+      background: rgba(255, 220, 241, 0.7);
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1060px, 100%);
+      min-height: min(90vh, 840px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .widget {
+      width: 100%;
+      padding: clamp(22px, 4vw, 40px);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(180deg, var(--card-strong) 0%, var(--card) 100%);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(24px) saturate(1.12);
+      -webkit-backdrop-filter: blur(24px) saturate(1.12);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(20px, 3vw, 28px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .widget::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.58), transparent 30%, transparent 72%, rgba(255,255,255,0.3));
+      pointer-events: none;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .eyebrow {
+      font-size: 1.24rem;
+      color: var(--soft);
+      letter-spacing: 0.04em;
+    }
+
+    .title {
+      font-size: clamp(1.7rem, 3vw, 2.2rem);
+      font-weight: normal;
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.64);
+      border: 1px solid rgba(255,255,255,0.68);
+      color: var(--muted);
+      font-size: 1.12rem;
+      box-shadow: var(--shadow-md);
+      white-space: nowrap;
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 10px rgba(52, 199, 89, 0.45);
+      flex-shrink: 0;
+    }
+
+    .check-card,
+    .input-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(255,255,255,0.62);
+      box-shadow: var(--shadow-md);
+      padding: clamp(16px, 2.6vw, 22px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .check-head,
+    .input-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .check-title,
+    .input-title {
+      font-size: 1.46rem;
+      font-weight: normal;
+      letter-spacing: -0.01em;
+    }
+
+    .check-caption,
+    .input-caption {
+      font-size: 1.08rem;
+      color: var(--soft);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 0.32fr) 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .new-input,
+    .category-select,
+    .item-category-select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.76);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.68);
+      color: var(--text);
+      outline: none;
+      padding: 13px 15px;
+      font-family: var(--main-font);
+      font-size: 1.25rem;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .category-select,
+    .item-category-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #7b8698 50%), linear-gradient(135deg, #7b8698 50%, transparent 50%);
+      background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 13px) calc(50% - 3px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+    }
+
+    .item-category-select {
+      min-width: 132px;
+      font-size: 1.08rem;
+      padding: 9px 34px 9px 12px;
+      border-radius: 14px;
+      background-color: rgba(255,255,255,0.7);
+    }
+
+    .new-input::placeholder {
+      color: #8a94a6;
+    }
+
+    .new-input:focus,
+    .category-select:focus,
+    .item-category-select:focus,
+    .item-text:focus {
+      border-color: rgba(47, 109, 246, 0.34);
+      box-shadow: 0 0 0 4px rgba(47, 109, 246, 0.09);
+      background-color: rgba(255,255,255,0.84);
+    }
+
+    .btn,
+    .icon-btn {
+      appearance: none;
+      border: none;
+      border-radius: 14px;
+      padding: 10px 15px;
+      background: rgba(255,255,255,0.78);
+      color: var(--text);
+      font-family: var(--main-font);
+      font-size: 1.12rem;
+      box-shadow: 0 8px 20px rgba(82, 96, 129, 0.12);
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, color 0.16s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover,
+    .icon-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 12px 24px rgba(82, 96, 129, 0.16);
+    }
+
+    .btn:active,
+    .icon-btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: rgba(47, 109, 246, 0.9);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: rgba(47, 109, 246, 1);
+    }
+
+    .btn-danger {
+      color: var(--danger);
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.64);
+      background: rgba(255,255,255,0.48);
+      color: var(--muted);
+      font-size: 1.05rem;
+      box-shadow: 0 5px 14px rgba(82, 96, 129, 0.07);
+    }
+
+    .legend-color {
+      width: 15px;
+      height: 15px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.9);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+    }
+
+    .legend-color.ta { background: var(--ta-main); }
+    .legend-color.lab { background: var(--lab-main); }
+    .legend-color.research { background: var(--research-main); }
+    .legend-color.coursework { background: var(--coursework-main); }
+    .legend-color.personal { background: var(--personal-main); }
+
+    .font-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.38);
+      border: 1px solid rgba(255,255,255,0.54);
+    }
+
+    .font-label {
+      color: var(--soft);
+      font-size: 1.08rem;
+    }
+
+    .font-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .font-size-view {
+      min-width: 62px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.08rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .check-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 80px;
+    }
+
+    .empty {
+      padding: 20px 18px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.44);
+      border: 1px solid rgba(255,255,255,0.56);
+      color: var(--soft);
+      font-size: 1.2rem;
+      line-height: 1.45;
+    }
+
+    .check-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto auto auto 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px 12px 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.56);
+      border: 1px solid rgba(255,255,255,0.68);
+      box-shadow: 0 10px 24px rgba(82, 96, 129, 0.09);
+      overflow: hidden;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, opacity 0.16s ease;
+    }
+
+    .check-item::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      border-radius: 22px 0 0 22px;
+    }
+
+    .check-item.category-ta {
+      background: linear-gradient(135deg, var(--ta-bg) 0%, var(--ta-bg-2) 58%, rgba(255,255,255,0.7) 100%);
+      border-color: var(--ta-line);
+    }
+
+    .check-item.category-ta::before { background: var(--ta-main); }
+
+    .check-item.category-lab {
+      background: linear-gradient(135deg, var(--lab-bg) 0%, var(--lab-bg-2) 58%, rgba(255,255,255,0.7) 100%);
+      border-color: var(--lab-line);
+    }
+
+    .check-item.category-lab::before { background: var(--lab-main); }
+
+    .check-item.category-research {
+      background: linear-gradient(135deg, var(--research-bg) 0%, var(--research-bg-2) 58%, rgba(255,255,255,0.74) 100%);
+      border-color: var(--research-line);
+    }
+
+    .check-item.category-research::before { background: var(--research-main); }
+
+    .check-item.category-coursework {
+      background: linear-gradient(135deg, var(--coursework-bg) 0%, var(--coursework-bg-2) 58%, rgba(255,255,255,0.74) 100%);
+      border-color: var(--coursework-line);
+    }
+
+    .check-item.category-coursework::before { background: var(--coursework-main); }
+
+    .check-item.category-personal {
+      background: linear-gradient(135deg, var(--personal-bg) 0%, var(--personal-bg-2) 58%, rgba(255,255,255,0.7) 100%);
+      border-color: var(--personal-line);
+    }
+
+    .check-item.category-personal::before { background: var(--personal-main); }
+
+    .check-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 15px 30px rgba(82, 96, 129, 0.13);
+    }
+
+    .check-item.dragging {
+      opacity: 0.55;
+      transform: scale(0.99);
+    }
+
+    .drag-handle {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 13px;
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(255,255,255,0.68);
+      color: var(--soft);
+      cursor: grab;
+      user-select: none;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .item-number {
+      width: 38px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 13px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.68);
+      color: var(--muted);
+      font-size: 1.05rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .checkbox-wrap {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .item-check {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      margin: 0;
+      border-radius: 9px;
+      border: 1.5px solid rgba(91, 100, 114, 0.34);
+      background: rgba(255,255,255,0.76);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .item-check:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 6px 16px rgba(47, 109, 246, 0.2);
+    }
+
+    .item-check:checked::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 4px;
+      width: 6px;
+      height: 11px;
+      border: solid #ffffff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .item-text {
+      width: 100%;
+      min-height: 48px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.76);
+      border-radius: 17px;
+      background: rgba(255,255,255,0.64);
+      color: var(--text);
+      outline: none;
+      padding: 11px 13px;
+      font-family: var(--main-font);
+      font-size: var(--item-font-size);
+      font-weight: normal;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.16s ease;
+    }
+
+    .category-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 96px;
+      height: 34px;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: #ffffff;
+      font-size: 1.02rem;
+      line-height: 1;
+      box-shadow: 0 8px 16px rgba(82, 96, 129, 0.11);
+      white-space: nowrap;
+    }
+
+    .category-chip.ta { background: var(--ta-main); }
+    .category-chip.lab { background: var(--lab-main); }
+    .category-chip.research { background: var(--research-main); }
+    .category-chip.coursework { background: var(--coursework-main); }
+    .category-chip.personal { background: var(--personal-main); }
+
+    .check-item.done {
+      opacity: 0.72;
+    }
+
+    .check-item.done .item-text {
+      color: var(--soft);
+      text-decoration: line-through;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: rgba(91, 100, 114, 0.5);
+    }
+
+    .check-item.done .item-number {
+      color: #9aa3b2;
+    }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      font-size: 1.08rem;
+      box-shadow: 0 6px 16px rgba(82, 96, 129, 0.1);
+    }
+
+    .icon-btn.delete {
+      color: var(--danger);
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .check-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      font-size: 1.06rem;
+      color: var(--soft);
+      min-height: 1.2em;
+    }
+
+    @media (max-width: 980px) {
+      .legend {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+
+      .check-item {
+        grid-template-columns: auto auto auto 1fr;
+      }
+
+      .category-chip,
+      .item-category-select {
+        grid-column: 1 / 3;
+      }
+
+      .item-actions {
+        grid-column: 3 / -1;
+        justify-content: flex-end;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .widget {
+        padding: 18px 14px;
+        border-radius: 26px;
+      }
+
+      .header,
+      .check-head,
+      .input-head,
+      .check-footer,
+      .font-tools {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .check-card,
+      .input-card {
+        border-radius: 22px;
+      }
+
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-primary {
+        width: 100%;
+      }
+
+      .legend {
+        grid-template-columns: 1fr;
+      }
+
+      .check-item {
+        grid-template-columns: auto auto auto 1fr;
+        gap: 8px;
+      }
+
+      .item-text {
+        grid-column: 1 / -1;
+        min-height: 52px;
+      }
+
+      .category-chip,
+      .item-category-select {
+        grid-column: 1 / -1;
+      }
+
+      .item-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared.css" />
+</head>
+<body class="workspace-tool">
+
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← my workspace</a>
+    <span class="myworkspace-date">Created Apr 1, 2025</span>
+  </nav>
+
+  <main class="app">
+    <section class="widget" aria-label="Joon Hee checklist">
+      <div class="header">
+        <div class="title-wrap">
+          <div class="eyebrow">🩷</div>
+          <div class="title">Joon Hee</div>
+        </div>
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>checklist</span>
+        </div>
+      </div>
+
+      <section class="input-card" aria-label="add checklist item">
+        <div class="input-head">
+          <div class="input-title">add</div>
+          <div class="input-caption">local only</div>
+        </div>
+
+        <div class="input-row">
+          <select id="categorySelect" class="category-select" aria-label="category">
+            <option value="ta">TA</option>
+            <option value="lab">LAB</option>
+            <option value="research">my research</option>
+            <option value="coursework">coursework</option>
+            <option value="personal">personal</option>
+          </select>
+          <input id="newItemInput" class="new-input" type="text" maxlength="160" placeholder="new checklist" aria-label="new checklist" />
+          <button id="addBtn" class="btn btn-primary" type="button">add</button>
+        </div>
+
+        <div class="legend" aria-label="category colors">
+          <div class="legend-item"><span class="legend-color ta"></span><span>TA</span></div>
+          <div class="legend-item"><span class="legend-color lab"></span><span>LAB</span></div>
+          <div class="legend-item"><span class="legend-color research"></span><span>my research</span></div>
+          <div class="legend-item"><span class="legend-color coursework"></span><span>coursework</span></div>
+          <div class="legend-item"><span class="legend-color personal"></span><span>personal</span></div>
+        </div>
+      </section>
+
+      <section class="check-card" aria-label="checklist">
+        <div class="check-head">
+          <div class="check-title">checklist</div>
+          <div id="countText" class="check-caption">0 / 0</div>
+        </div>
+
+        <div class="font-tools" aria-label="font size control">
+          <div class="font-label">font size</div>
+          <div class="font-actions">
+            <button id="fontMinusBtn" class="icon-btn" type="button" aria-label="decrease font size">−</button>
+            <div id="fontSizeView" class="font-size-view">24px</div>
+            <button id="fontPlusBtn" class="icon-btn" type="button" aria-label="increase font size">+</button>
+            <button id="fontResetBtn" class="btn" type="button">reset</button>
+          </div>
+        </div>
+
+        <div id="checkList" class="check-list" aria-label="checklist items"></div>
+
+        <div class="check-footer">
+          <div id="status" class="status"></div>
+          <div class="item-actions">
+            <button id="clearDoneBtn" class="btn" type="button">delete checked</button>
+            <button id="clearAllBtn" class="btn btn-danger" type="button">delete all</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'joonhee-simple-checklist';
+    const FONT_SIZE_KEY = 'joonhee-simple-checklist-font-size';
+    const DEFAULT_FONT_SIZE = 24;
+    const MIN_FONT_SIZE = 5;
+    const MAX_FONT_SIZE = 42;
+
+    const CATEGORY_LABELS = {
+      ta: 'TA',
+      lab: 'LAB',
+      research: 'my research',
+      coursework: 'coursework',
+      personal: 'personal'
+    };
+
+    const newItemInput = document.getElementById('newItemInput');
+    const categorySelect = document.getElementById('categorySelect');
+    const addBtn = document.getElementById('addBtn');
+    const checkList = document.getElementById('checkList');
+    const countText = document.getElementById('countText');
+    const statusEl = document.getElementById('status');
+    const clearDoneBtn = document.getElementById('clearDoneBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const fontMinusBtn = document.getElementById('fontMinusBtn');
+    const fontPlusBtn = document.getElementById('fontPlusBtn');
+    const fontResetBtn = document.getElementById('fontResetBtn');
+    const fontSizeView = document.getElementById('fontSizeView');
+
+    let items = [];
+    let draggedId = null;
+    let itemFontSize = DEFAULT_FONT_SIZE;
+
+    function createId() {
+      if (window.crypto && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function normalizeCategory(category) {
+      return CATEGORY_LABELS[category] ? category : 'personal';
+    }
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+      clearTimeout(setStatus._timer);
+      setStatus._timer = setTimeout(() => {
+        statusEl.textContent = items.length ? 'auto saved' : '';
+      }, 1200);
+    }
+
+    function loadItems() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        items = Array.isArray(saved)
+          ? saved.map(item => ({
+              id: item.id || createId(),
+              text: item.text || '',
+              done: Boolean(item.done),
+              category: normalizeCategory(item.category),
+              createdAt: item.createdAt || Date.now()
+            }))
+          : [];
+      } catch (error) {
+        items = [];
+      }
+    }
+
+    function loadFontSize() {
+      const saved = Number(localStorage.getItem(FONT_SIZE_KEY));
+      if (Number.isFinite(saved) && saved >= MIN_FONT_SIZE && saved <= MAX_FONT_SIZE) {
+        itemFontSize = saved;
+      }
+      applyFontSize();
+    }
+
+    function applyFontSize() {
+      document.documentElement.style.setProperty('--item-font-size', `${itemFontSize}px`);
+      fontSizeView.textContent = `${itemFontSize}px`;
+      localStorage.setItem(FONT_SIZE_KEY, String(itemFontSize));
+    }
+
+    function changeFontSize(delta) {
+      itemFontSize = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, itemFontSize + delta));
+      applyFontSize();
+      setStatus('font size changed');
+    }
+
+    function resetFontSize() {
+      itemFontSize = DEFAULT_FONT_SIZE;
+      applyFontSize();
+      setStatus('font size reset');
+    }
+
+    function saveItems(message = 'saved') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      renderItems();
+      setStatus(message);
+    }
+
+    function updateCount() {
+      const done = items.filter(item => item.done).length;
+      countText.textContent = `${done} / ${items.length}`;
+    }
+
+    function addItem() {
+      const text = newItemInput.value.trim();
+      const category = normalizeCategory(categorySelect.value);
+
+      if (!text) {
+        setStatus('text required');
+        newItemInput.focus();
+        return;
+      }
+
+      items.push({
+        id: createId(),
+        text,
+        done: false,
+        category,
+        createdAt: Date.now()
+      });
+
+      newItemInput.value = '';
+      saveItems('added');
+      newItemInput.focus();
+    }
+
+    function deleteItem(id) {
+      items = items.filter(item => item.id !== id);
+      saveItems('deleted');
+    }
+
+    function toggleItem(id, done) {
+      const item = items.find(item => item.id === id);
+      if (!item) return;
+      item.done = done;
+      saveItems(done ? 'checked' : 'unchecked');
+    }
+
+    function updateItemText(id, text) {
+      const item = items.find(item => item.id === id);
+      if (!item) return;
+      item.text = text;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      setStatus('saved');
+    }
+
+    function updateItemCategory(id, category) {
+      const item = items.find(item => item.id === id);
+      if (!item) return;
+      item.category = normalizeCategory(category);
+      saveItems('category changed');
+    }
+
+    function moveItem(id, direction) {
+      const index = items.findIndex(item => item.id === id);
+      if (index < 0) return;
+
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= items.length) return;
+
+      const [target] = items.splice(index, 1);
+      items.splice(nextIndex, 0, target);
+      saveItems('order changed');
+    }
+
+    function clearDone() {
+      if (!items.some(item => item.done)) {
+        setStatus('no checked items');
+        return;
+      }
+      items = items.filter(item => !item.done);
+      saveItems('checked deleted');
+    }
+
+    function clearAll() {
+      if (!items.length) {
+        setStatus('empty');
+        return;
+      }
+
+      const ok = confirm('전체 체크리스트를 삭제할까요?');
+      if (!ok) return;
+
+      items = [];
+      localStorage.removeItem(STORAGE_KEY);
+      renderItems();
+      setStatus('all deleted');
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('.check-item:not(.dragging)')];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        }
+
+        return closest;
+      }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+    }
+
+    function syncOrderFromDom() {
+      const ids = [...checkList.querySelectorAll('.check-item')].map(element => element.dataset.id);
+      const itemMap = new Map(items.map(item => [item.id, item]));
+      items = ids.map(id => itemMap.get(id)).filter(Boolean);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      renderItems();
+      setStatus('order changed');
+    }
+
+    function createCategoryChip(item) {
+      const category = normalizeCategory(item.category);
+      const chip = document.createElement('div');
+      chip.className = `category-chip ${category}`;
+      chip.textContent = CATEGORY_LABELS[category];
+      return chip;
+    }
+
+    function createCategorySelect(item) {
+      const select = document.createElement('select');
+      select.className = 'item-category-select';
+      select.setAttribute('aria-label', 'item category');
+
+      Object.entries(CATEGORY_LABELS).forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        option.selected = normalizeCategory(item.category) === value;
+        select.appendChild(option);
+      });
+
+      select.addEventListener('change', () => updateItemCategory(item.id, select.value));
+      return select;
+    }
+
+    function renderItems() {
+      updateCount();
+      checkList.innerHTML = '';
+
+      if (!items.length) {
+        checkList.innerHTML = '<div class="empty">No checklist yet.</div>';
+        return;
+      }
+
+      items.forEach((item, index) => {
+        item.category = normalizeCategory(item.category);
+
+        const row = document.createElement('div');
+        row.className = item.done ? `check-item done category-${item.category}` : `check-item category-${item.category}`;
+        row.dataset.id = item.id;
+        row.draggable = true;
+
+        const handle = document.createElement('div');
+        handle.className = 'drag-handle';
+        handle.textContent = '⋮⋮';
+        handle.title = 'drag to reorder';
+
+        const number = document.createElement('div');
+        number.className = 'item-number';
+        number.textContent = String(index + 1).padStart(2, '0');
+
+        const checkboxWrap = document.createElement('div');
+        checkboxWrap.className = 'checkbox-wrap';
+
+        const checkbox = document.createElement('input');
+        checkbox.className = 'item-check';
+        checkbox.type = 'checkbox';
+        checkbox.checked = item.done;
+        checkbox.setAttribute('aria-label', 'check item');
+        checkbox.addEventListener('change', () => toggleItem(item.id, checkbox.checked));
+
+        checkboxWrap.appendChild(checkbox);
+
+        const textarea = document.createElement('textarea');
+        textarea.className = 'item-text';
+        textarea.value = item.text;
+        textarea.rows = 1;
+        textarea.setAttribute('aria-label', 'checklist text');
+        textarea.addEventListener('input', () => updateItemText(item.id, textarea.value));
+
+        const chip = createCategoryChip(item);
+        const categoryControl = createCategorySelect(item);
+
+        const actions = document.createElement('div');
+        actions.className = 'item-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.className = 'icon-btn';
+        upBtn.type = 'button';
+        upBtn.textContent = '↑';
+        upBtn.title = 'move up';
+        upBtn.disabled = index === 0;
+        upBtn.addEventListener('click', () => moveItem(item.id, -1));
+
+        const downBtn = document.createElement('button');
+        downBtn.className = 'icon-btn';
+        downBtn.type = 'button';
+        downBtn.textContent = '↓';
+        downBtn.title = 'move down';
+        downBtn.disabled = index === items.length - 1;
+        downBtn.addEventListener('click', () => moveItem(item.id, 1));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'icon-btn delete';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = '×';
+        deleteBtn.title = 'delete';
+        deleteBtn.addEventListener('click', () => deleteItem(item.id));
+
+        actions.appendChild(upBtn);
+        actions.appendChild(downBtn);
+        actions.appendChild(deleteBtn);
+
+        row.addEventListener('dragstart', () => {
+          draggedId = item.id;
+          row.classList.add('dragging');
+        });
+
+        row.addEventListener('dragend', () => {
+          draggedId = null;
+          row.classList.remove('dragging');
+          syncOrderFromDom();
+        });
+
+        row.appendChild(handle);
+        row.appendChild(number);
+        row.appendChild(checkboxWrap);
+        row.appendChild(textarea);
+        row.appendChild(chip);
+        row.appendChild(categoryControl);
+        row.appendChild(actions);
+        checkList.appendChild(row);
+      });
+    }
+
+    checkList.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      if (!draggedId) return;
+
+      const afterElement = getDragAfterElement(checkList, event.clientY);
+      const draggingElement = checkList.querySelector('.dragging');
+      if (!draggingElement) return;
+
+      if (afterElement == null) {
+        checkList.appendChild(draggingElement);
+      } else {
+        checkList.insertBefore(draggingElement, afterElement);
+      }
+    });
+
+    addBtn.addEventListener('click', addItem);
+    newItemInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addItem();
+      }
+    });
+
+    clearDoneBtn.addEventListener('click', clearDone);
+    clearAllBtn.addEventListener('click', clearAll);
+    fontMinusBtn.addEventListener('click', () => changeFontSize(-1));
+    fontPlusBtn.addEventListener('click', () => changeFontSize(1));
+    fontResetBtn.addEventListener('click', resetFontSize);
+
+    loadItems();
+    loadFontSize();
+    renderItems();
+  </script>
+</body>
+</html>

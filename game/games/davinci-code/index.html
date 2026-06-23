@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Joonhee's davinci code</title>
+  <style>
+    :root {
+      --bg: #f8fbff;
+      --panel: rgba(255, 255, 255, 0.82);
+      --panel-strong: rgba(255, 255, 255, 0.94);
+      --line: rgba(120, 144, 180, 0.22);
+      --text: #243044;
+      --muted: #6b7b93;
+      --accent: #9bdcff;
+      --accent-strong: #62bdf5;
+      --violet: #c7b7ff;
+      --danger: #ff8aa2;
+      --success: #9ee6b8;
+      --warning: #ffe5a8;
+      --black-tile: #4b5568;
+      --white-tile: #ffffff;
+      --radius: 22px;
+      --shadow: 0 18px 42px rgba(94, 120, 160, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 10% 8%, rgba(155, 220, 255, 0.42), transparent 32%),
+        radial-gradient(circle at 86% 12%, rgba(255, 210, 235, 0.55), transparent 34%),
+        radial-gradient(circle at 50% 100%, rgba(199, 183, 255, 0.34), transparent 36%),
+        linear-gradient(135deg, #fff8ec 0%, #eef8ff 45%, #f6f1ff 100%);
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.28fr) minmax(280px, 0.72fr);
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-main {
+      position: relative;
+      overflow: hidden;
+      padding: 30px;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      right: -95px;
+      top: -95px;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(155, 220, 255, 0.5), rgba(255, 210, 235, 0.45));
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: #2f6f91;
+      background: rgba(155, 220, 255, 0.42);
+      border: 1px solid rgba(98, 189, 245, 0.36);
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 10px;
+      font-size: clamp(36px, 6vw, 62px);
+      line-height: 0.96;
+      letter-spacing: -0.06em;
+    }
+
+    .subtitle {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      max-width: 780px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    .score-card {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      justify-content: space-between;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .score-box {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.66);
+      border: 1px solid rgba(120, 144, 180, 0.16);
+    }
+
+    .score-label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .score-value {
+      display: block;
+      font-size: 25px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 370px;
+      gap: 20px;
+    }
+
+    .board {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(120, 144, 180, 0.18);
+      color: #44556d;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .hand {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-height: 112px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px dashed rgba(120, 144, 180, 0.32);
+    }
+
+    .tile {
+      width: 70px;
+      height: 98px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      padding: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+      user-select: none;
+    }
+
+    .tile.black {
+      color: #ffffff;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.2), transparent 45%),
+        linear-gradient(145deg, #667085, var(--black-tile));
+    }
+
+    .tile.white {
+      color: #243044;
+      background:
+        linear-gradient(145deg, rgba(155, 220, 255, 0.22), transparent 45%),
+        var(--white-tile);
+      border-color: rgba(120, 144, 180, 0.32);
+    }
+
+    .tile.selectable {
+      cursor: pointer;
+    }
+
+    .tile.selectable:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 14px 30px rgba(98, 189, 245, 0.22);
+    }
+
+    .tile.selected {
+      transform: translateY(-4px);
+      border-color: var(--accent-strong);
+      box-shadow: 0 0 0 4px rgba(155, 220, 255, 0.42), 0 14px 30px rgba(98, 189, 245, 0.22);
+    }
+
+    .tile-number {
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.06em;
+    }
+
+    .tile-color {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      opacity: 0.82;
+    }
+
+    .tile-index {
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: #7fbde8;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .badge {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      color: white;
+      background: rgba(80, 104, 140, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.52);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .badge.revealed {
+      background: rgba(255, 138, 162, 0.95);
+    }
+
+    .badge.drawn {
+      color: #082f49;
+      background: rgba(155, 220, 255, 0.96);
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .status-box,
+    .guess-form,
+    .hint-box {
+      padding: 15px;
+      border-radius: 18px;
+      border: 1px solid rgba(120, 144, 180, 0.18);
+      background: rgba(255, 255, 255, 0.64);
+    }
+
+    .status-box {
+      line-height: 1.62;
+      color: #44556d;
+    }
+
+    .hint-box {
+      color: #775f1f;
+      background: rgba(255, 229, 168, 0.36);
+      border-color: rgba(224, 168, 65, 0.2);
+      line-height: 1.58;
+      font-size: 14px;
+    }
+
+    .guess-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: -4px;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.86);
+      outline: none;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 14px;
+      color: #1f3b4d;
+      background: var(--accent);
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 140ms ease, opacity 140ms ease, filter 140ms ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .btn.secondary {
+      color: #44556d;
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(120, 144, 180, 0.24);
+    }
+
+    .btn.danger {
+      color: white;
+      background: var(--danger);
+    }
+
+    .btn.success {
+      color: #052e16;
+      background: var(--success);
+    }
+
+    .rules {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.62;
+      font-size: 14px;
+    }
+
+    .log {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 310px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log-item {
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #44556d;
+      background: rgba(255, 255, 255, 0.64);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .log-item.good {
+      border-color: rgba(134, 239, 172, 0.28);
+      background: rgba(158, 230, 184, 0.22);
+    }
+
+    .log-item.bad {
+      border-color: rgba(251, 113, 133, 0.28);
+      background: rgba(255, 138, 162, 0.18);
+    }
+
+    .log-item.info {
+      border-color: rgba(125, 211, 252, 0.26);
+      background: rgba(155, 220, 255, 0.22);
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 950px) {
+      .hero,
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .app {
+        width: min(100% - 18px, 1180px);
+        padding-top: 18px;
+      }
+
+      .hero-main,
+      .score-card,
+      .board,
+      .panel {
+        padding: 16px;
+        border-radius: 18px;
+      }
+
+      .tile {
+        width: 58px;
+        height: 84px;
+        border-radius: 14px;
+        padding: 8px;
+      }
+
+      .tile-number {
+        font-size: 28px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared.css" />
+</head>
+<body class="mygame-soft">
+  <nav class="mygame-topnav">
+    <a class="mygame-home" href="../../">← my game</a>
+    <span class="mygame-date">Created May 4, 2026</span>
+  </nav>
+
+  <main class="app">
+    <section class="hero">
+      <div class="card hero-main">
+        <div class="eyebrow">Joonhee vs Computer</div>
+        <h1>JoonHee's Davinci Code</h1>
+        <p class="subtitle">
+          작년에 보드게임 카페 갔을 때 했던 다빈치 코드가 짱 재미있었어서 만들어봤음 !! </br>
+          원래 자주 가진 않았지만 작년 이후로 보드게임 카페 간 적 없는 것 같아 ...
+        </p>
+      </div>
+
+      <aside class="card score-card">
+        <div class="score-grid">
+          <div class="score-box">
+            <span class="score-label">현재 턴</span>
+            <span class="score-value" id="turnValue">-</span>
+          </div>
+          <div class="score-box">
+            <span class="score-label">남은 덱</span>
+            <span class="score-value" id="deckValue">-</span>
+          </div>
+          <div class="score-box">
+            <span class="score-label">Joonhee 공개</span>
+            <span class="score-value" id="playerOpenValue">-</span>
+          </div>
+          <div class="score-box">
+            <span class="score-label">Computer 공개</span>
+            <span class="score-value" id="computerOpenValue">-</span>
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn" id="newGameBtn">새 게임</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="main-grid">
+      <section class="card board">
+        <div>
+          <div class="section-title">
+            <h2>Computer의 코드</h2>
+            <span class="tag">숨겨진 숫자를 맞히세요</span>
+          </div>
+          <div class="hand" id="computerHand"></div>
+        </div>
+
+        <div>
+          <div class="section-title">
+            <h2>Joonhee의 코드</h2>
+            <span class="tag">내 숫자는 항상 확인 가능</span>
+          </div>
+          <div class="hand" id="playerHand"></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="card panel">
+          <div class="section-title">
+            <h2>진행</h2>
+            <span class="tag" id="phaseTag">준비</span>
+          </div>
+          <div class="status-box" id="statusBox">새 게임을 시작하세요.</div>
+          <div class="button-row" style="margin-top: 12px;">
+            <button class="btn success" id="drawBtn">타일 뽑기</button>
+            <button class="btn secondary" id="endTurnBtn">턴 종료</button>
+          </div>
+        </section>
+
+        <section class="card panel">
+          <div class="section-title">
+            <h2>추리 입력</h2>
+            <span class="tag">선택 → 숫자 추측</span>
+          </div>
+          <div class="guess-form">
+            <div class="field-label">선택한 Computer 타일</div>
+            <div class="status-box" id="selectedTileBox">아직 선택하지 않았습니다.</div>
+
+            <label class="field-label" for="guessNumber">추측 숫자</label>
+            <select id="guessNumber"></select>
+
+            <button class="btn" id="guessBtn">추측 제출</button>
+          </div>
+        </section>
+
+        <section class="card panel">
+          <div class="section-title">
+            <h2>게임 로그</h2>
+            <span class="tag">최근 기록</span>
+          </div>
+          <div class="log" id="logBox"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const PLAYER_NAME = "Joonhee";
+    const COMPUTER_NAME = "Computer";
+    const COLORS = ["black", "white"];
+    const COLOR_LABEL = { black: "BLACK", white: "WHITE" };
+    const COLOR_KO = { black: "검은색", white: "흰색" };
+
+    let state = null;
+
+    const els = {
+      turnValue: document.getElementById("turnValue"),
+      deckValue: document.getElementById("deckValue"),
+      playerOpenValue: document.getElementById("playerOpenValue"),
+      computerOpenValue: document.getElementById("computerOpenValue"),
+      phaseTag: document.getElementById("phaseTag"),
+      statusBox: document.getElementById("statusBox"),
+      computerHand: document.getElementById("computerHand"),
+      playerHand: document.getElementById("playerHand"),
+      selectedTileBox: document.getElementById("selectedTileBox"),
+      guessNumber: document.getElementById("guessNumber"),
+      guessBtn: document.getElementById("guessBtn"),
+      drawBtn: document.getElementById("drawBtn"),
+      endTurnBtn: document.getElementById("endTurnBtn"),
+      newGameBtn: document.getElementById("newGameBtn"),
+      logBox: document.getElementById("logBox"),
+    };
+
+    function createDeck() {
+      const deck = [];
+      let id = 1;
+      for (const color of COLORS) {
+        for (let number = 0; number <= 11; number++) {
+          deck.push({ id: id++, color, number, revealed: false, justDrawn: false });
+        }
+      }
+      return shuffle(deck);
+    }
+
+    function shuffle(items) {
+      const arr = [...items];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function tileRank(tile) {
+      return tile.number * 2 + (tile.color === "black" ? 0 : 1);
+    }
+
+    function sortHand(hand) {
+      hand.sort((a, b) => tileRank(a) - tileRank(b));
+    }
+
+    function drawTile(owner) {
+      if (state.deck.length === 0) return null;
+      const tile = state.deck.pop();
+      tile.justDrawn = true;
+      tile.owner = owner;
+      const hand = owner === "player" ? state.playerHand : state.computerHand;
+      hand.forEach(t => t.justDrawn = false);
+      hand.push(tile);
+      sortHand(hand);
+      return tile;
+    }
+
+    function addLog(message, type = "info") {
+      state.logs.unshift({ message, type });
+      state.logs = state.logs.slice(0, 80);
+    }
+
+    function startGame() {
+      const deck = createDeck();
+      state = {
+        deck,
+        playerHand: [],
+        computerHand: [],
+        turn: "player",
+        phase: "playerDraw",
+        selectedComputerTileId: null,
+        logs: [],
+        gameOver: false,
+        computerSuccessStreak: 0,
+      };
+
+      for (let i = 0; i < 4; i++) {
+        state.playerHand.push({ ...state.deck.pop(), owner: "player" });
+        state.computerHand.push({ ...state.deck.pop(), owner: "computer" });
+      }
+      sortHand(state.playerHand);
+      sortHand(state.computerHand);
+      addLog("[System] 새 게임 시작 | 컴퓨터야 내가 먼저 할게 ~", "info");
+      render();
+    }
+
+    function countRevealed(hand) {
+      return hand.filter(tile => tile.revealed).length;
+    }
+
+    function hiddenTiles(hand) {
+      return hand.filter(tile => !tile.revealed);
+    }
+
+    function hasWinner() {
+      if (hiddenTiles(state.computerHand).length === 0) return "player";
+      if (hiddenTiles(state.playerHand).length === 0) return "computer";
+      return null;
+    }
+
+    function finalizeIfGameOver() {
+      const winner = hasWinner();
+      if (!winner) return false;
+      state.gameOver = true;
+      state.phase = "gameOver";
+      state.turn = winner;
+      if (winner === "player") {
+        addLog("[Joonhee/승리] Computer 코드 전체 공개", "good");
+      } else {
+        addLog("[Computer/승리] Joonhee 코드 전체 공개", "bad");
+      }
+      return true;
+    }
+
+    function render() {
+      if (!state) return;
+
+      els.turnValue.textContent = state.gameOver
+        ? "종료"
+        : state.turn === "player" ? PLAYER_NAME : COMPUTER_NAME;
+      els.deckValue.textContent = String(state.deck.length);
+      els.playerOpenValue.textContent = `${countRevealed(state.playerHand)}/${state.playerHand.length}`;
+      els.computerOpenValue.textContent = `${countRevealed(state.computerHand)}/${state.computerHand.length}`;
+
+      renderHand("computer", state.computerHand, els.computerHand);
+      renderHand("player", state.playerHand, els.playerHand);
+      renderControls();
+      renderLog();
+    }
+
+    function renderHand(owner, hand, root) {
+      root.innerHTML = "";
+      if (hand.length === 0) {
+        root.innerHTML = `<span class="empty">타일이 없어!</span>`;
+        return;
+      }
+
+      hand.forEach((tile, index) => {
+        const isComputerHidden = owner === "computer" && !tile.revealed;
+        const isSelectable = owner === "computer" && !tile.revealed && state.turn === "player" && (state.phase === "playerGuess" || state.phase === "playerContinue");
+        const showNumber = owner === "player" || tile.revealed;
+        const tileEl = document.createElement("div");
+        tileEl.className = [
+          "tile",
+          tile.color,
+          isSelectable ? "selectable" : "",
+          state.selectedComputerTileId === tile.id ? "selected" : "",
+        ].join(" ").trim();
+
+        tileEl.innerHTML = `
+          <span class="tile-index">${index + 1}</span>
+          <span class="tile-color">${COLOR_LABEL[tile.color]}</span>
+          <span class="tile-number">${showNumber ? tile.number : "?"}</span>
+          ${tile.revealed ? `<span class="badge revealed">OPEN</span>` : ""}
+          ${tile.justDrawn ? `<span class="badge drawn">DRAW</span>` : ""}
+        `;
+
+        if (isSelectable) {
+          tileEl.addEventListener("click", () => {
+            state.selectedComputerTileId = tile.id;
+            render();
+          });
+        }
+
+        if (isComputerHidden) {
+          tileEl.title = `${COLOR_KO[tile.color]} 숨김 타일`;
+        } else {
+          tileEl.title = `${COLOR_KO[tile.color]} ${tile.number}`;
+        }
+
+        root.appendChild(tileEl);
+      });
+    }
+
+    function renderControls() {
+      const selectedTile = state.computerHand.find(t => t.id === state.selectedComputerTileId);
+      if (selectedTile && !selectedTile.revealed) {
+        const index = state.computerHand.findIndex(t => t.id === selectedTile.id) + 1;
+        els.selectedTileBox.textContent = `Computer의 ${index}번째 ${COLOR_KO[selectedTile.color]} 타일`;
+      } else {
+        els.selectedTileBox.textContent = "선택부터~";
+      }
+
+      const phaseLabel = {
+        playerDraw: "Joonhee 타일 뽑기",
+        playerGuess: "Joonhee 추리",
+        playerContinue: "계속 추리 가능",
+        computerTurn: "Computer 진행 중",
+        gameOver: "게임 종료",
+      }[state.phase] || "진행 중";
+      els.phaseTag.textContent = phaseLabel;
+
+      if (state.gameOver) {
+        const winner = hasWinner();
+        els.statusBox.textContent = winner === "player"
+          ? "게임 종료: Joonhee 승리. 히히"
+          : "게임 종료: Computer 승리. 새 게임을 눌러 다시 시작할 수 있습니다.";
+      } else if (state.phase === "playerDraw") {
+        els.statusBox.textContent = "Joonhee의 턴. 타일 1개 뽑기.";
+      } else if (state.phase === "playerGuess") {
+        els.statusBox.textContent = "Computer의 타일 하나 선택 후 숫자 추측.";
+      } else if (state.phase === "playerContinue") {
+        els.statusBox.textContent = "정답!!!!! 계속 추리하거나 턴 종료 가능.";
+      } else if (state.phase === "computerTurn") {
+        els.statusBox.textContent = "Computer Joonhee의 타일 추리 중";
+      }
+
+      els.drawBtn.disabled = !(state.phase === "playerDraw" && state.turn === "player" && !state.gameOver);
+      els.guessBtn.disabled = !((state.phase === "playerGuess" || state.phase === "playerContinue") && state.turn === "player" && !state.gameOver);
+      els.endTurnBtn.disabled = !(state.phase === "playerContinue" && state.turn === "player" && !state.gameOver);
+    }
+
+    function renderLog() {
+      els.logBox.innerHTML = "";
+      if (state.logs.length === 0) {
+        els.logBox.innerHTML = `<span class="empty">아직 로그가 없습니다.</span>`;
+        return;
+      }
+      state.logs.forEach(item => {
+        const div = document.createElement("div");
+        div.className = `log-item ${item.type}`;
+        div.textContent = item.message;
+        els.logBox.appendChild(div);
+      });
+    }
+
+    function drawForPlayer() {
+      if (state.phase !== "playerDraw" || state.turn !== "player") return;
+      const tile = drawTile("player");
+      if (!tile) {
+        addLog("[Joonhee] 덱 비어 있음 | 타일 뽑기 불가", "info");
+      } else {
+        addLog(`[Joonhee] ${COLOR_KO[tile.color]} 타일 1개 뽑음`, "info");
+      }
+      state.phase = "playerGuess";
+      render();
+    }
+
+    function submitPlayerGuess() {
+      if (!(state.phase === "playerGuess" || state.phase === "playerContinue") || state.turn !== "player") return;
+      const tile = state.computerHand.find(t => t.id === state.selectedComputerTileId);
+      if (!tile || tile.revealed) {
+        alert("Computer의 숨겨진 타일을 먼저 선택하세요.");
+        return;
+      }
+
+      const guess = Number(els.guessNumber.value);
+      const index = state.computerHand.findIndex(t => t.id === tile.id) + 1;
+      if (guess === tile.number) {
+        tile.revealed = true;
+        tile.justDrawn = false;
+        state.selectedComputerTileId = null;
+        addLog(`[Joonhee/정답] Computer ${index}번째 ${COLOR_KO[tile.color]} 추측 = ${guess}`, "good");
+        if (!finalizeIfGameOver()) {
+          state.phase = "playerContinue";
+        }
+      } else {
+        addLog(`[Joonhee/오답] Computer ${index}번째 ${COLOR_KO[tile.color]} 추측 = ${guess}`, "bad");
+        revealPlayersDrawnTileAfterWrongGuess();
+        if (!finalizeIfGameOver()) {
+          beginComputerTurn();
+        }
+      }
+      render();
+    }
+
+    function revealPlayersDrawnTileAfterWrongGuess() {
+      const drawn = state.playerHand.find(t => t.justDrawn && !t.revealed);
+      if (drawn) {
+        drawn.revealed = true;
+        drawn.justDrawn = false;
+        addLog(`[Joonhee/오답] 타일 공개 = ${COLOR_KO[drawn.color]} ${drawn.number}`, "bad");
+      } else {
+        addLog("[Joonhee/오답] 타일 공개 없음", "info");
+      }
+      state.selectedComputerTileId = null;
+    }
+
+    function endPlayerTurn() {
+      if (state.phase !== "playerContinue" || state.turn !== "player") return;
+      const drawn = state.playerHand.find(t => t.justDrawn);
+      if (drawn) drawn.justDrawn = false;
+      addLog("[Joonhee] 턴 종료", "info");
+      beginComputerTurn();
+      render();
+    }
+
+    function beginComputerTurn() {
+      state.turn = "computer";
+      state.phase = "computerTurn";
+      state.computerSuccessStreak = 0;
+      state.computerHand.forEach(t => t.justDrawn = false);
+      render();
+      window.setTimeout(runComputerTurn, 800);
+    }
+
+    function runComputerTurn() {
+      if (state.gameOver || state.turn !== "computer") return;
+
+      const drawn = drawTile("computer");
+      if (drawn) {
+        addLog(`[Computer] ${COLOR_KO[drawn.color]} 타일 1개 뽑음`, "info");
+      } else {
+        addLog("[Computer] 덱 비어 있음 | 타일 뽑기 불가", "info");
+      }
+      render();
+      window.setTimeout(() => computerGuessLoop(), 900);
+    }
+
+    function computerGuessLoop() {
+      if (state.gameOver || state.turn !== "computer") return;
+      const decision = chooseComputerGuess();
+      if (!decision) {
+        addLog("[Computer] 추리 가능한 숨겨진 타일 없음", "info");
+        endComputerTurn();
+        return;
+      }
+
+      const { tile, guess, candidates } = decision;
+      const index = state.playerHand.findIndex(t => t.id === tile.id) + 1;
+      addLog(`[Computer] Joonhee ${index}번째 ${COLOR_KO[tile.color]} 추측 = ${guess} | 후보 ${candidates.length}개`, "info");
+
+      if (guess === tile.number) {
+        tile.revealed = true;
+        tile.justDrawn = false;
+        state.computerSuccessStreak += 1;
+        addLog(`[Computer/정답] Joonhee ${index}번째 ${COLOR_KO[tile.color]} = ${tile.number}`, "bad");
+        if (finalizeIfGameOver()) {
+          render();
+          return;
+        }
+
+        const shouldContinue = candidates.length <= 2 && state.computerSuccessStreak < 3;
+        if (shouldContinue) {
+          addLog("[Computer] 확률 높음 → 추가 추리", "info");
+          render();
+          window.setTimeout(() => computerGuessLoop(), 900);
+        } else {
+          addLog("[Computer] 턴 종료", "info");
+          endComputerTurn();
+        }
+      } else {
+        addLog(`[Computer/오답] Joonhee ${index}번째 ${COLOR_KO[tile.color]} 추측 = ${guess}`, "good");
+        const drawn = state.computerHand.find(t => t.justDrawn && !t.revealed);
+        if (drawn) {
+          drawn.revealed = true;
+          drawn.justDrawn = false;
+          addLog(`[Computer/오답] 벌칙 공개 = ${COLOR_KO[drawn.color]} ${drawn.number}`, "good");
+        }
+        if (!finalizeIfGameOver()) {
+          endComputerTurn();
+        }
+      }
+      render();
+    }
+
+    function endComputerTurn() {
+      state.computerHand.forEach(t => t.justDrawn = false);
+      state.turn = "player";
+      state.phase = "playerDraw";
+      state.selectedComputerTileId = null;
+      addLog("[Joonhee] 턴 시작", "info");
+      render();
+    }
+
+    function chooseComputerGuess() {
+      const hidden = state.playerHand.filter(t => !t.revealed);
+      if (hidden.length === 0) return null;
+
+      const options = hidden.map(tile => {
+        const candidates = getCandidatesForPlayerTile(tile);
+        return { tile, candidates };
+      }).filter(item => item.candidates.length > 0);
+
+      if (options.length === 0) {
+        const fallbackTile = hidden[Math.floor(Math.random() * hidden.length)];
+        return {
+          tile: fallbackTile,
+          guess: Math.floor(Math.random() * 12),
+          candidates: Array.from({ length: 12 }, (_, i) => i),
+        };
+      }
+
+      options.sort((a, b) => {
+        if (a.candidates.length !== b.candidates.length) return a.candidates.length - b.candidates.length;
+        return Math.random() - 0.5;
+      });
+
+      const best = options[0];
+      const guess = best.candidates[Math.floor(Math.random() * best.candidates.length)];
+      return { tile: best.tile, guess, candidates: best.candidates };
+    }
+
+    function getCandidatesForPlayerTile(target) {
+      const targetIndex = state.playerHand.findIndex(t => t.id === target.id);
+      const usedRanks = new Set();
+
+      // Computer는 자기 타일 전체와 Joonhee의 공개 타일을 알고 있다고 가정합니다.
+      for (const tile of state.computerHand) usedRanks.add(tileRank(tile));
+      for (const tile of state.playerHand) {
+        if (tile.revealed && tile.id !== target.id) usedRanks.add(tileRank(tile));
+      }
+
+      const candidates = [];
+      for (let number = 0; number <= 11; number++) {
+        const imaginary = { color: target.color, number };
+        const rank = tileRank(imaginary);
+        if (usedRanks.has(rank)) continue;
+        if (satisfiesKnownOrder(targetIndex, rank)) candidates.push(number);
+      }
+      return candidates;
+    }
+
+    function satisfiesKnownOrder(targetIndex, candidateRank) {
+      for (let i = 0; i < state.playerHand.length; i++) {
+        if (i === targetIndex) continue;
+        const tile = state.playerHand[i];
+        if (!tile.revealed) continue;
+        const knownRank = tileRank(tile);
+        if (i < targetIndex && knownRank > candidateRank) return false;
+        if (i > targetIndex && knownRank < candidateRank) return false;
+      }
+      return true;
+    }
+
+    function setupGuessSelect() {
+      els.guessNumber.innerHTML = "";
+      for (let i = 0; i <= 11; i++) {
+        const option = document.createElement("option");
+        option.value = String(i);
+        option.textContent = String(i);
+        els.guessNumber.appendChild(option);
+      }
+    }
+
+    els.newGameBtn.addEventListener("click", startGame);
+    els.drawBtn.addEventListener("click", drawForPlayer);
+    els.guessBtn.addEventListener("click", submitPlayerGuess);
+    els.endTurnBtn.addEventListener("click", endPlayerTurn);
+
+    setupGuessSelect();
+    startGame();
+  </script>
+</body>
+</html>
