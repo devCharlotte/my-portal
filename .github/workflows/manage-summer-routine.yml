@@ -1,0 +1,119 @@
+name: Manage Summer Routine
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "작업 선택"
+        required: true
+        type: choice
+        options:
+          - add
+          - delete
+      title:
+        description: "루틴 이름 (add 필수 / delete 시 정확한 이름으로도 사용 가능)"
+        required: false
+        type: string
+      time:
+        description: "시간 HH:MM (add 필수, 예: 07:30)"
+        required: false
+        type: string
+      message:
+        description: "알림 내용 (add 필수)"
+        required: false
+        type: string
+      days:
+        description: "요일 (add 필수, 예: MON,WED,FRI 또는 월,수,금)"
+        required: false
+        type: string
+      routine_id:
+        description: "삭제할 ID (delete 권장, timetable 카드에 표시되는 ID)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: summer-routine-pages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update routines.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update routine data
+        id: update
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+          TITLE: ${{ inputs.title }}
+          ROUTINE_TIME: ${{ inputs.time }}
+          MESSAGE: ${{ inputs.message }}
+          DAYS: ${{ inputs.days }}
+          ROUTINE_ID: ${{ inputs.routine_id }}
+        run: |
+          set -euo pipefail
+          output="$(python3 scripts/manage_summer_routine.py \
+            --operation "$OPERATION" \
+            --title "$TITLE" \
+            --time "$ROUTINE_TIME" \
+            --message "$MESSAGE" \
+            --days "$DAYS" \
+            --routine-id "$ROUTINE_ID")"
+          printf '%s\n' "$output"
+          commit_message="$(printf '%s\n' "$output" | sed -n 's/^COMMIT_MESSAGE=//p' | head -n 1)"
+          if [[ -z "$commit_message" ]]; then
+            echo "Commit message 생성에 실패했습니다." >&2
+            exit 1
+          fi
+          echo "commit_message=$commit_message" >> "$GITHUB_OUTPUT"
+
+      - name: Validate JSON
+        run: python3 -m json.tool work/wellness/summer-routine/routines.json > /dev/null
+
+      - name: Commit and push
+        shell: bash
+        env:
+          COMMIT_MESSAGE: ${{ steps.update.outputs.commit_message }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add work/wellness/summer-routine/routines.json
+          if git diff --cached --quiet; then
+            echo "변경 사항이 없습니다."
+            exit 0
+          fi
+          git commit -m "$COMMIT_MESSAGE"
+          git push origin HEAD:main
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload portal artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: .
+          include-hidden-files: true
+
+  deploy:
+    name: Deploy updated portal
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
