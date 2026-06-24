@@ -5,7 +5,8 @@
   const TIMEZONE = CONFIG.timezone || "Asia/Seoul";
   const ACTIVE_FROM = CONFIG.activeFrom || "2026-07-01";
   const ACTIVE_UNTIL = CONFIG.activeUntil || "2026-08-31";
-  const ACTIONS_URL = String(CONFIG.githubActionsUrl || "https://github.com/devcharlotte/my-portal/actions/workflows/manage-summer-routine.yml");
+  const NEW_ISSUE_URL = String(CONFIG.githubNewIssueUrl || "https://github.com/devcharlotte/my-portal/issues/new");
+  const PENDING_REQUEST_KEY = "summer-routine-pending-github-request";
   const SAMSUNG_CLOCK_PACKAGE = "com.sec.android.app.clockpackage";
   const DESKTOP_ENABLED_KEY = "summer-routine-desktop-notification-enabled";
   const FIRED_KEY_PREFIX = "summer-routine-fired:";
@@ -25,7 +26,8 @@
     serviceWorkerRegistration: null,
     audioContext: null,
     checking: false,
-    lastRenderedMinute: ""
+    lastRenderedMinute: "",
+    pendingRefreshTimer: null
   };
 
   const els = {
@@ -56,8 +58,136 @@
     closeAndroidAlarmBtn: document.getElementById("closeAndroidAlarmBtn"),
   };
 
-  function openActionsPage() {
-    window.open(ACTIONS_URL, "_blank", "noopener,noreferrer");
+  function buildIssueRequestUrl(request) {
+    const operationLabel = request.operation === "add" ? "ADD" : "DELETE";
+    const subject = request.operation === "add"
+      ? `${request.time} · ${request.title}`
+      : request.title;
+    const visibleLines = request.operation === "add"
+      ? [
+          "Summer Routine 페이지에서 자동 전달된 루틴 추가 요청입니다.",
+          "",
+          `- 작업: 추가`,
+          `- 루틴: ${request.title}`,
+          `- 시간: ${request.time}`,
+          `- 요일: ${request.days.join(",")}`,
+          `- 알림 내용: ${request.message || "(비워 둠)"}`,
+          "",
+          "아래 자동 요청 데이터는 수정하지 마세요."
+        ]
+      : [
+          "Summer Routine 페이지에서 자동 전달된 루틴 삭제 요청입니다.",
+          "",
+          `- 작업: 삭제`,
+          `- 루틴: ${request.title}`,
+          `- Routine ID: ${request.routineId}`,
+          "",
+          "아래 자동 요청 데이터는 수정하지 마세요."
+        ];
+    const payload = request.operation === "add"
+      ? {
+          version: 1,
+          operation: "add",
+          title: request.title,
+          time: request.time,
+          message: request.message,
+          days: request.days
+        }
+      : {
+          version: 1,
+          operation: "delete",
+          title: request.title,
+          routineId: request.routineId
+        };
+    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
+    let payloadBinary = "";
+    payloadBytes.forEach((byte) => { payloadBinary += String.fromCharCode(byte); });
+    const payloadBase64 = btoa(payloadBinary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+    const body = [
+      ...visibleLines,
+      "",
+      `<!-- SUMMER_ROUTINE_REQUEST_BASE64 ${payloadBase64} -->`
+    ].join("\n");
+    const params = new URLSearchParams({
+      title: `[Summer Routine] ${operationLabel} · ${subject}`,
+      body
+    });
+    return `${NEW_ISSUE_URL}?${params.toString()}`;
+  }
+
+  function rememberPendingRequest(operation) {
+    try {
+      localStorage.setItem(PENDING_REQUEST_KEY, JSON.stringify({
+        operation,
+        baselineUpdatedAt: state.data?.updatedAt || "",
+        createdAt: Date.now()
+      }));
+    } catch {
+      // Storage access can be blocked; the request itself still works.
+    }
+  }
+
+  function openPrefilledIssue(request) {
+    rememberPendingRequest(request.operation);
+    const anchor = document.createElement("a");
+    anchor.href = buildIssueRequestUrl(request);
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+  }
+
+  function readPendingRequest() {
+    try {
+      const raw = localStorage.getItem(PENDING_REQUEST_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || Date.now() - Number(parsed.createdAt || 0) > 10 * 60 * 1000) {
+        localStorage.removeItem(PENDING_REQUEST_KEY);
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function clearPendingRequest() {
+    try { localStorage.removeItem(PENDING_REQUEST_KEY); } catch { /* noop */ }
+    if (state.pendingRefreshTimer) {
+      window.clearInterval(state.pendingRefreshTimer);
+      state.pendingRefreshTimer = null;
+    }
+  }
+
+  function startPendingRefresh() {
+    const pending = readPendingRequest();
+    if (!pending || state.pendingRefreshTimer) return;
+    let attempts = 0;
+    const refresh = async () => {
+      attempts += 1;
+      try {
+        await loadRoutines();
+        const changed = Boolean(state.data?.updatedAt) && state.data.updatedAt !== pending.baselineUpdatedAt;
+        if (changed) {
+          clearPendingRequest();
+          showMessage(els.adminMessage, "GitHub Action 반영이 확인되었습니다. 최신 루틴 목록을 불러왔습니다.");
+          return;
+        }
+      } catch {
+        // Keep polling while GitHub Pages deployment is in progress.
+      }
+      if (attempts >= 24) {
+        clearPendingRequest();
+        showMessage(els.adminMessage, "GitHub 요청을 제출했다면 Actions 처리 후 ‘목록 새로고침’을 눌러 확인해 주세요.");
+      }
+    };
+    refresh();
+    state.pendingRefreshTimer = window.setInterval(refresh, 5000);
   }
 
   function isAndroidDevice() {
@@ -210,8 +340,8 @@
     const title = document.createElement("strong");
     title.textContent = item.title;
 
-    const message = document.createElement("p");
-    message.textContent = item.message || "등록된 알림 내용이 없습니다.";
+    const message = item.message ? document.createElement("p") : null;
+    if (message) message.textContent = item.message;
 
     const actions = document.createElement("div");
     actions.className = "routine-card-actions";
@@ -219,12 +349,14 @@
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "small-btn";
-    deleteButton.textContent = "Actions에서 삭제";
+    deleteButton.textContent = "삭제 요청";
     deleteButton.title = `Routine ID: ${item.id}`;
-    deleteButton.addEventListener("click", () => openDeleteWorkflow(item));
+    deleteButton.addEventListener("click", () => openDeleteIssue(item));
 
     actions.append(deleteButton);
-    card.append(title, message, actions);
+    card.append(title);
+    if (message) card.append(message);
+    card.append(actions);
     return card;
   }
 
@@ -384,12 +516,13 @@
   async function showDesktopNotification(item, test = false) {
     const title = test ? "Summer Routine Test" : item.title;
     const options = {
-      body: test ? "Desktop 알림이 정상적으로 동작합니다." : item.message,
       icon: "./icon.svg",
       badge: "./icon.svg",
       tag: test ? "summer-routine-test" : `summer-routine-${item.id}`,
       renotify: true
     };
+    const body = test ? "Desktop 알림이 정상적으로 동작합니다." : String(item.message || "").trim();
+    if (body) options.body = body;
 
     if (state.serviceWorkerRegistration) {
       await state.serviceWorkerRegistration.showNotification(title, options);
@@ -530,9 +663,12 @@
       copy.className = "android-alarm-copy";
       const title = document.createElement("strong");
       title.textContent = item.title;
-      const message = document.createElement("span");
-      message.textContent = item.message || "Summer Routine";
-      copy.append(title, message);
+      copy.append(title);
+      if (item.message) {
+        const message = document.createElement("span");
+        message.textContent = item.message;
+        copy.append(message);
+      }
 
       const addButton = document.createElement("button");
       addButton.type = "button";
@@ -572,57 +708,43 @@
     const message = els.routineMessage.value.trim();
     const time = els.routineTime.value;
     const days = selectedDays();
-    if (!title || !message || !time) throw new Error("모든 입력 항목을 작성해 주세요.");
+    if (!title || !time) throw new Error("루틴 이름과 시간을 입력해 주세요.");
     if (days.length === 0) throw new Error("요일을 하나 이상 선택해 주세요.");
     return { title, message, time, days };
   }
 
-  async function copyManagementInput(lines) {
-    const text = lines.join("\n");
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  async function handleRoutineSubmit(event) {
+  function handleRoutineSubmit(event) {
     event.preventDefault();
     clearMessage(els.adminMessage);
     try {
       const values = validateRoutineForm();
-      const copied = await copyManagementInput([
-        "operation: add",
-        `title: ${values.title}`,
-        `time: ${values.time}`,
-        `message: ${values.message}`,
-        `days: ${values.days.join(",")}`
-      ]);
-      openActionsPage();
+      openPrefilledIssue({
+        version: 1,
+        operation: "add",
+        title: values.title,
+        time: values.time,
+        message: values.message,
+        days: values.days
+      });
       showMessage(
         els.adminMessage,
-        copied
-          ? "입력값을 클립보드에 복사하고 GitHub Actions를 열었습니다. Run workflow에 값을 붙여 넣어 실행해 주세요."
-          : "GitHub Actions를 열었습니다. 현재 폼의 값을 Run workflow 입력란에 옮겨 실행해 주세요."
+        "현재 입력값이 자동으로 채워진 GitHub Issue 화면을 열었습니다. Submit new issue를 한 번 누르면 JSON 커밋과 포털 재배포가 자동 실행됩니다."
       );
     } catch (error) {
       showMessage(els.adminMessage, error.message, true);
     }
   }
 
-  async function openDeleteWorkflow(item) {
-    const copied = await copyManagementInput([
-      "operation: delete",
-      `routine_id: ${item.id}`,
-      `title: ${item.title}`
-    ]);
-    openActionsPage();
+  function openDeleteIssue(item) {
+    openPrefilledIssue({
+      version: 1,
+      operation: "delete",
+      routineId: item.id,
+      title: item.title
+    });
     showMessage(
       els.listMessage,
-      copied
-        ? `“${item.title}” 삭제 정보가 클립보드에 복사되었습니다. Actions에서 operation=delete와 routine_id를 입력해 실행해 주세요.`
-        : `Actions에서 operation=delete와 routine_id=${item.id}를 입력해 주세요.`
+      `“${item.title}”의 삭제 정보가 모두 채워진 GitHub Issue 화면을 열었습니다. Submit new issue를 누르면 자동 삭제됩니다.`
     );
   }
 
@@ -651,7 +773,10 @@
         checkDueRoutines();
       }
     });
-    window.addEventListener("focus", checkDueRoutines);
+    window.addEventListener("focus", () => {
+      checkDueRoutines();
+      startPendingRefresh();
+    });
   }
 
   async function init() {
@@ -665,6 +790,7 @@
       // Error is already shown in the page.
     }
     await checkDueRoutines();
+    startPendingRefresh();
     window.setInterval(updateClock, 1000);
     window.setInterval(checkDueRoutines, 15000);
   }

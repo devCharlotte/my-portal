@@ -3,37 +3,6 @@
   "timezone": "Asia/Seoul",
   "activeFrom": "2026-07-01",
   "activeUntil": "2026-08-31",
-  "updatedAt": "2026-06-24T02:12:47Z",
-  "items": [
-    {
-      "id": "wake-up-20260624020954",
-      "title": "Wake up",
-      "message": "Wake up",
-      "time": "05:00",
-      "days": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "enabled": true,
-      "createdAt": "2026-06-24T02:09:54Z"
-    },
-    {
-      "id": "lunch-20260624021247",
-      "title": "Lunch",
-      "message": "Lunch",
-      "time": "11:25",
-      "days": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "enabled": true,
-      "createdAt": "2026-06-24T02:12:47Z"
-    }
-  ]
+  "updatedAt": "2026-06-24T00:00:00.000Z",
+  "items": []
 }

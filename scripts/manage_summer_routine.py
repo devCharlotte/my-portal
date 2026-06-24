@@ -71,8 +71,6 @@ def add_item(data: dict, args: argparse.Namespace) -> str:
     message = args.message.strip()
     if not title:
         fail("추가 작업에는 루틴 이름이 필요합니다.")
-    if not message:
-        fail("추가 작업에는 알림 내용이 필요합니다.")
     if len(title) > 80:
         fail("루틴 이름은 80자 이하여야 합니다.")
     if len(message) > 240:
