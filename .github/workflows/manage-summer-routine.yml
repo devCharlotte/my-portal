@@ -1,49 +1,39 @@
-name: Manage Summer Routine
+name: Process Summer Routine Request
 
 on:
-  workflow_dispatch:
-    inputs:
-      operation:
-        description: "작업 선택"
-        required: true
-        type: choice
-        options:
-          - add
-          - delete
-      title:
-        description: "루틴 이름 (add 필수 / delete 시 정확한 이름으로도 사용 가능)"
-        required: false
-        type: string
-      time:
-        description: "시간 HH:MM (add 필수, 예: 07:30)"
-        required: false
-        type: string
-      message:
-        description: "알림 내용 (add 필수)"
-        required: false
-        type: string
-      days:
-        description: "요일 (add 필수, 예: MON,WED,FRI 또는 월,수,금)"
-        required: false
-        type: string
-      routine_id:
-        description: "삭제할 ID (delete 권장, timetable 카드에 표시되는 ID)"
-        required: false
-        type: string
+  issues:
+    types:
+      - opened
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
+  issues: write
 
 concurrency:
-  group: summer-routine-pages
+  group: summer-routine-json-update
   cancel-in-progress: false
 
 jobs:
+  reject-untrusted:
+    name: Reject untrusted request
+    if: startsWith(github.event.issue.title, '[Summer Routine]') && github.event.issue.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject and close
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "이 자동 요청은 저장소 소유자 계정이 생성한 경우에만 처리됩니다."
+          gh issue close "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --reason "not planned"
+
   update:
     name: Update routines.json
+    if: startsWith(github.event.issue.title, '[Summer Routine]') && github.event.issue.user.login == github.repository_owner
     runs-on: ubuntu-latest
+    outputs:
+      commit_message: ${{ steps.update.outputs.commit_message }}
+      changed: ${{ steps.commit.outputs.changed }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v7
@@ -51,25 +41,12 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Update routine data
+      - name: Process prefilled Issue request
         id: update
         shell: bash
-        env:
-          OPERATION: ${{ inputs.operation }}
-          TITLE: ${{ inputs.title }}
-          ROUTINE_TIME: ${{ inputs.time }}
-          MESSAGE: ${{ inputs.message }}
-          DAYS: ${{ inputs.days }}
-          ROUTINE_ID: ${{ inputs.routine_id }}
         run: |
           set -euo pipefail
-          output="$(python3 scripts/manage_summer_routine.py \
-            --operation "$OPERATION" \
-            --title "$TITLE" \
-            --time "$ROUTINE_TIME" \
-            --message "$MESSAGE" \
-            --days "$DAYS" \
-            --routine-id "$ROUTINE_ID")"
+          output="$(python3 scripts/process_summer_routine_issue.py --event "$GITHUB_EVENT_PATH")"
           printf '%s\n' "$output"
           commit_message="$(printf '%s\n' "$output" | sed -n 's/^COMMIT_MESSAGE=//p' | head -n 1)"
           if [[ -z "$commit_message" ]]; then
@@ -82,6 +59,7 @@ jobs:
         run: python3 -m json.tool work/wellness/summer-routine/routines.json > /dev/null
 
       - name: Commit and push
+        id: commit
         shell: bash
         env:
           COMMIT_MESSAGE: ${{ steps.update.outputs.commit_message }}
@@ -92,28 +70,34 @@ jobs:
           git add work/wellness/summer-routine/routines.json
           if git diff --cached --quiet; then
             echo "변경 사항이 없습니다."
-            exit 0
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "$COMMIT_MESSAGE"
+            git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-          git commit -m "$COMMIT_MESSAGE"
-          git push origin HEAD:main
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v6
+      - name: Complete request
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMIT_MESSAGE: ${{ steps.update.outputs.commit_message }}
+          CHANGED: ${{ steps.commit.outputs.changed }}
+        run: |
+          if [[ "$CHANGED" == "true" ]]; then
+            body="완료되었습니다. \`$COMMIT_MESSAGE\` 커밋을 생성했습니다. main push로 GitHub Pages 배포가 자동 시작됩니다."
+          else
+            body="요청은 정상 처리되었지만 실제 JSON 변경 사항은 없었습니다."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$body"
+          gh issue close "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --reason "completed"
 
-      - name: Upload portal artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: .
-          include-hidden-files: true
-
-  deploy:
-    name: Deploy updated portal
-    needs: update
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+      - name: Report failed request
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "자동 반영에 실패했습니다. Actions 실행 로그를 확인해 주세요: $RUN_URL"
