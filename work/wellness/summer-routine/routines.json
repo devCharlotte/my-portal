@@ -3,7 +3,7 @@
   "timezone": "Asia/Seoul",
   "activeFrom": "2026-07-01",
   "activeUntil": "2026-08-31",
-  "updatedAt": "2026-06-24T05:33:21Z",
+  "updatedAt": "2026-06-24T05:33:48Z",
   "items": [
     {
       "id": "wake-up-20260624053036",
@@ -34,6 +34,21 @@
       ],
       "enabled": true,
       "createdAt": "2026-06-24T05:33:21Z"
+    },
+    {
+      "id": "morning-study-2-20260624053348",
+      "title": "morning study 2",
+      "message": "",
+      "time": "08:00",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "enabled": true,
+      "createdAt": "2026-06-24T05:33:48Z"
     }
   ]
 }
