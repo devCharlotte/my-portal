@@ -637,24 +637,6 @@
       }
     }
 
-
-    .mode-switch-card { margin-bottom:18px; padding:12px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:stretch; }
-    .mode-tab { min-height:84px; padding:15px 18px; border-radius:18px; color:var(--my-muted); background:rgba(255,255,255,.64); border:1px solid var(--my-line); text-align:left; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; gap:6px; }
-    .mode-tab strong { color:var(--my-text); font-size:.98rem; font-weight:900; letter-spacing:-.025em; }
-    .mode-tab span { font-size:.78rem; line-height:1.55; font-weight:600; }
-    .mode-tab.active { color:#6e3455; background:linear-gradient(135deg,rgba(255,216,237,.92),rgba(220,244,255,.92)); box-shadow:0 12px 24px rgba(94,120,160,.13); }
-    .mode-tab.active strong { color:#6e3455; }
-    .mode-view { display:none; }
-    .mode-view.active { display:block; }
-    .sequence-shell { padding:16px; overflow:hidden; }
-    .sequence-shell-head { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; align-items:flex-start; padding:8px 8px 16px; }
-    .sequence-shell-head h2 { margin:0; font-size:clamp(1.3rem,2.4vw,2rem); letter-spacing:-.045em; }
-    .sequence-shell-head p { margin:7px 0 0; color:var(--my-muted); font-size:.88rem; line-height:1.65; }
-    .sequence-feature-pills { display:flex; flex-wrap:wrap; gap:7px; justify-content:flex-end; }
-    .sequence-feature-pills span { padding:7px 10px; border-radius:999px; background:rgba(255,255,255,.68); border:1px solid var(--my-line); color:var(--my-muted); font-size:.75rem; }
-    .yoga-frame { width:100%; min-height:1250px; border:0; border-radius:22px; background:transparent; display:block; }
-    @media(max-width:760px){.mode-switch-card{grid-template-columns:1fr}.sequence-shell{padding:8px}.yoga-frame{min-height:1600px}.sequence-feature-pills{justify-content:flex-start}}
-
   </style>
 </head>
 <body class="workspace-tool summer-routine-page">
@@ -666,7 +648,7 @@
   <main class="myworkspace-page routine-page">
     <section class="routine-hero">
       <div class="myworkspace-card routine-hero-main">
-        <div class="eyebrow">summer routine</div>
+        <div class="eyebrow">routine alarm</div>
         <h1 class="routine-title">Summer Routine</h1>
         <p class="routine-intro">Coursework와 TA 업무 종강 이후의 여름 루틴!!1</p>
         <div class="routine-actions">
@@ -678,19 +660,6 @@
       <aside class="myworkspace-card routine-side" aria-hidden="true"></aside>
     </section>
 
-
-    <section class="myworkspace-card mode-switch-card" aria-label="Summer Routine mode">
-      <button class="mode-tab active" data-mode="routine" type="button">
-        <strong>Routine Alarm</strong>
-        <span>Desktop 알림과 오늘 남은 Galaxy 시계 일회성 알람을 관리합니다.</span>
-      </button>
-      <button class="mode-tab" data-mode="sequence" type="button">
-        <strong>Pilates &amp; Yoga Sequence Studio</strong>
-        <span>동작 탐색, 시퀀스 구성, 타이머와 운동 기록을 독립적으로 사용합니다.</span>
-      </button>
-    </section>
-
-    <div class="mode-view active" id="routineView">
     <section class="routine-layout">
       <div class="myworkspace-card routine-panel">
         <div class="panel-head">
@@ -743,7 +712,7 @@
       <div class="panel-head">
         <div>
           <h2 class="panel-title">루틴 추가</h2>
-          <p class="panel-description">이 화면에서 작성한 루틴 정보는 GitHub 새 Issue 화면에 그대로 자동 전달됩니다. GitHub에서 <strong>Submit new issue</strong>를 한 번 누르면 Action이 <code>routines.json</code>을 수정·커밋하고 포털을 다시 배포합니다.</p>
+          <p class="panel-description">이 화면에서 작성한 값은 <strong>GitHub Issue 작성 화면</strong>에 자동으로 채워집니다. GitHub에서 <strong>Submit new issue</strong>를 한 번 누르면 <code>routines.json</code> 수정·커밋과 포털 재배포가 자동으로 진행됩니다.</p>
         </div>
       </div>
 
@@ -773,28 +742,11 @@
           </div>
         </fieldset>
         <div class="form-actions">
-          <button class="primary-btn" id="saveRoutineBtn" type="submit">GitHub로 자동 전달</button>
+          <button class="primary-btn" id="saveRoutineBtn" type="submit">루틴 등록 요청 열기</button>
         </div>
       </form>
-      <p class="panel-description" style="margin-top:12px;">루틴 이름·시간·요일은 필수이고 알림 내용은 비워도 됩니다. GitHub 화면에는 현재 입력값이 모두 자동으로 채워지므로 다시 입력할 필요가 없습니다. <strong>Submit new issue</strong>만 누르세요.</p>
+      <p class="panel-description" style="margin-top:12px;">루틴 이름·시간·요일은 필수이고 알림 내용은 비워도 됩니다. Actions 실행 화면이 아니라, 입력값이 채워진 <strong>Issue 작성 화면</strong>이 열립니다. 다시 입력하지 않고 <strong>Submit new issue</strong>만 누르면 됩니다.</p>
       <div class="message" id="adminMessage" role="status" aria-live="polite"></div>
-    </section>
-
-    </div>
-
-    <section class="mode-view" id="sequenceView">
-      <div class="myworkspace-card sequence-shell">
-        <div class="sequence-shell-head">
-          <div>
-            <h2>Pilates &amp; Yoga Sequence Studio</h2>
-            <p>205개 동작을 기반으로 자동 생성 또는 직접 선택으로 시퀀스를 구성하고 Timer, Voice guide, Calendar, Story export를 사용합니다.</p>
-          </div>
-          <div class="sequence-feature-pills" aria-label="Sequence Studio features">
-            <span>205 movements</span><span>Auto Builder</span><span>Timer &amp; Voice</span><span>Calendar</span><span>9:16 Story</span>
-          </div>
-        </div>
-        <iframe class="yoga-frame" id="yogaStudioFrame" title="Yoga Sequence Studio" data-src="./yoga-studio/index.html?embed=1" loading="lazy"></iframe>
-      </div>
     </section>
   </main>
 
@@ -812,8 +764,7 @@
   </dialog>
 
 
-  <script src="./config.js"></script>
-  <script src="./app.js"></script>
-  <script src="./hub.js"></script>
+  <script src="./config.js?v=20260624-final"></script>
+  <script src="./app.js?v=20260624-final"></script>
 </body>
 </html>

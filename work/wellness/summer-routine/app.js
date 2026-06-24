@@ -10,6 +10,8 @@
   const SAMSUNG_CLOCK_PACKAGE = "com.sec.android.app.clockpackage";
   const DESKTOP_ENABLED_KEY = "summer-routine-desktop-notification-enabled";
   const FIRED_KEY_PREFIX = "summer-routine-fired:";
+  const UI_VERSION = "20260624-separated-final";
+  const UI_VERSION_KEY = "summer-routine-ui-version";
   const DISPLAY_DAYS = [
     { value: 1, ko: "월", en: "MON" },
     { value: 2, ko: "화", en: "TUE" },
@@ -132,13 +134,13 @@
 
   function openPrefilledIssue(request) {
     rememberPendingRequest(request.operation);
-    const anchor = document.createElement("a");
-    anchor.href = buildIssueRequestUrl(request);
-    anchor.target = "_blank";
-    anchor.rel = "noopener noreferrer";
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
+    const issueUrl = new URL(buildIssueRequestUrl(request));
+    const expectedPath = "/devcharlotte/my-portal/issues/new";
+    if (issueUrl.hostname !== "github.com" || issueUrl.pathname !== expectedPath) {
+      throw new Error("루틴 등록 주소가 GitHub Issue 작성 경로가 아닙니다.");
+    }
+    const popup = window.open(issueUrl.toString(), "_blank", "noopener,noreferrer");
+    if (!popup) window.location.assign(issueUrl.toString());
   }
 
   function readPendingRequest() {
@@ -175,7 +177,7 @@
         const changed = Boolean(state.data?.updatedAt) && state.data.updatedAt !== pending.baselineUpdatedAt;
         if (changed) {
           clearPendingRequest();
-          showMessage(els.adminMessage, "GitHub Action 반영이 확인되었습니다. 최신 루틴 목록을 불러왔습니다.");
+          showMessage(els.adminMessage, "GitHub 자동 반영이 확인되었습니다. 최신 루틴 목록을 불러왔습니다.");
           return;
         }
       } catch {
@@ -183,7 +185,7 @@
       }
       if (attempts >= 24) {
         clearPendingRequest();
-        showMessage(els.adminMessage, "GitHub 요청을 제출했다면 Actions 처리 후 ‘목록 새로고침’을 눌러 확인해 주세요.");
+        showMessage(els.adminMessage, "GitHub Issue를 제출했다면 자동 처리 후 ‘목록 새로고침’을 눌러 확인해 주세요.");
       }
     };
     refresh();
@@ -295,6 +297,21 @@
   function setBusy(button, busy, busyText, idleText) {
     button.disabled = busy;
     button.textContent = busy ? busyText : idleText;
+  }
+
+  async function clearLegacyRoutineShell() {
+    let previousVersion = "";
+    try { previousVersion = localStorage.getItem(UI_VERSION_KEY) || ""; } catch { /* noop */ }
+    if (previousVersion === UI_VERSION) return;
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((key) => key.startsWith("summer-routine-shell-")).map((key) => caches.delete(key)));
+      }
+    } catch (error) {
+      console.warn("Legacy Summer Routine cache cleanup failed:", error);
+    }
+    try { localStorage.setItem(UI_VERSION_KEY, UI_VERSION); } catch { /* noop */ }
   }
 
   async function registerServiceWorker() {
@@ -417,7 +434,6 @@
   }
 
   function getTodayRemainingRoutines(now = getSeoulParts()) {
-    if (!isWithinActivePeriod(now.dateString)) return [];
     return enabledItems()
       .filter((item) => {
         if (!item.days.includes(now.weekday)) return false;
@@ -614,7 +630,7 @@
   }
 
   function isStillFutureToday(item, now = getSeoulParts()) {
-    if (!isWithinActivePeriod(now.dateString) || !item.days.includes(now.weekday)) return false;
+    if (!item.days.includes(now.weekday)) return false;
     const [hour, minute] = item.time.split(":").map(Number);
     return hour * 60 + minute > now.currentMinutes;
   }
@@ -728,7 +744,7 @@
       });
       showMessage(
         els.adminMessage,
-        "현재 입력값이 자동으로 채워진 GitHub Issue 화면을 열었습니다. Submit new issue를 한 번 누르면 JSON 커밋과 포털 재배포가 자동 실행됩니다."
+        "입력값이 모두 채워진 GitHub Issue 작성 화면을 열었습니다. Actions 페이지가 아니라 Issue 화면이어야 하며, Submit new issue를 한 번 누르면 자동 반영됩니다."
       );
     } catch (error) {
       showMessage(els.adminMessage, error.message, true);
@@ -781,6 +797,7 @@
 
   async function init() {
     wireEvents();
+    await clearLegacyRoutineShell();
     await registerServiceWorker();
     updateClock();
     updatePlatformStatus();

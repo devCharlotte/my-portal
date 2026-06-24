@@ -1,11 +1,11 @@
 "use strict";
 
-const CACHE_NAME = "summer-routine-shell-v1";
+const CACHE_NAME = "summer-routine-shell-v5-separated";
 const SHELL_FILES = [
   "./",
   "./index.html",
-  "./app.js",
-  "./config.js",
+  "./app.js?v=20260624-final",
+  "./config.js?v=20260624-final",
   "./routines.json",
   "./manifest.webmanifest",
   "./icon.svg",

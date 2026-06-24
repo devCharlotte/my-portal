@@ -106,16 +106,16 @@
   * 20분 작업 Timer, 10초 준비 Countdown 및 브라우저 알림
   * 운동 종료 후 작업 Timer로 자동 복귀
 * [Summer Routine](https://devcharlotte.github.io/my-portal/work/wellness/summer-routine/) — Updated Jun 24, 2026
-  * **Routine Alarm**
-    * Weekly Timetable과 Desktop 시스템 알림
-    * Android에서는 오늘 요일의 현재 시각 이후 루틴만 표시
-    * 각 루틴을 Galaxy 시계에 반복 요일 없는 일회성 알람으로 개별 추가
-    * 페이지 입력값을 GitHub Issue에 자동 전달하고, 소유자 확인 후 `routines.json` 자동 커밋·Pages 재배포
-    * 알림 내용은 선택 입력
-  * **Pilates & Yoga Sequence Studio**
-    * Yoga·Pilates·Recovery Ring·Magic Circle 205개 동작
-    * Auto Sequence Builder, quick preset, 즐겨찾기, 상세 Teaching Guide
-    * Sequence 편집·복원·저장, Timer, Voice guide, Calendar, Story export
+  * Weekly Timetable과 Desktop 시스템 알림
+  * Android에서는 오늘 요일의 현재 시각 이후 루틴만 표시
+  * 각 루틴을 Galaxy 시계에 반복 요일 없는 일회성 알람으로 개별 추가
+  * 페이지 입력값을 GitHub Issue 작성 화면에 자동 전달하고, Issue 제출 후 `routines.json` 자동 커밋·Pages 재배포
+  * 알림 내용은 선택 입력
+* [Pilates & Yoga Sequence Studio](https://devcharlotte.github.io/my-portal/work/wellness/pilates-yoga-guide-v2/) — Updated Jun 24, 2026
+  * Summer Routine과 분리된 독립 페이지
+  * Yoga·Pilates·Recovery Ring·Magic Circle 205개 동작
+  * Auto Sequence Builder, quick preset, 즐겨찾기, 상세 Teaching Guide
+  * Sequence 편집·복원·저장, Timer, Voice guide, Calendar, Story export
 * [A Few Minutes Later](https://devcharlotte.github.io/my-portal/work/wellness/my-a-few-minutes-later/) — Created Jun 17, 2026
   * 현재 시각을 기준으로 몇 분 후 울릴 Android 알람 생성
   * `AlarmClock.ACTION_SET_ALARM` intent를 사용하는 Android APK 제공
