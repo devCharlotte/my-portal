@@ -116,6 +116,11 @@
   * 선택 운동 및 5가지 운동 자동 진행
   * 20분 작업 Timer, 10초 준비 Countdown 및 브라우저 알림
   * 운동 종료 후 작업 Timer로 자동 복귀
+* [Summer Routine](https://devcharlotte.github.io/my-portal/work/wellness/summer-routine/) — Created Jun 24, 2026
+  * Weekly Timetable에서 요일·시간 기반 여름 루틴 확인
+  * Desktop 브라우저 시스템 알림 활성화
+  * Android Galaxy에서 오늘 요일의 현재 시각 이후 루틴만 Samsung Clock의 일회성 알람으로 추가
+  * 관리자 비밀번호 검증 후 `routines.json` 추가·삭제 내용을 GitHub 저장소에 실제 커밋
 * [A Few Minutes Later](https://devcharlotte.github.io/my-portal/work/wellness/my-a-few-minutes-later/) — Created Jun 17, 2026
   * 현재 시각을 기준으로 몇 분 후 울릴 Android 알람 생성
   * `AlarmClock.ACTION_SET_ALARM` intent를 사용하는 Android APK 제공

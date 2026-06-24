@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#eef8ff" />
+  <title>Summer Routine</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="../../shared.css" />
+  <style>
+    :root {
+      --routine-success: #2f7d5a;
+      --routine-danger: #a84e61;
+      --routine-warning: #8a641f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body.summer-routine-page {
+      min-width: 320px;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(139, 215, 255, 0.42);
+      outline-offset: 3px;
+    }
+
+    .routine-page {
+      width: min(1420px, calc(100% - 32px));
+    }
+
+    .routine-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.55fr);
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .routine-hero-main {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(26px, 5vw, 48px);
+    }
+
+    .routine-hero-main::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -88px;
+      width: 250px;
+      height: 250px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 143, 199, 0.42), rgba(139, 215, 255, 0.38));
+      pointer-events: none;
+    }
+
+    .eyebrow,
+    .status-pill,
+    .day-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--my-line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--my-muted);
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      min-height: 34px;
+      padding: 7px 12px;
+      margin-bottom: 15px;
+      font-size: 0.88rem;
+    }
+
+    .routine-title {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0;
+      color: #172033;
+      font-size: clamp(3rem, 8vw, 6rem) !important;
+      line-height: 0.9 !important;
+      letter-spacing: -0.065em !important;
+    }
+
+    .routine-intro {
+      position: relative;
+      z-index: 1;
+      max-width: 850px;
+      margin: 22px 0 0;
+      color: var(--my-muted);
+      font-size: 0.97rem;
+      line-height: 1.75;
+    }
+
+    .routine-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn,
+    .small-btn {
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      transition: transform 150ms ease, filter 150ms ease, box-shadow 150ms ease;
+    }
+
+    .primary-btn {
+      color: #fff;
+      background: linear-gradient(135deg, var(--my-pink), #ff74ba);
+      box-shadow: 0 12px 26px rgba(255, 116, 186, 0.22);
+    }
+
+    .secondary-btn {
+      color: var(--my-ink);
+      border: 1px solid var(--my-line);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .danger-btn {
+      color: #7c3545;
+      border: 1px solid rgba(190, 92, 112, 0.24);
+      background: rgba(255, 229, 234, 0.82);
+    }
+
+    .small-btn {
+      min-height: 36px;
+      padding: 8px 12px;
+      color: var(--my-ink);
+      border: 1px solid var(--my-line);
+      background: rgba(255, 255, 255, 0.82);
+      font-size: 0.82rem !important;
+    }
+
+    .primary-btn:hover,
+    .secondary-btn:hover,
+    .danger-btn:hover,
+    .small-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.02);
+    }
+
+    .routine-side {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px;
+    }
+
+    .side-label {
+      color: var(--my-muted);
+      font-size: 0.86rem;
+    }
+
+    .side-value {
+      margin-top: 9px;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      line-height: 1.25;
+      letter-spacing: -0.045em;
+    }
+
+    .side-meta {
+      margin-top: 8px;
+      color: var(--my-muted);
+      font-size: 0.88rem;
+      line-height: 1.65;
+    }
+
+    .status-pill {
+      width: fit-content;
+      min-height: 36px;
+      padding: 7px 12px;
+      font-size: 0.82rem;
+    }
+
+    .status-pill.active {
+      color: var(--routine-success);
+      background: rgba(220, 247, 232, 0.82);
+    }
+
+    .status-pill.warning {
+      color: var(--routine-warning);
+      background: rgba(255, 244, 213, 0.84);
+    }
+
+    .status-pill.error {
+      color: var(--routine-danger);
+      background: rgba(255, 229, 234, 0.84);
+    }
+
+    .routine-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.55fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .routine-panel {
+      padding: clamp(20px, 3vw, 28px);
+    }
+
+    .panel-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .panel-title {
+      margin: 0;
+      color: var(--my-ink);
+      font-size: clamp(1.28rem, 2vw, 1.72rem);
+      letter-spacing: -0.04em;
+    }
+
+    .panel-description {
+      margin: 7px 0 0;
+      color: var(--my-muted);
+      font-size: 0.9rem;
+      line-height: 1.65;
+    }
+
+    .timetable-shell {
+      overflow-x: auto;
+      padding-bottom: 5px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(120, 144, 180, 0.42) transparent;
+    }
+
+    .timetable {
+      display: grid;
+      grid-template-columns: 86px repeat(7, minmax(138px, 1fr));
+      min-width: 1080px;
+      overflow: hidden;
+      border: 1px solid var(--my-line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .timetable-cell {
+      min-width: 0;
+      padding: 10px;
+      border-right: 1px solid var(--my-line);
+      border-bottom: 1px solid var(--my-line);
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .timetable-cell:nth-child(8n) {
+      border-right: 0;
+    }
+
+    .timetable-cell.last-row {
+      border-bottom: 0;
+    }
+
+    .timetable-corner,
+    .timetable-day {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #50606e;
+      background: rgba(255, 255, 255, 0.78);
+      font-size: 0.84rem;
+    }
+
+    .timetable-day span {
+      display: block;
+      margin-top: 2px;
+      color: var(--my-muted);
+      font-size: 0.72rem;
+    }
+
+    .timetable-time {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 17px;
+      color: #425663;
+      background: linear-gradient(180deg, rgba(139, 215, 255, 0.22), rgba(255, 255, 255, 0.46));
+      font-variant-numeric: tabular-nums;
+    }
+
+    .routine-cell {
+      min-height: 118px;
+    }
+
+    .routine-card {
+      display: grid;
+      gap: 8px;
+      padding: 11px;
+      border: 1px solid rgba(120, 144, 180, 0.18);
+      border-radius: 17px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(247, 244, 255, 0.76));
+      box-shadow: 0 8px 18px rgba(94, 120, 160, 0.1);
+    }
+
+    .routine-card + .routine-card {
+      margin-top: 8px;
+    }
+
+    .routine-card strong {
+      color: var(--my-ink);
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .routine-card p {
+      margin: 0;
+      color: var(--my-muted);
+      font-size: 0.78rem !important;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+
+    .routine-card-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .empty-state {
+      padding: 32px 20px;
+      border: 1px dashed rgba(120, 144, 180, 0.34);
+      border-radius: 20px;
+      color: var(--my-muted);
+      background: rgba(255, 255, 255, 0.46);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .control-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .control-card {
+      padding: 17px;
+      border: 1px solid var(--my-line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .control-card h3 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: -0.03em;
+    }
+
+    .control-card p {
+      margin: 8px 0 13px;
+      color: var(--my-muted);
+      font-size: 0.84rem !important;
+      line-height: 1.6;
+    }
+
+    .control-card button {
+      width: 100%;
+    }
+
+    .inline-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .message {
+      display: none;
+      margin-top: 13px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      color: var(--routine-success);
+      background: rgba(220, 247, 232, 0.74);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      color: var(--routine-danger);
+      background: rgba(255, 229, 234, 0.78);
+    }
+
+    .admin-panel {
+      margin-top: 18px;
+    }
+
+    .routine-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label,
+    .field-label {
+      color: #566471;
+      font-size: 0.84rem;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      min-height: 46px;
+      padding: 11px 13px;
+      border: 1px solid var(--my-line);
+      border-radius: 14px;
+      color: var(--my-ink);
+      background: rgba(255, 255, 255, 0.78);
+      outline: none;
+    }
+
+    .field textarea {
+      min-height: 104px;
+      resize: vertical;
+    }
+
+    .day-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .day-chip {
+      position: relative;
+      min-width: 46px;
+      min-height: 40px;
+      padding: 8px 11px;
+      overflow: hidden;
+      cursor: pointer;
+      font-size: 0.84rem;
+    }
+
+    .day-chip input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .day-chip:has(input:checked) {
+      color: #7c3659;
+      border-color: rgba(255, 143, 199, 0.48);
+      background: rgba(255, 216, 237, 0.82);
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      grid-column: 1 / -1;
+    }
+
+    dialog {
+      width: min(660px, calc(100% - 28px));
+      padding: 0;
+      border: 1px solid var(--my-line);
+      border-radius: 26px;
+      color: var(--my-ink);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--my-shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    dialog::backdrop {
+      background: rgba(37, 48, 68, 0.28);
+      backdrop-filter: blur(5px);
+    }
+
+    .dialog-body {
+      padding: 24px;
+    }
+
+    .dialog-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .dialog-head h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: -0.04em;
+    }
+
+    .dialog-head p {
+      margin: 7px 0 0;
+      color: var(--my-muted);
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
+    .android-alarm-list {
+      display: grid;
+      gap: 10px;
+      max-height: min(58vh, 580px);
+      overflow-y: auto;
+    }
+
+    .android-alarm-item {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid var(--my-line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .android-alarm-time {
+      font-size: 1.08rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .android-alarm-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .android-alarm-copy strong {
+      font-size: 0.9rem;
+    }
+
+    .android-alarm-copy span {
+      color: var(--my-muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .dialog-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .delete-copy {
+      margin: 0 0 14px;
+      color: var(--my-muted);
+      line-height: 1.65;
+    }
+
+    @media (max-width: 980px) {
+      .routine-hero,
+      .routine-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .routine-page {
+        width: min(100% - 18px, 1420px);
+      }
+
+      .routine-form {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full,
+      .form-actions {
+        grid-column: auto;
+      }
+
+      .form-actions button {
+        width: 100%;
+      }
+
+      .inline-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .android-alarm-item {
+        grid-template-columns: 64px minmax(0, 1fr);
+      }
+
+      .android-alarm-item button {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="workspace-tool summer-routine-page">
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← wellness</a>
+    <span class="myworkspace-date" id="portalClock">Asia/Seoul</span>
+  </nav>
+
+  <main class="myworkspace-page routine-page">
+    <section class="routine-hero">
+      <div class="myworkspace-card routine-hero-main">
+        <div class="eyebrow">my workspace · wellness</div>
+        <h1 class="routine-title">Summer Routine</h1>
+        <p class="routine-intro">
+          2026년 Coursework 종강과 TA 업무 종강 이후부터 2학기 개강 전까지 적용할 여름 루틴 알림입니다.
+          정해진 요일과 시간에 맞춰 등록된 루틴을 확인하고, Desktop 알림 또는 Galaxy 시계의 일회성 알람으로 연결합니다.
+        </p>
+        <div class="routine-actions">
+          <button class="primary-btn" id="desktopNotificationBtn" type="button">Desktop Notification Turn On</button>
+          <button class="secondary-btn" id="androidAlarmBtn" type="button">Android Alarm Turn On</button>
+        </div>
+      </div>
+
+      <aside class="myworkspace-card routine-side">
+        <div>
+          <div class="side-label">오늘 남은 다음 루틴</div>
+          <div class="side-value" id="nextRoutineValue">불러오는 중</div>
+          <div class="side-meta" id="nextRoutineMeta">루틴 목록을 확인하고 있습니다.</div>
+        </div>
+        <div class="status-pill" id="dataStatus">routines.json 확인 중</div>
+      </aside>
+    </section>
+
+    <section class="routine-layout">
+      <div class="myworkspace-card routine-panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Weekly Timetable</h2>
+            <p class="panel-description">등록된 루틴을 시간순으로 정리한 주간 시간표입니다.</p>
+          </div>
+          <button class="small-btn" id="refreshBtn" type="button">목록 새로고침</button>
+        </div>
+        <div id="timetableArea"></div>
+        <div class="message" id="listMessage" role="status" aria-live="polite"></div>
+      </div>
+
+      <aside class="myworkspace-card routine-panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Alarm Control</h2>
+            <p class="panel-description">사용 중인 기기에 맞는 알림 방식을 선택합니다.</p>
+          </div>
+        </div>
+
+        <div class="control-stack">
+          <section class="control-card">
+            <h3>Desktop Notification</h3>
+            <p>PC 브라우저에서 루틴 시각을 확인하고 데스크톱 시스템 알림을 표시합니다.</p>
+            <button class="primary-btn" id="desktopControlBtn" type="button">Desktop Notification Turn On</button>
+            <div class="status-pill" id="desktopNotificationStatus">상태 확인 중</div>
+          </section>
+
+          <section class="control-card">
+            <h3>Android Alarm</h3>
+            <p>버튼을 누른 오늘의 요일에 해당하고 현재 시각 이후인 루틴만 Galaxy 시계에 일회성 알람으로 추가합니다.</p>
+            <button class="secondary-btn" id="androidControlBtn" type="button">Android Alarm Turn On</button>
+            <div class="status-pill" id="androidAlarmStatus">Galaxy 기기 확인 중</div>
+          </section>
+
+          <section class="control-card">
+            <h3>Notification Test</h3>
+            <p>Desktop 알림 권한과 소리가 정상적으로 동작하는지 즉시 확인합니다.</p>
+            <div class="inline-actions">
+              <button class="secondary-btn" id="testNotificationBtn" type="button">Test Notification</button>
+              <button class="secondary-btn" id="turnOffDesktopBtn" type="button">Desktop Turn Off</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </section>
+
+    <section class="myworkspace-card routine-panel admin-panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">루틴 추가</h2>
+          <p class="panel-description">추가한 루틴은 로컬 디바이스에만 저장되는 것이 아니라 실제 <code>routines.json</code> 파일에 커밋되도록 구현되어 있습니다.</p>
+        </div>
+      </div>
+
+      <form class="routine-form" id="routineForm" autocomplete="off">
+        <div class="field">
+          <label for="routineTitle">루틴 이름</label>
+          <input id="routineTitle" name="title" type="text" maxlength="80" required placeholder="예: Morning Study" />
+        </div>
+        <div class="field">
+          <label for="routineTime">시간</label>
+          <input id="routineTime" name="time" type="time" required />
+        </div>
+        <div class="field full">
+          <label for="routineMessage">알림 내용</label>
+          <textarea id="routineMessage" name="message" maxlength="240" required placeholder="알림에 표시할 내용을 입력해 주세요."></textarea>
+        </div>
+        <fieldset class="field full" style="border:0; padding:0; margin:0;">
+          <legend class="field-label" style="margin-bottom:8px;">요일</legend>
+          <div class="day-selector">
+            <label class="day-chip"><input type="checkbox" name="days" value="1" />월</label>
+            <label class="day-chip"><input type="checkbox" name="days" value="2" />화</label>
+            <label class="day-chip"><input type="checkbox" name="days" value="3" />수</label>
+            <label class="day-chip"><input type="checkbox" name="days" value="4" />목</label>
+            <label class="day-chip"><input type="checkbox" name="days" value="5" />금</label>
+            <label class="day-chip"><input type="checkbox" name="days" value="6" />토</label>
+            <label class="day-chip"><input type="checkbox" name="days" value="0" />일</label>
+          </div>
+        </fieldset>
+        <div class="field full">
+          <label for="adminPassword">관리자 비밀번호</label>
+          <input id="adminPassword" name="password" type="password" inputmode="numeric" required placeholder="관리자 비밀번호" />
+        </div>
+        <div class="form-actions">
+          <button class="primary-btn" id="saveRoutineBtn" type="submit">루틴 저장</button>
+        </div>
+      </form>
+      <div class="message" id="adminMessage" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <dialog id="androidAlarmDialog">
+    <div class="dialog-body">
+      <div class="dialog-head">
+        <div>
+          <h2>오늘의 Galaxy 알람</h2>
+          <p id="androidAlarmSummary">오늘 남은 루틴을 확인하고 있습니다.</p>
+        </div>
+        <button class="small-btn" id="closeAndroidAlarmBtn" type="button">닫기</button>
+      </div>
+      <div class="android-alarm-list" id="androidAlarmList"></div>
+    </div>
+  </dialog>
+
+  <dialog id="deleteDialog">
+    <form class="dialog-body" id="deleteForm" method="dialog">
+      <div class="dialog-head">
+        <div>
+          <h2>루틴 삭제</h2>
+          <p>관리자 비밀번호 확인 후 저장소의 JSON 파일에서 삭제합니다.</p>
+        </div>
+      </div>
+      <p class="delete-copy" id="deleteTargetText"></p>
+      <div class="field">
+        <label for="deletePassword">관리자 비밀번호</label>
+        <input id="deletePassword" type="password" inputmode="numeric" required />
+      </div>
+      <div class="dialog-actions">
+        <button class="secondary-btn" id="cancelDeleteBtn" type="button">취소</button>
+        <button class="danger-btn" type="submit">JSON에서 삭제</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
