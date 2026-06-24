@@ -3,7 +3,7 @@
   "timezone": "Asia/Seoul",
   "activeFrom": "2026-07-01",
   "activeUntil": "2026-08-31",
-  "updatedAt": "2026-06-24T05:34:34Z",
+  "updatedAt": "2026-06-24T05:36:36Z",
   "items": [
     {
       "id": "wake-up-20260624053036",
@@ -79,6 +79,21 @@
       ],
       "enabled": true,
       "createdAt": "2026-06-24T05:34:34Z"
+    },
+    {
+      "id": "lunch-20260624053636",
+      "title": "Lunch ~",
+      "message": "",
+      "time": "11:25",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "enabled": true,
+      "createdAt": "2026-06-24T05:36:36Z"
     }
   ]
 }
