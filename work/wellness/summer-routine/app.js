@@ -5,8 +5,7 @@
   const TIMEZONE = CONFIG.timezone || "Asia/Seoul";
   const ACTIVE_FROM = CONFIG.activeFrom || "2026-07-01";
   const ACTIVE_UNTIL = CONFIG.activeUntil || "2026-08-31";
-  const API_URL = String(CONFIG.apiUrl || "").replace(/\/$/, "");
-  const API_CONFIGURED = /^https:\/\//.test(API_URL) && !API_URL.includes("REPLACE-WITH-YOUR-WORKER");
+  const ACTIONS_URL = String(CONFIG.githubActionsUrl || "https://github.com/devcharlotte/my-portal/actions/workflows/manage-summer-routine.yml");
   const SAMSUNG_CLOCK_PACKAGE = "com.sec.android.app.clockpackage";
   const DESKTOP_ENABLED_KEY = "summer-routine-desktop-notification-enabled";
   const FIRED_KEY_PREFIX = "summer-routine-fired:";
@@ -23,7 +22,6 @@
 
   const state = {
     data: null,
-    deleteId: null,
     serviceWorkerRegistration: null,
     audioContext: null,
     checking: false,
@@ -50,22 +48,16 @@
     routineTitle: document.getElementById("routineTitle"),
     routineTime: document.getElementById("routineTime"),
     routineMessage: document.getElementById("routineMessage"),
-    adminPassword: document.getElementById("adminPassword"),
     saveRoutineBtn: document.getElementById("saveRoutineBtn"),
     adminMessage: document.getElementById("adminMessage"),
     androidAlarmDialog: document.getElementById("androidAlarmDialog"),
     androidAlarmSummary: document.getElementById("androidAlarmSummary"),
     androidAlarmList: document.getElementById("androidAlarmList"),
     closeAndroidAlarmBtn: document.getElementById("closeAndroidAlarmBtn"),
-    deleteDialog: document.getElementById("deleteDialog"),
-    deleteForm: document.getElementById("deleteForm"),
-    deleteTargetText: document.getElementById("deleteTargetText"),
-    deletePassword: document.getElementById("deletePassword"),
-    cancelDeleteBtn: document.getElementById("cancelDeleteBtn")
   };
 
-  function apiEndpoint(path) {
-    return `${API_URL}${path}`;
+  function openActionsPage() {
+    window.open(ACTIONS_URL, "_blank", "noopener,noreferrer");
   }
 
   function isAndroidDevice() {
@@ -153,6 +145,7 @@
   }
 
   function setStatus(element, text, variant = "") {
+    if (!element) return;
     element.textContent = text;
     element.classList.remove("active", "warning", "error");
     if (variant) element.classList.add(variant);
@@ -184,16 +177,6 @@
   }
 
   async function fetchRoutineData() {
-    if (API_CONFIGURED) {
-      const response = await fetch(apiEndpoint("/routines"), {
-        headers: { Accept: "application/json" },
-        cache: "no-store"
-      });
-      if (!response.ok) throw new Error(`Worker에서 루틴 목록을 읽지 못했습니다. (${response.status})`);
-      const payload = await response.json();
-      return normalizeData(payload.data);
-    }
-
     const response = await fetch(`./routines.json?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`routines.json을 읽지 못했습니다. (${response.status})`);
     return normalizeData(await response.json());
@@ -205,7 +188,7 @@
     try {
       state.data = await fetchRoutineData();
       renderAll();
-      setStatus(els.dataStatus, API_CONFIGURED ? "GitHub JSON 연결됨" : "로컬 JSON 표시 중", API_CONFIGURED ? "active" : "warning");
+      setStatus(els.dataStatus, "GitHub Pages JSON 연결됨", "active");
       if (announce) showMessage(els.listMessage, "루틴 목록을 새로 불러왔습니다.");
     } catch (error) {
       setStatus(els.dataStatus, "루틴 목록 오류", "error");
@@ -236,8 +219,9 @@
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "small-btn";
-    deleteButton.textContent = "삭제";
-    deleteButton.addEventListener("click", () => openDeleteDialog(item));
+    deleteButton.textContent = "Actions에서 삭제";
+    deleteButton.title = `Routine ID: ${item.id}`;
+    deleteButton.addEventListener("click", () => openDeleteWorkflow(item));
 
     actions.append(deleteButton);
     card.append(title, message, actions);
@@ -312,6 +296,7 @@
   }
 
   function renderTodaySummary() {
+    if (!els.nextRoutineValue || !els.nextRoutineMeta) return;
     const now = getSeoulParts();
     const remaining = getTodayRemainingRoutines();
     if (remaining.length === 0) {
@@ -587,26 +572,19 @@
     const message = els.routineMessage.value.trim();
     const time = els.routineTime.value;
     const days = selectedDays();
-    const password = els.adminPassword.value;
-
-    if (!title || !message || !time || !password) throw new Error("모든 입력 항목을 작성해 주세요.");
+    if (!title || !message || !time) throw new Error("모든 입력 항목을 작성해 주세요.");
     if (days.length === 0) throw new Error("요일을 하나 이상 선택해 주세요.");
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new Error("시간 형식이 올바르지 않습니다.");
-    return { title, message, time, days, password };
+    return { title, message, time, days };
   }
 
-  async function mutateRoutines(body) {
-    if (!API_CONFIGURED) {
-      throw new Error("config.js에 배포한 Cloudflare Worker URL을 설정해야 routines.json을 실제 커밋할 수 있습니다.");
+  async function copyManagementInput(lines) {
+    const text = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
     }
-    const response = await fetch(apiEndpoint("/routines"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(body)
-    });
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(payload?.error || `저장소 반영에 실패했습니다. (${response.status})`);
-    return normalizeData(payload.data);
   }
 
   async function handleRoutineSubmit(event) {
@@ -614,57 +592,38 @@
     clearMessage(els.adminMessage);
     try {
       const values = validateRoutineForm();
-      setBusy(els.saveRoutineBtn, true, "저장 중", "루틴 저장");
-      state.data = await mutateRoutines({
-        action: "add",
-        password: values.password,
-        item: {
-          title: values.title,
-          message: values.message,
-          time: values.time,
-          days: values.days
-        }
-      });
-      els.routineForm.reset();
-      renderAll();
-      showMessage(els.adminMessage, "루틴을 routines.json에 커밋했습니다.");
+      const copied = await copyManagementInput([
+        "operation: add",
+        `title: ${values.title}`,
+        `time: ${values.time}`,
+        `message: ${values.message}`,
+        `days: ${values.days.join(",")}`
+      ]);
+      openActionsPage();
+      showMessage(
+        els.adminMessage,
+        copied
+          ? "입력값을 클립보드에 복사하고 GitHub Actions를 열었습니다. Run workflow에 값을 붙여 넣어 실행해 주세요."
+          : "GitHub Actions를 열었습니다. 현재 폼의 값을 Run workflow 입력란에 옮겨 실행해 주세요."
+      );
     } catch (error) {
       showMessage(els.adminMessage, error.message, true);
-    } finally {
-      setBusy(els.saveRoutineBtn, false, "저장 중", "루틴 저장");
     }
   }
 
-  function openDeleteDialog(item) {
-    state.deleteId = item.id;
-    els.deleteTargetText.textContent = `“${item.title}” 루틴을 routines.json에서 삭제합니다.`;
-    els.deletePassword.value = "";
-    if (typeof els.deleteDialog.showModal === "function") {
-      els.deleteDialog.showModal();
-      window.setTimeout(() => els.deletePassword.focus(), 0);
-    } else {
-      showMessage(els.listMessage, "현재 브라우저가 삭제 대화상자를 지원하지 않습니다.", true);
-    }
-  }
-
-  async function handleDeleteSubmit(event) {
-    event.preventDefault();
-    const password = els.deletePassword.value;
-    if (!password || !state.deleteId) return;
-    const submitButton = els.deleteForm.querySelector('button[type="submit"]');
-    setBusy(submitButton, true, "삭제 중", "JSON에서 삭제");
-    try {
-      state.data = await mutateRoutines({ action: "delete", password, id: state.deleteId });
-      els.deleteDialog.close();
-      state.deleteId = null;
-      renderAll();
-      showMessage(els.listMessage, "선택한 루틴을 routines.json에서 삭제했습니다.");
-    } catch (error) {
-      els.deleteDialog.close();
-      showMessage(els.listMessage, error.message, true);
-    } finally {
-      setBusy(submitButton, false, "삭제 중", "JSON에서 삭제");
-    }
+  async function openDeleteWorkflow(item) {
+    const copied = await copyManagementInput([
+      "operation: delete",
+      `routine_id: ${item.id}`,
+      `title: ${item.title}`
+    ]);
+    openActionsPage();
+    showMessage(
+      els.listMessage,
+      copied
+        ? `“${item.title}” 삭제 정보가 클립보드에 복사되었습니다. Actions에서 operation=delete와 routine_id를 입력해 실행해 주세요.`
+        : `Actions에서 operation=delete와 routine_id=${item.id}를 입력해 주세요.`
+    );
   }
 
   function updateClock() {
@@ -685,8 +644,6 @@
     els.turnOffDesktopBtn.addEventListener("click", turnOffDesktopNotifications);
     els.refreshBtn.addEventListener("click", () => loadRoutines({ announce: true }).catch(() => {}));
     els.routineForm.addEventListener("submit", handleRoutineSubmit);
-    els.deleteForm.addEventListener("submit", handleDeleteSubmit);
-    els.cancelDeleteBtn.addEventListener("click", () => els.deleteDialog.close());
     els.closeAndroidAlarmBtn.addEventListener("click", () => els.androidAlarmDialog.close());
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {

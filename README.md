@@ -92,17 +92,6 @@
 
 #### [Wellness](https://devcharlotte.github.io/my-portal/work/wellness/)
 
-* [Pilates & Yoga Guide](https://devcharlotte.github.io/my-portal/work/wellness/pilates-yoga-guide/) — Created May 20, 2026
-  * 카테고리와 검색어 기반 동작 탐색
-  * 부위, 효과, 난이도 및 도구 필터
-  * 오늘의 자세, 루틴 자동 생성, 즐겨찾기, Voice guide
-* [Pilates & Yoga Guide v2](https://devcharlotte.github.io/my-portal/work/wellness/pilates-yoga-guide-v2/) — Created Jun 13, 2026
-  * 카테고리, 신체 부위, Yoga style 및 검색어 기반 동작 탐색
-  * 원하는 동작을 담아 나만의 운동 Sequence 구성
-  * Sequence 순서 정리, 저장 및 불러오기
-  * Sequence timer와 음성 Countdown 및 호흡 안내
-  * 운동 Calendar와 연속 운동 일수 확인
-  * 인스타 스토리용 9:16 Sequence 이미지 생성 저장 공유
 * [Pilates/Yoga Counter](https://devcharlotte.github.io/my-portal/work/wellness/my-pilates-and-yoga-counter/) — Created Apr 17, 2026
   * Slow, Medium, Fast 운동 간격 선택
   * 목표 횟수와 현재 횟수 표시
@@ -116,11 +105,16 @@
   * 선택 운동 및 5가지 운동 자동 진행
   * 20분 작업 Timer, 10초 준비 Countdown 및 브라우저 알림
   * 운동 종료 후 작업 Timer로 자동 복귀
-* [Summer Routine](https://devcharlotte.github.io/my-portal/work/wellness/summer-routine/) — Created Jun 24, 2026
-  * Weekly Timetable에서 요일·시간 기반 여름 루틴 확인
-  * Desktop 브라우저 시스템 알림 활성화
-  * Android Galaxy에서 오늘 요일의 현재 시각 이후 루틴만 Samsung Clock의 일회성 알람으로 추가
+* [Summer Routine & Yoga Sequence](https://devcharlotte.github.io/my-portal/work/wellness/summer-routine/) — Updated Jun 24, 2026
+  * Routine Alarm과 Yoga Sequence Studio를 하나의 Wellness 페이지에 통합
+  * Weekly Timetable, Desktop 시스템 알림, Galaxy 시계 일회성 알람 생성
+  * Android에서는 오늘 요일의 현재 시각 이후 루틴만 표시하고 반복 요일은 전달하지 않음
   * 관리자 비밀번호 검증 후 `routines.json` 추가·삭제 내용을 GitHub 저장소에 실제 커밋
+  * Yoga·Pilates·Recovery Ring·Magic Circle 205개 동작 검색 및 상세 Teaching Guide
+  * 목적·시간·강도·도구 기반 Auto Sequence Builder와 빠른 Preset
+  * 즐겨찾기, Sequence 순서 변경, 작업 중 자동 복원, 저장·불러오기
+  * Sequence Timer, 음성 Countdown, 호흡 안내, 운동 Calendar와 streak
+  * Instagram Story용 1080 × 1920 Sequence 이미지 생성·다운로드·공유
 * [A Few Minutes Later](https://devcharlotte.github.io/my-portal/work/wellness/my-a-few-minutes-later/) — Created Jun 17, 2026
   * 현재 시각을 기준으로 몇 분 후 울릴 Android 알람 생성
   * `AlarmClock.ACTION_SET_ALARM` intent를 사용하는 Android APK 제공
