@@ -3,7 +3,7 @@
   "timezone": "Asia/Seoul",
   "activeFrom": "2026-07-01",
   "activeUntil": "2026-08-31",
-  "updatedAt": "2026-06-24T05:34:12Z",
+  "updatedAt": "2026-06-24T05:34:34Z",
   "items": [
     {
       "id": "wake-up-20260624053036",
@@ -64,6 +64,21 @@
       ],
       "enabled": true,
       "createdAt": "2026-06-24T05:34:12Z"
+    },
+    {
+      "id": "lab-20260624053434",
+      "title": "LAB",
+      "message": "",
+      "time": "09:30",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "enabled": true,
+      "createdAt": "2026-06-24T05:34:34Z"
     }
   ]
 }
