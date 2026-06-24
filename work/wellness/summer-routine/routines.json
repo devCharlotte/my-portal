@@ -3,6 +3,22 @@
   "timezone": "Asia/Seoul",
   "activeFrom": "2026-07-01",
   "activeUntil": "2026-08-31",
-  "updatedAt": "2026-06-24T00:00:00.000Z",
-  "items": []
+  "updatedAt": "2026-06-24T05:29:40Z",
+  "items": [
+    {
+      "id": "wake-up-20260624052940",
+      "title": "wake up",
+      "message": "",
+      "time": "07:00",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "enabled": true,
+      "createdAt": "2026-06-24T05:29:40Z"
+    }
+  ]
 }
