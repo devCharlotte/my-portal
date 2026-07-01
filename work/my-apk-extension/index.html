@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Workspace</title>
+  <title>My APK Extension</title>
   <link rel="stylesheet" href="../shared.css" />
   <style>
 body { overflow-x: hidden; }
@@ -45,8 +45,8 @@ h1 {
   position: relative;
   z-index: 1;
   margin: 0;
-  font-size: clamp(2.6rem, 8vw, 5.8rem);
-  line-height: 0.9;
+  font-size: clamp(2.5rem, 7vw, 5.6rem);
+  line-height: 0.95;
   letter-spacing: -0.06em;
   color: #172033;
 }
@@ -57,13 +57,7 @@ h1 {
   justify-content: space-between;
   gap: 18px;
 }
-.side-note .label { color: var(--my-muted); font-size: 0.9rem; }
-.side-note .value { font-size: 2rem; line-height: 1.1; letter-spacing: -0.05em; }
-.workspace-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
+.side-note .value { font-size: 2rem; line-height: 1.1; }
 .tool-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -94,6 +88,14 @@ h1 {
   border: 1px solid rgba(120,144,180,0.18);
   font-size: 1.55rem;
 }
+.icon-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 17px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.68);
+  border: 1px solid rgba(120,144,180,0.18);
+}
 .workspace-title {
   margin: 18px 0 7px;
   font-size: 1.26rem;
@@ -103,23 +105,17 @@ h1 {
 .created {
   margin-top: 18px;
   color: #7b8190;
-  font-size: 0.8rem;
-}
-.server-list {
-  color: var(--my-muted);
-  font-size: 0.96rem;
-  line-height: 1.9;
-  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 @media (max-width: 980px) {
   .hero { grid-template-columns: 1fr; }
-  .workspace-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
-  .workspace-grid, .tool-grid { grid-template-columns: 1fr; }
+  .tool-grid { grid-template-columns: 1fr; }
   .workspace-link { min-height: 180px; }
 }
-</style>
+  </style>
 </head>
 <body class="myworkspace-soft">
   <nav class="myworkspace-topnav">
@@ -129,54 +125,28 @@ h1 {
     <section class="hero">
       <div class="myworkspace-card hero-main">
         <div class="eyebrow">my workspace</div>
-        <h1>Workspace</h1>
+        <h1>My APK<br>Extension</h1>
       </div>
       <aside class="myworkspace-card side-note">
-        <div class="value">🖥️</div>
+        <div class="value">첨부한 파일을 언제든 다시 내려받을 수 있도록 모아둔 챕터예요.</div>
       </aside>
     </section>
     <section class="tool-grid">
-      <a class="myworkspace-card workspace-link" href="pomodoro/">
+      <a class="myworkspace-card workspace-link" href="my-tab-customizer/">
         <div>
-          <div class="icon">⏱️</div>
-          <h2 class="workspace-title">JoonHee's Pomodoro</h2>
+          <div class="icon">🗂️</div>
+          <h2 class="workspace-title">My Tab Customizer</h2>
         </div>
-        <div class="created">Created Apr 1, 2025</div>
+        <div class="created">Chrome extension ZIP download</div>
       </a>
 
-      <a class="myworkspace-card workspace-link" href="checklist/">
+      <a class="myworkspace-card workspace-link" href="a-few-minutes-later/">
         <div>
-          <div class="icon">✅</div>
-          <h2 class="workspace-title">JoonHee's Checklist</h2>
+          <img class="icon-image" src="logo.png" alt="A Few Minutes Later logo" />
+          <h2 class="workspace-title">A Few Minutes Later</h2>
         </div>
-        <div class="created">Created Apr 1, 2025</div>
+        <div class="created">Current stable APK download</div>
       </a>
-
-      <a class="myworkspace-card workspace-link" href="clock/">
-        <div>
-          <div class="icon">🩷</div>
-          <h2 class="workspace-title">JoonHee's Clock</h2>
-        </div>
-        <div class="created">Created Apr 1, 2025</div>
-      </a>
-
-
-      <a class="myworkspace-card workspace-link" href="cafe/">
-        <div>
-          <div class="icon">☕</div>
-          <h2 class="workspace-title">JoonHee's Cafe</h2>
-        </div>
-        <div class="created">Created Jun 3, 2026</div>
-      </a>
-
-      <a class="myworkspace-card workspace-link" href="claude-token-calculator/">
-        <div>
-          <div class="icon">🧮</div>
-          <h2 class="workspace-title">Claude Token Calculator</h2>
-        </div>
-        <div class="created">Created Jun 10, 2026</div>
-      </a>
-
     </section>
   </main>
 </body>
