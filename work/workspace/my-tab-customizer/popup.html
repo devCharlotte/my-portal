@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joon Hee's My Tab Customizer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="brand">
+      <img src="icons/icon-48.png" alt="JH" width="42" height="42">
+      <div>
+        <p class="eyebrow">JOON HEE</p>
+        <h1>My Tab Customizer</h1>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-heading compact-heading">
+        <div>
+          <span class="field-label section-title">탭 별칭 <span class="english">Alias</span></span>
+          <span class="section-caption">Chrome 탭에 실제로 표시되는 이름입니다</span>
+        </div>
+      </div>
+
+      <label class="sr-only" for="aliasTitle">탭 별칭</label>
+      <input id="aliasTitle" type="text" maxlength="120" placeholder="현재 탭 이름">
+      <p class="field-help">비워 두면 회색으로 표시된 현재 탭 이름이 그대로 적용됩니다.</p>
+
+      <div class="label-row icon-label-row">
+        <span class="field-label">사이트 아이콘</span>
+        <span class="hint">기존 아이콘이 기본값입니다</span>
+      </div>
+
+      <div class="icon-modes" role="radiogroup" aria-label="아이콘 방식">
+        <label class="mode-card">
+          <input type="radio" name="iconMode" value="existing" checked>
+          <span class="mode-visual existing-icon-box">
+            <img id="existingIconPreview" alt="현재 사이트 아이콘">
+            <span id="existingIconFallback">○</span>
+          </span>
+          <span>기존 아이콘</span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="iconMode" value="jh">
+          <span class="mode-visual jh-mark">JH</span>
+          <span>JH 아이콘</span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="iconMode" value="url">
+          <span class="mode-visual">🔗</span>
+          <span>이미지 URL</span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="iconMode" value="upload">
+          <span class="mode-visual">＋</span>
+          <span>파일 선택</span>
+        </label>
+      </div>
+
+      <div id="urlArea" class="conditional hidden">
+        <label for="iconUrl">아이콘 이미지 URL</label>
+        <input id="iconUrl" type="url" placeholder="https://example.com/icon.png">
+      </div>
+
+      <div id="uploadArea" class="conditional hidden">
+        <label for="iconFile">아이콘 이미지 파일</label>
+        <input id="iconFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+        <div id="uploadPreview" class="upload-preview hidden">
+          <img id="previewImage" alt="선택한 아이콘 미리보기">
+          <span id="previewName"></span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-heading">
+        <div>
+          <span class="field-label section-title">탭 카테고리</span>
+          <span class="section-caption">별칭과 별개로, 같은 카테고리의 탭을 현재 창의 한 그룹으로 합칩니다</span>
+        </div>
+      </div>
+
+      <div class="category-select-row">
+        <label class="sr-only" for="categorySelect">저장된 탭 카테고리</label>
+        <select id="categorySelect">
+          <option value="">카테고리 사용 안 함</option>
+        </select>
+        <button id="deleteCategoryButton" class="mini-button danger" type="button" disabled>삭제</button>
+      </div>
+
+      <div class="category-add-box">
+        <label for="newCategoryName">새 카테고리 직접 추가</label>
+        <input id="newCategoryName" type="text" maxlength="40" placeholder="예: 연구, 수업, 업무">
+        <div class="category-add-row">
+          <label class="sr-only" for="newCategoryColor">새 카테고리 색상</label>
+          <select id="newCategoryColor">
+            <option value="blue">파랑</option>
+            <option value="cyan">청록</option>
+            <option value="green">초록</option>
+            <option value="yellow">노랑</option>
+            <option value="orange">주황</option>
+            <option value="red">빨강</option>
+            <option value="pink">분홍</option>
+            <option value="purple">보라</option>
+            <option value="grey">회색</option>
+          </select>
+          <button id="addCategoryButton" class="mini-button add" type="button">추가</button>
+        </div>
+      </div>
+
+      <p class="notice">별칭은 탭의 표시 이름이고, 카테고리는 탭 그룹입니다. 둘은 항상 독립적으로 함께 적용됩니다. 서로 다른 Chrome 창의 탭은 하나의 그룹으로 합칠 수 없습니다.</p>
+    </section>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <div class="actions">
+      <button id="resetButton" class="button secondary" type="button">원래대로</button>
+      <button id="applyButton" class="button primary" type="button">현재 탭에 적용</button>
+    </div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

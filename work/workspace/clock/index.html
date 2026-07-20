@@ -1,0 +1,1003 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoonHee's Clock</title>
+  <style>
+    :root {
+      --bg-1: #eef2f7;
+      --bg-2: #e8edf5;
+      --bg-3: #dde5f0;
+      --card: rgba(255, 255, 255, 0.62);
+      --card-strong: rgba(255, 255, 255, 0.78);
+      --line: rgba(255, 255, 255, 0.72);
+      --line-soft: rgba(255, 255, 255, 0.42);
+      --text: #111827;
+      --muted: #5b6472;
+      --soft: #7b8698;
+      --accent: #2f6df6;
+      --shadow-lg: 0 24px 60px rgba(74, 92, 128, 0.16);
+      --shadow-md: 0 10px 28px rgba(74, 92, 128, 0.12);
+      --radius-xl: 34px;
+      --radius-lg: 26px;
+      --radius-md: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.95), transparent 24%),
+        radial-gradient(circle at 82% 16%, rgba(255,255,255,0.7), transparent 20%),
+        linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(16px, 3vw, 36px);
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(70px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      width: 280px;
+      height: 280px;
+      top: -40px;
+      right: -50px;
+      background: rgba(190, 214, 255, 0.7);
+    }
+
+    body::after {
+      width: 260px;
+      height: 260px;
+      left: -40px;
+      bottom: -50px;
+      background: rgba(231, 214, 255, 0.55);
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(920px, 100%);
+      min-height: min(90vh, 820px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .widget {
+      width: 100%;
+      padding: clamp(22px, 4vw, 40px);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(180deg, var(--card-strong) 0%, var(--card) 100%);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(24px) saturate(1.1);
+      -webkit-backdrop-filter: blur(24px) saturate(1.1);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(20px, 3vw, 28px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .widget::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.55), transparent 30%, transparent 72%, rgba(255,255,255,0.28));
+      pointer-events: none;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .eyebrow {
+      font-size: 0.84rem;
+      color: var(--soft);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      font-size: clamp(1rem, 1.7vw, 1.16rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(255,255,255,0.65);
+      color: var(--muted);
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-md);
+      white-space: nowrap;
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34c759;
+      box-shadow: 0 0 10px rgba(52, 199, 89, 0.45);
+      flex-shrink: 0;
+    }
+
+    .clock-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.62);
+      box-shadow: var(--shadow-md);
+      padding: clamp(18px, 3vw, 28px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .time {
+      font-size: clamp(3.2rem, 13vw, 8.2rem);
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      line-height: 0.95;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      color: #0f172a;
+    }
+
+    .date {
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+    }
+
+    .memo-card,
+    .alarm-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.44);
+      border: 1px solid rgba(255,255,255,0.58);
+      box-shadow: var(--shadow-md);
+      padding: clamp(16px, 2.6vw, 22px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .memo-head,
+    .alarm-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .memo-title,
+    .alarm-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .memo-caption,
+    .alarm-caption {
+      font-size: 0.9rem;
+      color: var(--soft);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 7em;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.72);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.58);
+      color: var(--text);
+      outline: none;
+      padding: 15px 16px;
+      font-size: clamp(0.98rem, 1.8vw, 1.05rem);
+      line-height: 1.65;
+      letter-spacing: -0.01em;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    textarea::placeholder {
+      color: #8a94a6;
+    }
+
+    textarea:focus {
+      border-color: rgba(47, 109, 246, 0.32);
+      box-shadow: 0 0 0 4px rgba(47, 109, 246, 0.09);
+      background: rgba(255,255,255,0.75);
+    }
+
+    .memo-footer,
+    .alarm-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .status,
+    .alarm-status {
+      font-size: 0.92rem;
+      color: var(--soft);
+      min-height: 1.2em;
+    }
+
+    .clear-btn,
+    .alarm-btn,
+    .alarm-delete-btn,
+    .alarm-stop-btn {
+      appearance: none;
+      border: none;
+      border-radius: 14px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.76);
+      color: var(--text);
+      font-size: 0.94rem;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(82, 96, 129, 0.12);
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .clear-btn:hover,
+    .alarm-btn:hover,
+    .alarm-delete-btn:hover,
+    .alarm-stop-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 12px 24px rgba(82, 96, 129, 0.16);
+    }
+
+    .clear-btn:active,
+    .alarm-btn:active,
+    .alarm-delete-btn:active,
+    .alarm-stop-btn:active {
+      transform: translateY(0);
+    }
+
+    .alarm-form {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.32fr) minmax(180px, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .alarm-input {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.72);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.58);
+      color: var(--text);
+      outline: none;
+      padding: 12px 14px;
+      font-size: 0.96rem;
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .alarm-input::placeholder {
+      color: #8a94a6;
+    }
+
+    .alarm-input:focus {
+      border-color: rgba(47, 109, 246, 0.32);
+      box-shadow: 0 0 0 4px rgba(47, 109, 246, 0.09);
+      background: rgba(255,255,255,0.75);
+    }
+
+    .alarm-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .alarm-empty {
+      padding: 14px 15px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.36);
+      border: 1px solid rgba(255,255,255,0.5);
+      color: var(--soft);
+      font-size: 0.94rem;
+      line-height: 1.45;
+    }
+
+    .alarm-item {
+      display: grid;
+      grid-template-columns: 76px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(255,255,255,0.58);
+    }
+
+    .alarm-item-time {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .alarm-item-message {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .alarm-delete-btn {
+      padding: 8px 11px;
+      color: #6b7280;
+      font-size: 0.86rem;
+      box-shadow: 0 6px 16px rgba(82, 96, 129, 0.1);
+    }
+
+    .alarm-stop-btn {
+      display: none;
+      background: rgba(47, 109, 246, 0.9);
+      color: #ffffff;
+    }
+
+    .alarm-stop-btn.active {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 640px) {
+      .widget {
+        padding: 18px 14px;
+        border-radius: 26px;
+      }
+
+      .header,
+      .memo-head,
+      .memo-footer,
+      .alarm-head,
+      .alarm-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .clock-card,
+      .memo-card,
+      .alarm-card {
+        border-radius: 22px;
+      }
+
+      textarea {
+        min-height: 7.6em;
+      }
+
+      .alarm-form {
+        grid-template-columns: 1fr;
+      }
+
+      .alarm-btn {
+        width: 100%;
+      }
+
+      .alarm-item {
+        grid-template-columns: 1fr auto;
+      }
+
+      .alarm-item-time {
+        grid-column: 1 / 2;
+      }
+
+      .alarm-item-message {
+        grid-column: 1 / -1;
+      }
+
+      .alarm-delete-btn {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared.css" />
+
+<style>
+.time,
+#clock,
+.clock-time,
+.digital-clock,
+.main-time {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif !important;
+  font-weight: 700 !important;
+}
+</style>
+
+
+<style>
+/* Main clock number uses clean normal font */
+.time,
+.clock-time,
+.digital-clock,
+#clock,
+#time,
+.main-time {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/* Keep other text in portal font */
+body,
+h1,
+h2,
+h3,
+p,
+span:not(.time):not(.clock-time):not(.digital-clock):not(#clock):not(#time):not(.main-time),
+button,
+label,
+.date,
+.day {
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+</style>
+
+
+<style>
+/* Only the largest clock time uses a clean system font */
+body.workspace-tool .time,
+body.workspace-tool #time,
+body.workspace-tool #clock,
+body.workspace-tool .clock-time,
+body.workspace-tool .main-time {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.04em !important;
+}
+</style>
+
+
+<style>
+/* Header heart + name fine tuning */
+body.workspace-tool .title-wrap .eyebrow {
+  display: inline-flex !important;
+  width: fit-content !important;
+  max-width: max-content !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body.workspace-tool .title-wrap .heart-mark {
+  display: inline-block !important;
+  color: #ff5fa8 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Symbol", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;
+  font-size: 0.86rem !important;
+  line-height: 1 !important;
+}
+
+body.workspace-tool .title-wrap .title {
+  font-size: clamp(0.94rem, 1.55vw, 1.08rem) !important;
+  line-height: 1.18 !important;
+}
+</style>
+
+</head>
+<body class="workspace-tool">
+
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← my workspace</a>
+    <span class="myworkspace-date">Created Apr 1, 2025</span>
+  </nav>
+
+  <main class="app">
+    <section class="widget" aria-label="준희">
+      <div class="header">
+        <div class="title-wrap">
+          <div class="eyebrow" aria-hidden="true"><span class="heart-mark">♥</span></div>
+          <div class="title">Joon Hee</div>
+        </div>
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>Asia/Seoul</span>
+        </div>
+      </div>
+
+      <section class="clock-card" aria-label="clock">
+        <div id="time" class="time">00:00:00</div>
+        <div id="date" class="date">0000년 00월 00일</div>
+      </section>
+
+      <section class="memo-card" aria-label="memo">
+        <div class="memo-head">
+          <div class="memo-title">memo</div>
+          <div class="memo-caption"></div>
+        </div>
+
+        <textarea
+          id="memo"
+          placeholder=""
+          aria-label="input"
+        ></textarea>
+
+        <div class="memo-footer">
+          <div id="status" class="status"></div>
+          <button id="clearBtn" class="clear-btn" type="button">delete</button>
+        </div>
+      </section>
+
+      <section class="alarm-card" aria-label="alarm">
+        <div class="alarm-head">
+          <div class="alarm-title">alarm</div>
+          <div id="alarmCount" class="alarm-caption">0 / 5</div>
+        </div>
+
+        <div class="alarm-form">
+          <input id="alarmTime" class="alarm-input" type="time" aria-label="alarm time" />
+          <input id="alarmMessage" class="alarm-input" type="text" maxlength="80" placeholder="alarm memo" aria-label="alarm message" />
+          <button id="addAlarmBtn" class="alarm-btn" type="button">add</button>
+        </div>
+
+        <div id="alarmList" class="alarm-list" aria-label="alarm list"></div>
+
+        <div class="alarm-footer">
+          <div id="alarmStatus" class="alarm-status"></div>
+          <button id="stopAlarmBtn" class="alarm-stop-btn" type="button">stop alarm</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const timeEl = document.getElementById('time');
+    const dateEl = document.getElementById('date');
+    const memoEl = document.getElementById('memo');
+    const statusEl = document.getElementById('status');
+    const clearBtn = document.getElementById('clearBtn');
+    const alarmTimeEl = document.getElementById('alarmTime');
+    const alarmMessageEl = document.getElementById('alarmMessage');
+    const addAlarmBtn = document.getElementById('addAlarmBtn');
+    const alarmListEl = document.getElementById('alarmList');
+    const alarmStatusEl = document.getElementById('alarmStatus');
+    const alarmCountEl = document.getElementById('alarmCount');
+    const stopAlarmBtn = document.getElementById('stopAlarmBtn');
+
+    const MEMO_KEY = 'kst-clock-private-memo';
+    const ALARM_KEY = 'kst-clock-private-alarms';
+    const MAX_ALARMS = 5;
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
+
+    let alarms = [];
+    let audioContext = null;
+    let alarmSoundTimer = null;
+    let activeOscillators = [];
+
+    function getSeoulParts(date = new Date()) {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Seoul',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        weekday: 'long'
+      }).formatToParts(date);
+
+      const get = (type) => parts.find(p => p.type === type)?.value || '';
+
+      return {
+        hour: get('hour'),
+        minute: get('minute'),
+        second: get('second'),
+        year: get('year'),
+        month: get('month'),
+        day: get('day'),
+        weekdayEn: get('weekday')
+      };
+    }
+
+    function updateClock() {
+      const nowParts = getSeoulParts();
+      const weekdayMap = {
+        Sunday: weekdays[0],
+        Monday: weekdays[1],
+        Tuesday: weekdays[2],
+        Wednesday: weekdays[3],
+        Thursday: weekdays[4],
+        Friday: weekdays[5],
+        Saturday: weekdays[6]
+      };
+
+      timeEl.textContent = `${nowParts.hour}:${nowParts.minute}:${nowParts.second}`;
+      dateEl.textContent = `${nowParts.year}년 ${nowParts.month}월 ${nowParts.day}일 ${weekdayMap[nowParts.weekdayEn] || ''}`;
+    }
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+      clearTimeout(setStatus._timer);
+      setStatus._timer = setTimeout(() => {
+        statusEl.textContent = 'auto saved';
+      }, 1200);
+    }
+
+    function setAlarmStatus(message) {
+      alarmStatusEl.textContent = message;
+      clearTimeout(setAlarmStatus._timer);
+      setAlarmStatus._timer = setTimeout(() => {
+        alarmStatusEl.textContent = alarms.length ? 'alarm saved' : '';
+      }, 1800);
+    }
+
+    function loadMemo() {
+      const saved = localStorage.getItem(MEMO_KEY);
+      if (saved !== null) {
+        memoEl.value = saved;
+      }
+    }
+
+    function saveMemo() {
+      localStorage.setItem(MEMO_KEY, memoEl.value);
+      setStatus('saved');
+    }
+
+    function loadAlarms() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(ALARM_KEY) || '[]');
+        alarms = Array.isArray(saved) ? saved.slice(0, MAX_ALARMS) : [];
+      } catch (error) {
+        alarms = [];
+      }
+    }
+
+    function saveAlarms() {
+      localStorage.setItem(ALARM_KEY, JSON.stringify(alarms));
+      renderAlarms();
+    }
+
+    function createAlarmId() {
+      if (window.crypto && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function renderAlarms() {
+      alarmCountEl.textContent = `${alarms.length} / ${MAX_ALARMS}`;
+
+      if (!alarms.length) {
+        alarmListEl.innerHTML = '<div class="alarm-empty">No alarms yet.</div>';
+        return;
+      }
+
+      const sortedAlarms = [...alarms].sort((a, b) => a.time.localeCompare(b.time));
+      alarmListEl.innerHTML = '';
+
+      sortedAlarms.forEach((alarm) => {
+        const item = document.createElement('div');
+        item.className = 'alarm-item';
+
+        const time = document.createElement('div');
+        time.className = 'alarm-item-time';
+        time.textContent = alarm.time;
+
+        const message = document.createElement('div');
+        message.className = 'alarm-item-message';
+        message.textContent = alarm.message || 'alarm';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'alarm-delete-btn';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = 'delete';
+        deleteBtn.addEventListener('click', () => deleteAlarm(alarm.id));
+
+        item.appendChild(time);
+        item.appendChild(message);
+        item.appendChild(deleteBtn);
+        alarmListEl.appendChild(item);
+      });
+    }
+
+    async function ensureAudioReady() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        return;
+      }
+
+      if (!audioContext) {
+        audioContext = new AudioContextClass();
+      }
+
+      if (audioContext.state === 'suspended') {
+        try {
+          await audioContext.resume();
+        } catch (error) {
+          
+        }
+      }
+    }
+
+    function playOneBeep(startDelay = 0) {
+      if (!audioContext) {
+        return;
+      }
+
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const startTime = audioContext.currentTime + startDelay;
+      const stopTime = startTime + 0.34;
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, startTime);
+      oscillator.frequency.setValueAtTime(660, startTime + 0.17);
+
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.22, startTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, stopTime);
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(startTime);
+      oscillator.stop(stopTime);
+
+      activeOscillators.push(oscillator);
+      oscillator.addEventListener('ended', () => {
+        activeOscillators = activeOscillators.filter(item => item !== oscillator);
+      });
+    }
+
+    async function startAlarmSound() {
+      await ensureAudioReady();
+      stopAlarmSound();
+      playOneBeep(0);
+      playOneBeep(0.46);
+      playOneBeep(0.92);
+
+      alarmSoundTimer = setInterval(() => {
+        playOneBeep(0);
+        playOneBeep(0.46);
+        playOneBeep(0.92);
+      }, 1800);
+
+      stopAlarmBtn.classList.add('active');
+    }
+
+    function stopAlarmSound() {
+      if (alarmSoundTimer) {
+        clearInterval(alarmSoundTimer);
+        alarmSoundTimer = null;
+      }
+
+      activeOscillators.forEach((oscillator) => {
+        try {
+          oscillator.stop();
+        } catch (error) {
+          // Already stopped.
+        }
+      });
+      activeOscillators = [];
+      stopAlarmBtn.classList.remove('active');
+    }
+
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        return 'unsupported';
+      }
+
+      if (Notification.permission === 'default') {
+        return await Notification.requestPermission();
+      }
+
+      return Notification.permission;
+    }
+
+    function showBrowserNotification(alarm) {
+      if (!('Notification' in window) || Notification.permission !== 'granted') {
+        return;
+      }
+
+      const notification = new Notification('Joon Hee alarm', {
+        body: `${alarm.time}  ${alarm.message || 'alarm'}`,
+        silent: true
+      });
+
+      setTimeout(() => notification.close(), 12000);
+    }
+
+    async function addAlarm() {
+      const time = alarmTimeEl.value;
+      const message = alarmMessageEl.value.trim();
+
+      if (!time) {
+        setAlarmStatus('time required');
+        alarmTimeEl.focus();
+        return;
+      }
+
+      if (!message) {
+        setAlarmStatus('memo required');
+        alarmMessageEl.focus();
+        return;
+      }
+
+      if (alarms.length >= MAX_ALARMS) {
+        setAlarmStatus('maximum 5 alarms');
+        return;
+      }
+
+      if (alarms.some(alarm => alarm.time === time && alarm.message === message)) {
+        setAlarmStatus('already added');
+        return;
+      }
+
+      await ensureAudioReady();
+      const permission = await requestNotificationPermission();
+
+      alarms.push({
+        id: createAlarmId(),
+        time,
+        message,
+        lastFiredDate: ''
+      });
+
+      alarmTimeEl.value = '';
+      alarmMessageEl.value = '';
+      saveAlarms();
+
+      if (permission === 'denied') {
+        setAlarmStatus('alarm saved, notification blocked');
+      } else if (permission === 'unsupported') {
+        setAlarmStatus('alarm saved, notification unsupported');
+      } else {
+        setAlarmStatus('alarm added');
+      }
+    }
+
+    function deleteAlarm(id) {
+      alarms = alarms.filter(alarm => alarm.id !== id);
+      saveAlarms();
+      setAlarmStatus('alarm deleted');
+    }
+
+    async function fireAlarm(alarm, todayKey) {
+      alarm.lastFiredDate = todayKey;
+      saveAlarms();
+      setAlarmStatus(`${alarm.time} ${alarm.message}`);
+      showBrowserNotification(alarm);
+      await startAlarmSound();
+    }
+
+    function checkAlarms() {
+      if (!alarms.length) {
+        return;
+      }
+
+      const nowParts = getSeoulParts();
+      const currentTime = `${nowParts.hour}:${nowParts.minute}`;
+      const todayKey = `${nowParts.year}-${nowParts.month}-${nowParts.day}`;
+
+      alarms.forEach((alarm) => {
+        if (alarm.time === currentTime && alarm.lastFiredDate !== todayKey) {
+          fireAlarm(alarm, todayKey);
+        }
+      });
+    }
+
+    memoEl.addEventListener('input', saveMemo);
+
+    clearBtn.addEventListener('click', () => {
+      memoEl.value = '';
+      localStorage.removeItem(MEMO_KEY);
+      setStatus('deleted');
+      memoEl.focus();
+    });
+
+    addAlarmBtn.addEventListener('click', addAlarm);
+    alarmMessageEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        addAlarm();
+      }
+    });
+    stopAlarmBtn.addEventListener('click', () => {
+      stopAlarmSound();
+      setAlarmStatus('alarm stopped');
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        checkAlarms();
+      }
+    });
+
+    loadMemo();
+    loadAlarms();
+    renderAlarms();
+    updateClock();
+    checkAlarms();
+    setInterval(() => {
+      updateClock();
+      checkAlarms();
+    }, 1000);
+  </script>
+
+<script>
+(function patchClockEnglishDate() {
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const dayNames = [
+    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+  ];
+
+  function updateEnglishDateOnly() {
+    const now = new Date();
+    const formatted = `${dayNames[now.getDay()]}, ${monthNames[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+    const candidates = document.querySelectorAll(".date, #date, .clock-date, [data-date]");
+    candidates.forEach((el) => {
+      if (el.classList.contains("myworkspace-date")) return;
+      el.textContent = formatted;
+    });
+  }
+
+  updateEnglishDateOnly();
+  setInterval(updateEnglishDateOnly, 1000);
+})();
+</script>
+
+</body>
