@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoonHee's Healthy Eyes</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #202632;
+      --sub: #667085;
+      --accent: #6c8cff;
+      --accent2: #9dd7c8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 55%, #e9eefb 100%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(960px, 100%);
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 32px;
+      box-shadow: 0 24px 80px rgba(40, 57, 100, 0.16);
+      padding: 28px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--sub);
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 18px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #f2f4f7;
+      color: #475467;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .stage {
+      height: 360px;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(108,140,255,0.10), rgba(157,215,200,0.20)),
+        #ffffff;
+      border: 1px solid #eef1f6;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 12px rgba(108,140,255,0.12);
+      transition: left 900ms ease-in-out, top 900ms ease-in-out, width 300ms ease, height 300ms ease;
+    }
+
+    .guide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      color: var(--sub);
+      pointer-events: none;
+      font-weight: 800;
+    }
+
+    .panel {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #eef1f6;
+    }
+
+    .timer {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      margin: 8px 0;
+    }
+
+    .big-timer {
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+      margin: 10px 0;
+    }
+
+    .mode {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .desc {
+      color: var(--sub);
+      line-height: 1.6;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #edf1ff;
+      color: #4058d8;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #edf1ff;
+      color: #4058d8;
+      transition: transform 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    button.gray {
+      background: #f2f4f7;
+      color: #475467;
+    }
+
+    button.green {
+      background: #e7f8f1;
+      color: #13795b;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .item {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #f8fafc;
+      font-size: 14px;
+      color: #344054;
+      cursor: pointer;
+    }
+
+    .item.active {
+      background: #edf1ff;
+      color: #4058d8;
+      font-weight: 800;
+    }
+
+    .manage-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .mini {
+      color: var(--sub);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 720px) {
+      .panel,
+      .manage-grid {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .stage {
+        height: 300px;
+      }
+
+      .timer {
+        font-size: 40px;
+      }
+
+      .big-timer {
+        font-size: 52px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared.css" />
+
+<style>
+body.healthy-eyes-page {
+  display: block !important;
+  padding: 0 !important;
+}
+body.healthy-eyes-page .app {
+  margin: 24px auto 48px !important;
+  width: min(960px, calc(100% - 32px)) !important;
+  background: var(--my-card) !important;
+  border: 1px solid var(--my-line) !important;
+  border-radius: 26px !important;
+  box-shadow: var(--my-shadow) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+body.healthy-eyes-page header h1 {
+  font-size: clamp(1.8rem, 4.2vw, 2.35rem) !important;
+  letter-spacing: -0.045em !important;
+}
+body.healthy-eyes-page .stage,
+body.healthy-eyes-page .card {
+  background: rgba(255,255,255,0.68) !important;
+  border: 1px solid var(--my-line) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 8px 22px rgba(94,120,160,0.10) !important;
+}
+body.healthy-eyes-page .tab.active,
+body.healthy-eyes-page button.primary {
+  background: linear-gradient(135deg, var(--my-pink), #ff74ba) !important;
+  color: #fff !important;
+}
+body.healthy-eyes-page button,
+body.healthy-eyes-page .tab {
+  border-radius: 999px !important;
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+body.healthy-eyes-page .dot {
+  background: var(--my-pink) !important;
+  box-shadow: 0 0 0 12px rgba(255,143,199,0.14) !important;
+}
+body.healthy-eyes-page .timer,
+body.healthy-eyes-page .big-timer {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif !important;
+  font-weight: 800 !important;
+}
+</style>
+
+</head>
+<body class="workspace-tool healthy-eyes-page">
+
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← Wellness</a>
+    <span class="myworkspace-date">Created May 18, 2026</span>
+  </nav>
+
+  <main class="app">
+    <header>
+      <div>
+        <h1>JoonHee's Healthy Eyes</h1>
+        <div class="subtitle">눈 피로를 줄이기 위한 간단한 안구 운동 도우미</div>
+      </div>
+      <button class="gray" onclick="toggleFullScreen()">전체 화면</button>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" id="exerciseTabBtn" onclick="openTab('exercise')">운동하기</button>
+      <button class="tab" id="manageTabBtn" onclick="openTab('manage')">자동 관리</button>
+    </div>
+
+    <section class="stage">
+      <div class="dot" id="dot"></div>
+      <div class="guide" id="guide">핑크색 포인터 따라가기!</div>
+    </section>
+
+    <section class="tab-content active" id="exerciseTab">
+      <section class="panel">
+        <div class="card">
+          <div class="mode" id="modeTitle">멀리 보기 휴식</div>
+          <div class="timer" id="timer">00:15</div>
+          <div class="desc" id="modeDesc">잠깐 멀리 보기! 눈 휴식하기 ~!</div>
+
+          <div class="buttons">
+            <button class="primary" onclick="startAutoSequence()">5가지 자동 시작</button>
+            <button onclick="startSelected()">선택 운동 시작</button>
+            <button onclick="pauseExercise()">일시정지</button>
+            <button class="gray" onclick="resetExercise()">초기화</button>
+            <button onclick="nextMode()">다음 운동</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="mode">운동 선택</div>
+          <div class="list" id="modeList"></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="tab-content" id="manageTab">
+      <section class="manage-grid">
+        <div class="card">
+          <div class="mode">20분 작업 타이머</div>
+          <div class="big-timer" id="workTimer">20:00</div>
+          <div class="status" id="manageStatus">작업 준비</div>
+          <div class="desc" id="manageDesc">
+            시작하면 20분 뒤 쉬라고 알려주고, 10초 카운트 후 5가지 운동을 자동으로 시작합니다.
+          </div>
+
+          <div class="buttons">
+            <button class="primary" onclick="startAutoManage()">자동 관리 시작</button>
+            <button onclick="pauseAutoManage()">일시정지</button>
+            <button class="gray" onclick="resetAutoManage()">초기화</button>
+            <button class="green" onclick="requestNotificationPermission()">알림 허용</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="mode">자동 흐름</div>
+          <div class="list">
+            <div class="item">1. 20분 집중하기</div>
+            <div class="item">2. 쉬는 시간 알림 받기</div>
+            <div class="item">3. 10초 준비하기</div>
+            <div class="item">4. 5가지 눈 운동 자동 시작</div>
+            <div class="item">5. 운동 끝나면 다시 20분 타이머로 복귀</div>
+          </div>
+          <p class="mini">
+            브라우저 알림은 권한을 허용해야 표시됩니다. 알림이 꺼져 있어도 화면 안에서는 카운트가 계속 보입니다.
+          </p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const modes = [
+      {
+        name: "멀리 보기 휴식",
+        seconds: 15,
+        desc: "잠깐 멀리 보기! 눈 휴식하기 ~!",
+        pattern: "center"
+      },
+      {
+        name: "좌우 안구 이동",
+        seconds: 15,
+        desc: "핑크색 포인터를 좌우로 따라가기!",
+        pattern: "horizontal"
+      },
+      {
+        name: "상하 안구 이동",
+        seconds: 15,
+        desc: "핑크색 포인터를 위아래로 따라가기!",
+        pattern: "vertical"
+      },
+      {
+        name: "대각선 안구 이동",
+        seconds: 15,
+        desc: "핑크색 포인터를 대각선으로 따라가기!",
+        pattern: "diagonal"
+      },
+      {
+        name: "원형 추적",
+        seconds: 15,
+        desc: "핑크색 포인터이 그리는 원 따라가기!",
+        pattern: "circle"
+      }
+    ];
+
+    const WORK_SECONDS = 20 * 60;
+    const PREP_SECONDS = 10;
+
+    let currentMode = 0;
+    let remaining = modes[0].seconds;
+    let timerId = null;
+    let motionId = null;
+    let motionStep = 0;
+    let autoSequence = false;
+    let returnToAutoManage = false;
+
+    let manageTimerId = null;
+    let manageRemaining = WORK_SECONDS;
+    let managePhase = "ready";
+
+    const timer = document.getElementById("timer");
+    const dot = document.getElementById("dot");
+    const modeTitle = document.getElementById("modeTitle");
+    const modeDesc = document.getElementById("modeDesc");
+    const modeList = document.getElementById("modeList");
+    const guide = document.getElementById("guide");
+
+    const workTimer = document.getElementById("workTimer");
+    const manageStatus = document.getElementById("manageStatus");
+    const manageDesc = document.getElementById("manageDesc");
+
+    function openTab(tabName) {
+      document.getElementById("exerciseTab").classList.remove("active");
+      document.getElementById("manageTab").classList.remove("active");
+      document.getElementById("exerciseTabBtn").classList.remove("active");
+      document.getElementById("manageTabBtn").classList.remove("active");
+
+      if (tabName === "exercise") {
+        document.getElementById("exerciseTab").classList.add("active");
+        document.getElementById("exerciseTabBtn").classList.add("active");
+      } else {
+        document.getElementById("manageTab").classList.add("active");
+        document.getElementById("manageTabBtn").classList.add("active");
+      }
+    }
+
+    function formatTime(sec) {
+      const min = String(Math.floor(sec / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      return `${min}:${s}`;
+    }
+
+    function renderModeList() {
+      modeList.innerHTML = "";
+
+      modes.forEach((mode, index) => {
+        const item = document.createElement("div");
+        item.className = "item" + (index === currentMode ? " active" : "");
+        item.textContent = mode.name;
+        item.onclick = () => selectMode(index);
+        modeList.appendChild(item);
+      });
+    }
+
+    function selectMode(index) {
+      pauseExercise();
+      autoSequence = false;
+      returnToAutoManage = false;
+      currentMode = index;
+      remaining = modes[currentMode].seconds;
+      motionStep = 0;
+      updateExerciseDisplay();
+      renderModeList();
+      moveDot();
+    }
+
+    function updateExerciseDisplay() {
+      timer.textContent = formatTime(remaining);
+      modeTitle.textContent = modes[currentMode].name;
+      modeDesc.textContent = modes[currentMode].desc;
+    }
+
+    function startSelected() {
+      autoSequence = false;
+      returnToAutoManage = false;
+      runExerciseTimer();
+    }
+
+    function startAutoSequence() {
+      pauseExercise();
+      autoSequence = true;
+      returnToAutoManage = false;
+      currentMode = 0;
+      remaining = modes[currentMode].seconds;
+      motionStep = 0;
+      updateExerciseDisplay();
+      renderModeList();
+      runExerciseTimer();
+    }
+
+    function startAutoSequenceFromManage() {
+      pauseExercise();
+      autoSequence = true;
+      returnToAutoManage = true;
+      currentMode = 0;
+      remaining = modes[currentMode].seconds;
+      motionStep = 0;
+      updateExerciseDisplay();
+      renderModeList();
+      openTab("exercise");
+      runExerciseTimer();
+    }
+
+    function runExerciseTimer() {
+      if (timerId) return;
+
+      guide.textContent = "핑크색 포인터 따라가기!";
+      moveDot();
+      motionId = setInterval(moveDot, 950);
+
+      timerId = setInterval(() => {
+        remaining--;
+
+        if (remaining <= 0) {
+          if (autoSequence) {
+            currentMode++;
+
+            if (currentMode >= modes.length) {
+              pauseExercise();
+              autoSequence = false;
+              currentMode = 0;
+              remaining = modes[currentMode].seconds;
+              motionStep = 0;
+              updateExerciseDisplay();
+              renderModeList();
+              setDot(50, 50);
+
+              if (returnToAutoManage) {
+                returnToAutoManage = false;
+                startNextWorkCycle();
+              }
+
+              return;
+            }
+
+            remaining = modes[currentMode].seconds;
+            motionStep = 0;
+            updateExerciseDisplay();
+            renderModeList();
+            moveDot();
+            return;
+          }
+
+          pauseExercise();
+          remaining = modes[currentMode].seconds;
+          motionStep = 0;
+          updateExerciseDisplay();
+          setDot(50, 50);
+          return;
+        }
+
+        updateExerciseDisplay();
+      }, 1000);
+    }
+
+    function pauseExercise() {
+      clearInterval(timerId);
+      clearInterval(motionId);
+      timerId = null;
+      motionId = null;
+    }
+
+    function resetExercise() {
+      pauseExercise();
+      autoSequence = false;
+      returnToAutoManage = false;
+      remaining = modes[currentMode].seconds;
+      motionStep = 0;
+      updateExerciseDisplay();
+      setDot(50, 50);
+      guide.textContent = "핑크색 포인터 따라가기!";
+    }
+
+    function nextMode() {
+      pauseExercise();
+      autoSequence = false;
+      returnToAutoManage = false;
+      currentMode = (currentMode + 1) % modes.length;
+      remaining = modes[currentMode].seconds;
+      motionStep = 0;
+      updateExerciseDisplay();
+      renderModeList();
+      setDot(50, 50);
+    }
+
+    function setDot(x, y) {
+      dot.style.left = `${x}%`;
+      dot.style.top = `${y}%`;
+    }
+
+    function moveDot() {
+      const pattern = modes[currentMode].pattern;
+
+      dot.style.width = "28px";
+      dot.style.height = "28px";
+
+      if (pattern === "center") {
+        setDot(50, 50);
+      }
+
+      if (pattern === "horizontal") {
+        const points = [[20, 50], [80, 50]];
+        setDot(...points[motionStep % points.length]);
+      }
+
+      if (pattern === "vertical") {
+        const points = [[50, 20], [50, 80]];
+        setDot(...points[motionStep % points.length]);
+      }
+
+      if (pattern === "diagonal") {
+        const points = [[20, 20], [80, 80], [80, 20], [20, 80]];
+        setDot(...points[motionStep % points.length]);
+      }
+
+      if (pattern === "circle") {
+        const angle = motionStep * 30 * Math.PI / 180;
+        const x = 50 + Math.cos(angle) * 30;
+        const y = 50 + Math.sin(angle) * 30;
+        setDot(x, y);
+      }
+
+      motionStep++;
+    }
+
+    function updateManageDisplay() {
+      workTimer.textContent = formatTime(manageRemaining);
+
+      if (managePhase === "ready") {
+        manageStatus.textContent = "작업 준비";
+        manageDesc.textContent = "시작하면 20분 뒤 쉬라고 알려주고, 10초 카운트 후 5가지 운동을 자동으로 시작합니다.";
+      }
+
+      if (managePhase === "work") {
+        manageStatus.textContent = "집중하기";
+        manageDesc.textContent = "20분 작업 중입니다. 끝나면 쉬라고 알려드릴게요.";
+      }
+
+      if (managePhase === "prep") {
+        manageStatus.textContent = "쉬는 시간!";
+        manageDesc.textContent = "곧 눈 운동을 시작합니다. 화면을 편하게 바라보기 ~!";
+      }
+
+      if (managePhase === "exercise") {
+        manageStatus.textContent = "운동 중";
+        manageDesc.textContent = "5가지 눈 운동 자동 진행 중입니다.";
+      }
+
+      if (managePhase === "paused") {
+        manageStatus.textContent = "일시정지";
+        manageDesc.textContent = "자동 관리가 잠시 멈춰 있습니다.";
+      }
+    }
+
+    function startAutoManage() {
+      if (manageTimerId) return;
+
+      pauseExercise();
+      openTab("manage");
+
+      if (managePhase === "ready" || managePhase === "paused") {
+        managePhase = "work";
+      }
+
+      updateManageDisplay();
+
+      manageTimerId = setInterval(() => {
+        manageRemaining--;
+
+        if (manageRemaining <= 0) {
+          clearInterval(manageTimerId);
+          manageTimerId = null;
+
+          if (managePhase === "work") {
+            notifyBreakTime();
+            startPrepCountdown();
+            return;
+          }
+
+          if (managePhase === "prep") {
+            managePhase = "exercise";
+            manageRemaining = WORK_SECONDS;
+            updateManageDisplay();
+            startAutoSequenceFromManage();
+            return;
+          }
+        }
+
+        updateManageDisplay();
+      }, 1000);
+    }
+
+    function startPrepCountdown() {
+      managePhase = "prep";
+      manageRemaining = PREP_SECONDS;
+      guide.textContent = "쉬는 시간! 10초 뒤 시작하기!";
+      setDot(50, 50);
+      openTab("manage");
+      startAutoManage();
+    }
+
+    function startNextWorkCycle() {
+      managePhase = "work";
+      manageRemaining = WORK_SECONDS;
+      updateManageDisplay();
+      openTab("manage");
+      startAutoManage();
+    }
+
+    function pauseAutoManage() {
+      clearInterval(manageTimerId);
+      manageTimerId = null;
+
+      if (managePhase !== "ready") {
+        managePhase = "paused";
+      }
+
+      updateManageDisplay();
+    }
+
+    function resetAutoManage() {
+      clearInterval(manageTimerId);
+      manageTimerId = null;
+      pauseExercise();
+
+      managePhase = "ready";
+      manageRemaining = WORK_SECONDS;
+      autoSequence = false;
+      returnToAutoManage = false;
+
+      guide.textContent = "핑크색 포인터 따라가기!";
+      setDot(50, 50);
+      updateManageDisplay();
+    }
+
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("이 브라우저는 알림을 지원하지 않습니다.");
+        return;
+      }
+
+      Notification.requestPermission();
+    }
+
+    function notifyBreakTime() {
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("쉬는 시간!", {
+          body: "10초 뒤 눈 운동을 시작합니다."
+        });
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    updateExerciseDisplay();
+    updateManageDisplay();
+    renderModeList();
+  </script>
+</body>
+</html>

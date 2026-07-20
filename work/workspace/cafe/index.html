@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoonHee's Cafe</title>
+  <link rel="stylesheet" href="../../shared.css" />
+  <style>
+    :root {
+      --coffee: #6d503d;
+      --americano: #4d372b;
+      --latte: #d9b284;
+      --strawberry: #f79fba;
+      --strawberry-soft: #ffc2d6;
+      --matcha: #8fc47a;
+      --orange: #f7bd63;
+      --greenade: #b7da7a;
+      --choco: #7c4b38;
+      --cup-line: rgba(91, 75, 62, 0.16);
+    }
+
+    body { overflow-x: hidden; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(260px, 0.58fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .hero-main {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(24px, 5vw, 46px);
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -85px;
+      width: 240px;
+      height: 240px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255,143,199,0.42), rgba(139,215,255,0.38));
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.62);
+      border: 1px solid var(--my-line);
+      color: var(--my-muted);
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(2.5rem, 7vw, 5.2rem);
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      color: #172033;
+    }
+
+    .side-note {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .side-note .label {
+      color: var(--my-muted);
+      font-size: 0.9rem;
+    }
+
+    .side-note .value {
+      font-size: clamp(1.2rem, 3vw, 1.85rem);
+      line-height: 1.32;
+      letter-spacing: -0.04em;
+    }
+
+    .cafe-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.03fr) minmax(320px, 0.97fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel { padding: 22px; }
+
+    .section-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 1.24rem;
+      line-height: 1.2;
+      letter-spacing: -0.04em;
+      color: var(--my-ink);
+    }
+
+    .section-title span {
+      color: var(--my-muted);
+      font-size: 0.86rem;
+      line-height: 1.5;
+      text-align: right;
+    }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    input, select, button { font: inherit; }
+
+    input, select {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--my-line);
+      border-radius: 18px;
+      padding: 0 14px;
+      outline: none;
+      color: var(--my-ink);
+      background: rgba(255,255,255,0.74);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(139,215,255,0.78);
+      box-shadow: 0 0 0 4px rgba(139,215,255,0.18);
+    }
+
+    button { border: 0; cursor: pointer; }
+
+    .btn {
+      min-height: 46px;
+      padding: 0 16px;
+      border-radius: 16px;
+      color: white;
+      background: linear-gradient(135deg, var(--my-pink), #ff74ba);
+      font-weight: 900;
+      box-shadow: 0 12px 22px rgba(255,116,186,0.18);
+      transition: transform 150ms ease, filter 150ms ease, box-shadow 150ms ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.02); }
+    .btn:active { transform: translateY(0); }
+
+    .btn.secondary {
+      color: var(--my-ink);
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--my-line);
+      box-shadow: none;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .menu-card {
+      min-height: 128px;
+      text-align: left;
+      color: var(--my-ink);
+      border: 1px solid var(--my-line);
+      border-radius: 22px;
+      padding: 14px;
+      background: rgba(255,255,255,0.62);
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .menu-card:hover,
+    .menu-card.active {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 18px 34px rgba(94,120,160,0.16);
+    }
+
+    .menu-card.active { outline: 4px solid rgba(255,143,199,0.18); }
+
+    .menu-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .menu-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--my-line);
+      font-size: 1.35rem;
+    }
+
+    .menu-name {
+      margin: 10px 0 4px;
+      font-size: 1.05rem;
+      letter-spacing: -0.035em;
+    }
+
+    .menu-desc,
+    .menu-price,
+    .menu-tag {
+      color: var(--my-muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .menu-price { color: #ff5aa7; font-weight: 900; }
+
+    .menu-tag {
+      display: inline-flex;
+      margin-top: 8px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(255,143,199,0.13);
+      color: #ff5aa7;
+      font-weight: 900;
+    }
+
+    .stage { display: grid; gap: 18px; }
+
+    .cup-zone {
+      min-height: 430px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.46));
+    }
+
+    .table-shadow {
+      position: absolute;
+      left: 50%;
+      bottom: 42px;
+      width: 360px;
+      height: 52px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: rgba(120,100,80,0.12);
+      filter: blur(2px);
+    }
+
+    .cup-wrap {
+      position: relative;
+      z-index: 2;
+      width: min(300px, 74vw);
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+    }
+
+    .lid {
+      width: 216px;
+      height: 36px;
+      border: 1px solid var(--cup-line);
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,239,229,0.78));
+      box-shadow: 0 8px 18px rgba(86,72,60,0.08);
+    }
+
+    .straw {
+      position: absolute;
+      top: -24px;
+      left: 55%;
+      width: 16px;
+      height: 122px;
+      border-radius: 999px;
+      transform: rotate(12deg);
+      background: linear-gradient(90deg, #fff, #ffd9eb 42%, #fff);
+      border: 1px solid rgba(255,143,199,0.28);
+      z-index: 0;
+    }
+
+    .cup {
+      position: relative;
+      width: 220px;
+      height: 275px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.86);
+      border-radius: 30px 30px 58px 58px / 28px 28px 70px 70px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.72), rgba(255,255,255,0.34));
+      box-shadow: 0 26px 44px rgba(87,92,105,0.18);
+      backdrop-filter: blur(6px);
+    }
+
+    .cup::before {
+      content: "";
+      position: absolute;
+      inset: 16px auto 0 24px;
+      width: 24px;
+      height: 215px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.42);
+      z-index: 4;
+    }
+
+    .liquid {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 82%;
+      background: var(--americano);
+      transition: height 720ms cubic-bezier(.2,.8,.2,1), background 260ms ease;
+      z-index: 1;
+    }
+
+    .liquid::before {
+      content: "";
+      position: absolute;
+      left: -10%;
+      top: -16px;
+      width: 120%;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.32);
+      animation: wave 3.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes wave {
+      from { transform: translateX(-8px) rotate(-1deg); }
+      to { transform: translateX(8px) rotate(1deg); }
+    }
+
+    .ice {
+      position: absolute;
+      width: 42px;
+      height: 34px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(255,255,255,0.62);
+      z-index: 2;
+      transform: rotate(-10deg);
+    }
+
+    .ice.i1 { left: 52px; bottom: 132px; }
+    .ice.i2 { right: 50px; bottom: 178px; transform: rotate(14deg); }
+    .ice.i3 { left: 96px; bottom: 82px; transform: rotate(6deg); }
+
+    .cup-label {
+      position: absolute;
+      z-index: 5;
+      left: 22px;
+      right: 22px;
+      top: 92px;
+      min-height: 86px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.74);
+      border: 1px solid rgba(120,144,180,0.18);
+      text-align: center;
+      box-shadow: 0 12px 24px rgba(82,93,110,0.12);
+    }
+
+    .cup-label strong { font-size: 1.02rem; letter-spacing: -0.035em; }
+    .cup-label span { color: var(--my-muted); font-size: 0.78rem; line-height: 1.35; }
+
+    .amount-panel { display: grid; gap: 10px; }
+
+    .amount-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--my-muted);
+      font-size: 0.9rem;
+    }
+
+    .progress {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.66);
+      border: 1px solid var(--my-line);
+    }
+
+    .progress-fill {
+      width: 82%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--my-pink), var(--my-blue));
+      transition: width 720ms cubic-bezier(.2,.8,.2,1);
+    }
+
+    .drink-actions,
+    .pomodoro-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .pomodoro {
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,247,252,0.62));
+    }
+
+    .timer-face {
+      display: grid;
+      place-items: center;
+      min-height: 170px;
+      border-radius: 28px;
+      background: radial-gradient(circle at top left, rgba(255,143,199,0.26), transparent 42%), rgba(255,255,255,0.62);
+      border: 1px solid var(--my-line);
+      margin: 14px 0 4px;
+    }
+
+    .timer-time {
+      font-size: clamp(3rem, 10vw, 5.2rem);
+      letter-spacing: -0.07em;
+      line-height: 1;
+      color: #172033;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-mode {
+      margin-top: 8px;
+      color: var(--my-muted);
+      text-align: center;
+      font-size: 0.94rem;
+    }
+
+    .pomodoro-mini {
+      margin-top: 10px;
+      color: var(--my-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+
+    .timer-settings {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+      gap: 10px;
+      align-items: end;
+      margin: 14px 0 2px;
+    }
+
+    .timer-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .timer-field label {
+      color: var(--my-muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .timer-field input {
+      min-height: 42px;
+      border-radius: 15px;
+    }
+
+    @media (max-width: 620px) {
+      .timer-settings {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .receipt {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,250,239,0.82));
+    }
+
+    .receipt::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 12px;
+      background: repeating-linear-gradient(90deg, transparent 0 12px, rgba(255,143,199,0.28) 12px 24px);
+    }
+
+    .receipt h2 { margin: 8px 0 12px; font-size: 1.25rem; letter-spacing: -0.04em; }
+
+    .receipt-list {
+      display: grid;
+      gap: 8px;
+      font-size: 0.94rem;
+      color: var(--my-ink);
+    }
+
+    .receipt-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed rgba(120,144,180,0.28);
+    }
+
+    .receipt-line span:first-child { color: var(--my-muted); }
+    .receipt-line strong { text-align: right; }
+
+    .receipt-note {
+      margin-top: 14px;
+      color: #ff5aa7;
+      line-height: 1.65;
+      font-size: 0.9rem;
+    }
+
+    .toast {
+      min-height: 24px;
+      margin-top: 12px;
+      color: var(--my-muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero, .cafe-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .menu-grid, .name-row, .drink-actions, .pomodoro-actions { grid-template-columns: 1fr; }
+      .cup-zone { min-height: 380px; }
+      .cup { width: 200px; height: 250px; }
+      .lid { width: 196px; }
+    }
+  </style>
+</head>
+<body class="myworkspace-soft workspace-tool">
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← Workspace</a>
+    <span class="myworkspace-date">Created Jun 3, 2026</span>
+  </nav>
+
+  <main class="myworkspace-page">
+    <section class="hero">
+      <div class="myworkspace-card hero-main">
+        <div class="eyebrow">my study cafe</div>
+        <h1>JoonHee's Cafe</h1>
+      </div>
+      <aside class="myworkspace-card side-note">
+        <div>
+          <div class="label">cafe note</div>
+          <div class="value">좋아하는 사람들이랑<br>카공하는 걸 좋아했던 나 !</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="cafe-layout">
+      <div class="myworkspace-card panel">
+        <div class="section-title">
+          <h2>주문하기</h2>
+          <span>이름이 컵이랑 영수증에 같이 찍혀요</span>
+        </div>
+
+        <div class="name-row">
+          <input id="guestName" type="text" maxlength="18" placeholder="이름 입력" />
+          <button class="btn" id="orderBtn" type="button">주문하기</button>
+        </div>
+
+        <div class="menu-grid" id="menuGrid" aria-label="카페 메뉴"></div>
+        <p class="toast" id="toast">메뉴를 고르고 이름을 입력한 뒤 주문하기를 누르면 컵과 영수증이 바뀝니다.</p>
+      </div>
+
+      <div class="stage">
+        <div class="myworkspace-card cup-zone">
+          <div class="table-shadow"></div>
+          <div class="cup-wrap">
+            <div class="straw"></div>
+            <div class="lid"></div>
+            <div class="cup" aria-label="drink cup">
+              <div class="liquid" id="liquid"></div>
+              <div class="ice i1"></div>
+              <div class="ice i2"></div>
+              <div class="ice i3"></div>
+              <div class="cup-label">
+                <strong id="cupName">JoonHee</strong>
+                <span id="cupMenu">Iced Americano · 100%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="myworkspace-card panel amount-panel">
+          <div class="amount-row">
+            <span>남은 음료</span>
+            <strong id="amountText">100%</strong>
+          </div>
+          <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="drink-actions">
+            <button class="btn secondary" id="sipBtn" type="button">한 모금</button>
+            <button class="btn secondary" id="bigSipBtn" type="button">크게 마시기</button>
+            <button class="btn" id="refillBtn" type="button">리필</button>
+          </div>
+        </div>
+
+        <div class="myworkspace-card pomodoro" aria-label="cafe pomodoro">
+          <div class="section-title">
+            <h2>카공 뽀모도로</h2>
+            <span id="timerSettingLabel">25분 집중 · 5분 쉬기</span>
+          </div>
+          <div class="timer-face">
+            <div>
+              <div class="timer-time" id="timerTime">25:00</div>
+              <div class="timer-mode" id="timerMode">focus time</div>
+            </div>
+          </div>
+          <div class="timer-settings" aria-label="pomodoro time settings">
+            <div class="timer-field">
+              <label for="focusMinutes">집중 시간</label>
+              <input id="focusMinutes" type="number" min="1" max="180" step="1" value="25" />
+            </div>
+            <div class="timer-field">
+              <label for="breakMinutes">휴식 시간</label>
+              <input id="breakMinutes" type="number" min="1" max="60" step="1" value="5" />
+            </div>
+            <button class="btn secondary" id="applyTimerBtn" type="button">시간 적용</button>
+          </div>
+          <div class="pomodoro-actions">
+            <button class="btn" id="startTimerBtn" type="button">시작</button>
+            <button class="btn secondary" id="pauseTimerBtn" type="button">멈춤</button>
+            <button class="btn secondary" id="resetTimerBtn" type="button">리셋</button>
+          </div>
+          <div class="pomodoro-mini" id="timerNote">음료 한 잔 놓고 25분만 집중하기.</div>
+        </div>
+
+        <div class="myworkspace-card receipt" aria-label="receipt">
+          <h2>receipt</h2>
+          <div class="receipt-list">
+            <div class="receipt-line"><span>name</span><strong id="receiptName">JoonHee</strong></div>
+            <div class="receipt-line"><span>menu</span><strong id="receiptMenu">Iced Americano</strong></div>
+            <div class="receipt-line"><span>time</span><strong id="receiptTime">--:--</strong></div>
+            <div class="receipt-line"><span>price</span><strong id="receiptPrice">₩4,300</strong></div>
+            <div class="receipt-line"><span>left</span><strong id="receiptLeft">100%</strong></div>
+            <div class="receipt-line"><span>timer</span><strong id="receiptTimer">25:00 focus</strong></div>
+          </div>
+          <div class="receipt-note" id="receiptNote">내 카공 최애 메뉴!</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const menus = [
+      { id: 'americano', icon: '🧊', name: 'Iced Americano', desc: '아이스 아메리카노가 내 카공 최애 메뉴!', tag: 'my fav', price: 4300, color: '#4d372b', start: 100 },
+      { id: 'strawberry-yogurt', icon: '🍓', name: 'Strawberry Yogurt Smoothie', desc: '딸기 요거트 스무디는 내가 좋아함!', tag: 'my fav', price: 6200, color: '#ffc2d6', start: 100 },
+      { id: 'strawberry-latte', icon: '🥛', name: 'Strawberry Latte', desc: '딸기 라떼는 내가 좋아함!', tag: 'my fav', price: 5800, color: '#f79fba', start: 100 },
+      { id: 'vanilla-ice', icon: '☕', name: 'Iced Vanilla Latte', desc: '달달하게 오래 앉아있기 좋은 메뉴', tag: '달달 카공', price: 5600, color: '#d9b284', start: 100 },
+      { id: 'matcha', icon: '🍵', name: 'Matcha Latte', desc: '차분하게 집중하는 녹차 라떼', tag: '차분 집중', price: 5700, color: '#8fc47a', start: 100 },
+      { id: 'orange-ade', icon: '🍊', name: 'Orange Ade', desc: '시원하고 톡 쏘는 오렌지 에이드', tag: '상큼 톡톡', price: 5600, color: '#f7bd63', start: 100 },
+      { id: 'green-tangerine-ade', icon: '🍋', name: 'Cheonggyul Ade', desc: '청귤 에이드처럼 상큼하게 리프레시', tag: '청귤 리프레시', price: 5900, color: '#b7da7a', start: 100 },
+      { id: 'choco', icon: '🍫', name: 'Chocolate Latte', desc: '당 충전용 진한 라떼', tag: '당 충전', price: 5900, color: '#7c4b38', start: 100 }
+    ];
+
+    const state = {
+      selected: menus[0],
+      name: 'JoonHee',
+      amount: menus[0].start,
+      orderedAt: new Date()
+    };
+
+    const timer = {
+      mode: 'focus',
+      focus: 25 * 60,
+      break: 5 * 60,
+      left: 25 * 60,
+      running: false,
+      id: null,
+      lastTickAt: null
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const menuGrid = $('menuGrid');
+    const guestName = $('guestName');
+    const toast = $('toast');
+
+    function money(value) {
+      return '₩' + value.toLocaleString('ko-KR');
+    }
+
+    function timeLabel(date) {
+      return new Intl.DateTimeFormat('ko-KR', {
+        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date).replace(/\. /g, '.').replace('.', '. ');
+    }
+
+    function timerLabel(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function resetDrinkToFull(message) {
+      state.amount = 100;
+      if (message) toast.textContent = message;
+      render();
+    }
+
+    function reduceDrinkByTimerTick() {
+      if (timer.mode !== 'focus') return;
+      const focusSeconds = Math.max(1, timer.focus);
+      const decreasePerSecond = 100 / focusSeconds;
+      state.amount = Math.max(0, Math.round((state.amount - decreasePerSecond) * 10) / 10);
+      render();
+    }
+
+    function renderMenu() {
+      menuGrid.innerHTML = menus.map((menu) => `
+        <button class="menu-card ${menu.id === state.selected.id ? 'active' : ''}" type="button" data-id="${menu.id}">
+          <div class="menu-top">
+            <div class="menu-icon">${menu.icon}</div>
+            <div class="menu-price">${money(menu.price)}</div>
+          </div>
+          <div class="menu-name">${menu.name}</div>
+          <div class="menu-desc">${menu.desc}</div>
+          <div class="menu-tag">${menu.tag}</div>
+        </button>
+      `).join('');
+
+      menuGrid.querySelectorAll('.menu-card').forEach((button) => {
+        button.addEventListener('click', () => {
+          const next = menus.find((menu) => menu.id === button.dataset.id);
+          state.selected = next;
+          state.amount = 100;
+          state.orderedAt = new Date();
+          toast.textContent = `${next.name} 선택 완료. 이름을 확인하고 주문하면 컵이 100%로 새로 준비됩니다.`;
+          render();
+          renderMenu();
+        });
+      });
+    }
+
+    function renderTimer() {
+      const focusMin = Math.round(timer.focus / 60);
+      const breakMin = Math.round(timer.break / 60);
+      $('timerTime').textContent = timerLabel(timer.left);
+      $('timerMode').textContent = timer.mode === 'focus' ? 'focus time' : 'break time';
+      $('receiptTimer').textContent = `${timerLabel(timer.left)} ${timer.mode}`;
+      $('timerSettingLabel').textContent = `${focusMin}분 집중 · ${breakMin}분 쉬기`;
+      if (timer.running) {
+        $('timerNote').textContent = timer.mode === 'focus' ? '카공 집중 중. 음료는 시간에 맞춰 천천히 줄어드는 중.' : '쉬는 시간. 다음 focus가 시작되면 음료가 다시 100%로 채워집니다.';
+      } else {
+        $('timerNote').textContent = timer.mode === 'focus' ? `음료 한 잔 놓고 ${focusMin}분만 집중하기.` : `${breakMin}분 쉬고 다시 집중하기.`;
+      }
+    }
+
+    function render() {
+      const amount = Math.max(0, Math.min(100, state.amount));
+      const amountLabel = Number.isInteger(amount) ? amount + '%' : amount.toFixed(1) + '%';
+      const name = state.name.trim() || 'JoonHee';
+      const menu = state.selected;
+
+      $('liquid').style.height = amount + '%';
+      $('liquid').style.background = menu.color;
+      $('progressFill').style.width = amount + '%';
+      $('cupName').textContent = name;
+      $('cupMenu').textContent = `${menu.name} · ${amountLabel}`;
+      $('amountText').textContent = amountLabel;
+
+      $('receiptName').textContent = name;
+      $('receiptMenu').textContent = menu.name;
+      $('receiptTime').textContent = timeLabel(state.orderedAt);
+      $('receiptPrice').textContent = money(menu.price);
+      $('receiptLeft').textContent = amountLabel;
+
+      if (amount === 0) {
+        $('receiptNote').textContent = '다 마셨습니다. 리필하고 다시 집중하면 됩니다.';
+      } else if (amount <= 25) {
+        $('receiptNote').textContent = '음료가 얼마 안 남았습니다. 그래도 집중력은 아직 남아있음.';
+      } else {
+        $('receiptNote').textContent = menu.desc;
+      }
+
+      renderTimer();
+    }
+
+    function order() {
+      const inputName = guestName.value.trim();
+      state.name = inputName || 'JoonHee';
+      state.amount = state.selected.start;
+      state.orderedAt = new Date();
+      toast.textContent = `${state.name}님의 ${state.selected.name} 주문 완료. 음료 100% 컵이랑 영수증에 이름을 찍었습니다.`;
+      render();
+    }
+
+    function drink(delta) {
+      state.amount = Math.max(0, state.amount - delta);
+      toast.textContent = delta >= 20 ? '크게 한 입 마셨습니다. 음료가 확 줄어들어요.' : '한 모금 마셨습니다. 컵 안 음료량이 줄어듭니다.';
+      render();
+    }
+
+    function startTimer() {
+      if (timer.running) return;
+      if (timer.mode === 'focus' && timer.left === timer.focus && state.amount < 100) {
+        state.amount = 100;
+      }
+      timer.running = true;
+      timer.lastTickAt = Date.now();
+      timer.id = window.setInterval(() => {
+        timer.left -= 1;
+        reduceDrinkByTimerTick();
+        if (timer.left <= 0) {
+          timer.mode = timer.mode === 'focus' ? 'break' : 'focus';
+          timer.left = timer.mode === 'focus' ? timer.focus : timer.break;
+          if (timer.mode === 'focus') {
+            state.amount = 100;
+            toast.textContent = `쉬는 시간 끝. 새 음료 100%로 다시 ${Math.round(timer.focus / 60)}분 카공 시작!`;
+          } else {
+            state.amount = 0;
+            toast.textContent = `집중 시간 끝. 음료도 다 마셨습니다. ${Math.round(timer.break / 60)}분 쉬는 시간!`;
+          }
+          render();
+        }
+        renderTimer();
+      }, 1000);
+      toast.textContent = `뽀모도로 시작. 음료가 100%에서 ${Math.round(timer.focus / 60)}분 동안 시간에 맞춰 줄어듭니다.`;
+      render();
+    }
+
+    function pauseTimer() {
+      timer.running = false;
+      if (timer.id) window.clearInterval(timer.id);
+      timer.id = null;
+      timer.lastTickAt = null;
+      renderTimer();
+    }
+
+    function clampMinute(value, min, max, fallback) {
+      const number = Number.parseInt(value, 10);
+      if (Number.isNaN(number)) return fallback;
+      return Math.max(min, Math.min(max, number));
+    }
+
+    function applyTimerSettings() {
+      const focusMinute = clampMinute($('focusMinutes').value, 1, 180, 25);
+      const breakMinute = clampMinute($('breakMinutes').value, 1, 60, 5);
+
+      $('focusMinutes').value = focusMinute;
+      $('breakMinutes').value = breakMinute;
+
+      pauseTimer();
+      timer.focus = focusMinute * 60;
+      timer.break = breakMinute * 60;
+      timer.mode = 'focus';
+      timer.left = timer.focus;
+      state.amount = 100;
+      toast.textContent = `뽀모도로 시간을 ${focusMinute}분 집중 · ${breakMinute}분 휴식으로 바꿨습니다. 음료도 100%로 다시 준비했습니다.`;
+      render();
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timer.mode = 'focus';
+      timer.left = timer.focus;
+      state.amount = 100;
+      toast.textContent = '뽀모도로 타이머와 음료를 100%로 리셋했습니다.';
+      render();
+    }
+
+    $('orderBtn').addEventListener('click', order);
+    $('sipBtn').addEventListener('click', () => drink(10));
+    $('bigSipBtn').addEventListener('click', () => drink(24));
+    $('refillBtn').addEventListener('click', () => {
+      state.amount = 100;
+      state.orderedAt = new Date();
+      toast.textContent = '리필 완료. 음료가 100%로 다시 찼고 영수증 시간도 새로 찍었습니다.';
+      render();
+    });
+    $('startTimerBtn').addEventListener('click', startTimer);
+    $('pauseTimerBtn').addEventListener('click', pauseTimer);
+    $('resetTimerBtn').addEventListener('click', resetTimer);
+    $('applyTimerBtn').addEventListener('click', applyTimerSettings);
+
+    guestName.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') order();
+    });
+
+    ['focusMinutes', 'breakMinutes'].forEach((id) => {
+      $(id).addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') applyTimerSettings();
+      });
+    });
+
+    renderMenu();
+    render();
+  </script>
+</body>
+</html>

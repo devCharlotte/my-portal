@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoonHee's Whiteboard</title>
+  <style>
+    :root {
+      --bg-start: #eef7ff;
+      --bg-mid: #f8fbff;
+      --bg-end: #fff8ec;
+      --panel: rgba(255, 255, 255, 0.78);
+      --panel-strong: rgba(255, 255, 255, 0.94);
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: rgba(31, 41, 55, 0.12);
+      --accent: #6aa9ff;
+      --shadow: 0 24px 70px rgba(71, 85, 105, 0.16);
+      --radius: 26px;
+      --editor-size: 42px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(106, 169, 255, 0.26), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(255, 199, 95, 0.22), transparent 32%),
+        linear-gradient(135deg, var(--bg-start), var(--bg-mid) 52%, var(--bg-end));
+      overflow: hidden;
+    }
+
+    body.focus-mode .topbar,
+    body.focus-mode .hint {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-10px);
+    }
+
+    .app {
+      width: 100%;
+      height: 100%;
+      padding: 22px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+    }
+
+    .topbar {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 14px 13px 20px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      box-shadow: 0 16px 45px rgba(71, 85, 105, 0.10);
+      backdrop-filter: blur(18px);
+      transition: 0.22s ease;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 180px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 7px rgba(106, 169, 255, 0.16);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.16s ease;
+      box-shadow: 0 8px 18px rgba(71, 85, 105, 0.08);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(106, 169, 255, 0.52);
+      box-shadow: 0 12px 26px rgba(71, 85, 105, 0.13);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.primary {
+      border-color: rgba(106, 169, 255, 0.42);
+      background: linear-gradient(135deg, #8ec5ff, #6aa9ff);
+      color: white;
+    }
+
+    .size-label {
+      min-width: 62px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .board-wrap {
+      min-height: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .board {
+      width: min(1180px, 100%);
+      height: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .board::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(31, 41, 55, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31, 41, 55, 0.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.82), rgba(0,0,0,0.15));
+      pointer-events: none;
+    }
+
+    #editor {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 44px 50px;
+      outline: none;
+      border: none;
+      resize: none;
+      background: transparent;
+      color: var(--ink);
+      font: 700 var(--editor-size)/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: -0.03em;
+      z-index: 1;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+
+    #editor:empty::before {
+      content: "TA! 강의실에 띄울 내용을 입력해!";
+      color: rgba(31, 41, 55, 0.28);
+      font-weight: 700;
+    }
+
+    .hint {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 4px;
+      color: rgba(31, 41, 55, 0.52);
+      font-size: 12px;
+      transition: 0.22s ease;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(14px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 11px 16px;
+      border-radius: 999px;
+      background: rgba(31, 41, 55, 0.88);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 18px 40px rgba(31, 41, 55, 0.24);
+      transition: 0.18s ease;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        padding: 12px;
+        gap: 10px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        border-radius: 22px;
+        flex-direction: column;
+      }
+
+      .controls {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      button {
+        padding: 9px 12px;
+      }
+
+      #editor {
+        padding: 28px 24px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared.css" />
+</head>
+<body class="workspace-tool">
+
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← my workspace</a>
+    <span class="myworkspace-date">Created Apr 1, 2025</span>
+  </nav>
+
+  <main class="app">
+    <header class="topbar" aria-label="화이트보드 도구막대">
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <div>
+          <div class="brand-title">JoonHee's Whiteboard</div>
+          <div class="brand-subtitle">classroom board</div>
+        </div>
+      </div>
+
+      <nav class="controls" aria-label="화이트보드 설정">
+        <button type="button" id="smallerBtn" title="글자 작게">A-</button>
+        <span class="size-label" id="sizeLabel">42px</span>
+        <button type="button" id="biggerBtn" title="글자 크게">A+</button>
+        <button type="button" id="clearBtn" title="내용 지우기">Clear</button>
+        <button type="button" id="focusBtn" title="도구막대 숨기기">Focus</button>
+        <button type="button" id="fullBtn" class="primary" title="전체화면">Fullscreen</button>
+      </nav>
+    </header>
+
+    <section class="board-wrap">
+      <article class="board" aria-label="화이트보드">
+        <div id="editor" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true"></div>
+      </article>
+    </section>
+
+    <footer class="hint">
+      <span>자동 저장은 현재 브라우저에만 적용</span>
+      <span>Ctrl + Enter: Focus · Esc: 도구막대 표시</span>
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const smallerBtn = document.getElementById('smallerBtn');
+    const biggerBtn = document.getElementById('biggerBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const focusBtn = document.getElementById('focusBtn');
+    const fullBtn = document.getElementById('fullBtn');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const toast = document.getElementById('toast');
+
+    const STORAGE_TEXT_KEY = 'joonhee-whiteboard-text';
+    const STORAGE_SIZE_KEY = 'joonhee-whiteboard-font-size';
+    const MIN_SIZE = 24;
+    const MAX_SIZE = 96;
+    const STEP = 4;
+
+    let fontSize = Number(localStorage.getItem(STORAGE_SIZE_KEY)) || 42;
+    let toastTimer = null;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1400);
+    }
+
+    function applyFontSize() {
+      fontSize = Math.min(MAX_SIZE, Math.max(MIN_SIZE, fontSize));
+      document.documentElement.style.setProperty('--editor-size', `${fontSize}px`);
+      sizeLabel.textContent = `${fontSize}px`;
+      localStorage.setItem(STORAGE_SIZE_KEY, String(fontSize));
+    }
+
+    function saveText() {
+      localStorage.setItem(STORAGE_TEXT_KEY, editor.innerHTML);
+    }
+
+    function loadText() {
+      const savedText = localStorage.getItem(STORAGE_TEXT_KEY);
+      if (savedText) {
+        editor.innerHTML = savedText;
+      }
+    }
+
+    function toggleFocusMode(forceOff = false) {
+      if (forceOff) {
+        document.body.classList.remove('focus-mode');
+      } else {
+        document.body.classList.toggle('focus-mode');
+      }
+      editor.focus();
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+          showToast('전체화면 전환.');
+        } else {
+          await document.exitFullscreen();
+          showToast('전체화면 종료.');
+        }
+      } catch (error) {
+        showToast('브라우저 전체 화면 비허용');
+      }
+    }
+
+    smallerBtn.addEventListener('click', () => {
+      fontSize -= STEP;
+      applyFontSize();
+      editor.focus();
+    });
+
+    biggerBtn.addEventListener('click', () => {
+      fontSize += STEP;
+      applyFontSize();
+      editor.focus();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      const shouldClear = confirm('삭제?');
+      if (!shouldClear) return;
+      editor.innerHTML = '';
+      saveText();
+      editor.focus();
+      showToast('삭제!');
+    });
+
+    focusBtn.addEventListener('click', () => {
+      toggleFocusMode();
+    });
+
+    fullBtn.addEventListener('click', toggleFullscreen);
+
+    editor.addEventListener('input', saveText);
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        toggleFocusMode(true);
+      }
+
+      if (event.ctrlKey && event.key === 'Enter') {
+        event.preventDefault();
+        toggleFocusMode();
+      }
+
+      if (event.ctrlKey && event.key === '=') {
+        event.preventDefault();
+        fontSize += STEP;
+        applyFontSize();
+      }
+
+      if (event.ctrlKey && event.key === '-') {
+        event.preventDefault();
+        fontSize -= STEP;
+        applyFontSize();
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      fullBtn.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+    });
+
+    loadText();
+    applyFontSize();
+    editor.focus();
+  </script>
+</body>
+</html>

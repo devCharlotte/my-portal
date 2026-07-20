@@ -1,0 +1,592 @@
+@font-face {
+  font-family: 'HakgyoansimNadeuriTTF-B';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-5@1.0/HakgyoansimNadeuriTTF-B.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  --my-bg-a: #fff7ec;
+  --my-bg-b: #eef8ff;
+  --my-bg-c: #f8f0ff;
+  --my-ink: #253044;
+  --my-muted: #6b7280;
+  --my-card: rgba(255,255,255,0.74);
+  --my-line: rgba(120,144,180,0.22);
+  --my-pink: #ff8fc7;
+  --my-blue: #8bd7ff;
+  --my-violet: #c7b7ff;
+  --my-shadow: 0 18px 42px rgba(94,120,160,0.16);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+.mygame-topnav {
+  position: relative;
+  z-index: 20;
+  width: min(1180px, calc(100% - 32px));
+  margin: 18px auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.mygame-home,
+.mygame-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid var(--my-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 8px 22px rgba(94,120,160,0.12);
+  color: var(--my-ink);
+  font-size: 0.86rem;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mygame-date { color: var(--my-muted); }
+
+.mygame-home:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(94,120,160,0.16);
+}
+
+body.mygame-soft {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--my-ink);
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 211, 235, 0.62), transparent 34%),
+    radial-gradient(circle at 88% 10%, rgba(139, 215, 255, 0.48), transparent 32%),
+    radial-gradient(circle at 50% 100%, rgba(199, 183, 255, 0.34), transparent 36%),
+    linear-gradient(135deg, var(--my-bg-a) 0%, var(--my-bg-b) 48%, var(--my-bg-c) 100%);
+}
+
+.mygame-page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.mygame-card {
+  border: 1px solid var(--my-line);
+  border-radius: 26px;
+  background: var(--my-card);
+  box-shadow: var(--my-shadow);
+  backdrop-filter: blur(18px);
+}
+
+@media (max-width: 640px) {
+  .mygame-topnav {
+    width: min(100% - 18px, 1180px);
+    margin-top: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mygame-date, .mygame-home { font-size: 0.78rem; }
+}
+
+/* unified soft theme overrides for game pages */
+body.mygame-soft {
+  overflow-x: hidden;
+}
+
+body.mygame-soft h1 {
+  font-size: clamp(1.8rem, 4.2vw, 2.35rem);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+body.mygame-soft p,
+body.mygame-soft li,
+body.mygame-soft button,
+body.mygame-soft input,
+body.mygame-soft select {
+  font-size: 0.95rem;
+}
+
+body.mygame-soft .page,
+body.mygame-soft .app,
+body.mygame-soft .wrapper {
+  margin-top: 16px;
+}
+
+body.mygame-soft .panel,
+body.mygame-soft .card,
+body.mygame-soft .game-container,
+body.mygame-soft .wrapper {
+  border: 1px solid var(--my-line) !important;
+  border-radius: 24px !important;
+  background: var(--my-card) !important;
+  box-shadow: var(--my-shadow) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+body.mygame-soft button,
+body.mygame-soft .btn,
+body.mygame-soft .bowl-btn {
+  background: linear-gradient(135deg, var(--my-pink), #ff74ba) !important;
+  color: #fff !important;
+  border-radius: 14px !important;
+  min-height: 42px;
+}
+
+body.mygame-soft .reset-btn,
+body.mygame-soft .btn.secondary {
+  background: rgba(255,255,255,0.78) !important;
+  color: var(--my-ink) !important;
+  border: 1px solid var(--my-line) !important;
+}
+
+body.mygame-soft .title-block h1,
+body.mygame-soft .hero-main h1 {
+  font-size: clamp(1.8rem, 4.2vw, 2.35rem) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body.mygame-soft .title-block p,
+body.mygame-soft .subtitle {
+  font-size: 0.95rem !important;
+  line-height: 1.62 !important;
+}
+
+body.mygame-soft .badge,
+body.mygame-soft .eyebrow,
+body.mygame-soft .tag {
+  background: rgba(255,255,255,0.68) !important;
+  border: 1px solid var(--my-line) !important;
+  color: var(--my-muted) !important;
+}
+
+body.mygame-soft .life-header {
+  width: min(1180px, calc(100% - 32px));
+  margin: 16px auto 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+body.mygame-soft .life-header h1 {
+  margin: 0 0 8px;
+}
+
+body.mygame-soft .life-header p {
+  margin: 0;
+  color: #ff4f9d;
+}
+
+
+/* final portal text rhythm */
+.side-note .value {
+  font-size: clamp(1.25rem, 3.2vw, 1.85rem) !important;
+  line-height: 1.32 !important;
+  letter-spacing: -0.04em;
+}
+
+.side-note .label {
+  font-size: 0.95rem !important;
+  line-height: 1.9 !important;
+  color: var(--my-muted) !important;
+}
+
+/* stronger bowling normalization */
+body.mygame-soft.bowling-page {
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 211, 235, 0.62), transparent 34%),
+    radial-gradient(circle at 88% 10%, rgba(139, 215, 255, 0.48), transparent 32%),
+    radial-gradient(circle at 50% 100%, rgba(199, 183, 255, 0.34), transparent 36%),
+    linear-gradient(135deg, var(--my-bg-a) 0%, var(--my-bg-b) 48%, var(--my-bg-c) 100%) !important;
+}
+
+body.mygame-soft.bowling-page::before,
+body.mygame-soft.bowling-page::after {
+  opacity: 0.35 !important;
+}
+
+body.mygame-soft.bowling-page .page {
+  width: min(1040px, calc(100vw - 32px)) !important;
+  padding-top: 18px !important;
+}
+
+body.mygame-soft.bowling-page header {
+  align-items: center !important;
+  margin-bottom: 14px !important;
+}
+
+body.mygame-soft.bowling-page .title-block h1 {
+  font-size: clamp(1.8rem, 4.1vw, 2.35rem) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body.mygame-soft.bowling-page .title-block p {
+  font-size: 0.92rem !important;
+  line-height: 1.58 !important;
+  margin-top: 8px !important;
+}
+
+body.mygame-soft.bowling-page .layout {
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr) !important;
+  gap: 14px !important;
+}
+
+body.mygame-soft.bowling-page .panel,
+body.mygame-soft.bowling-page .control-card,
+body.mygame-soft.bowling-page .stat,
+body.mygame-soft.bowling-page .frame,
+body.mygame-soft.bowling-page .log-line,
+body.mygame-soft.bowling-page .canvas-wrap {
+  border-color: var(--my-line) !important;
+  background: var(--my-card) !important;
+  box-shadow: var(--my-shadow) !important;
+}
+
+body.mygame-soft.bowling-page .game-panel,
+body.mygame-soft.bowling-page .info-card,
+body.mygame-soft.bowling-page .score-card,
+body.mygame-soft.bowling-page .log-card,
+body.mygame-soft.bowling-page .help {
+  padding: 14px !important;
+}
+
+body.mygame-soft.bowling-page .canvas-wrap {
+  min-height: 420px !important;
+  border-radius: 22px !important;
+}
+
+body.mygame-soft.bowling-page .controls {
+  gap: 10px !important;
+  margin-top: 12px !important;
+}
+
+body.mygame-soft.bowling-page .control-card label,
+body.mygame-soft.bowling-page .score-title,
+body.mygame-soft.bowling-page .help h2,
+body.mygame-soft.bowling-page .log-title {
+  font-size: 0.92rem !important;
+}
+
+body.mygame-soft.bowling-page .stat .value {
+  font-size: 1.12rem !important;
+}
+
+body.mygame-soft.bowling-page .stat .label,
+body.mygame-soft.bowling-page .frame-head {
+  font-size: 0.72rem !important;
+}
+
+body.mygame-soft.bowling-page button {
+  min-height: 42px !important;
+  font-size: 0.93rem !important;
+}
+
+body.mygame-soft.bowling-page .badge {
+  font-size: 1.05rem !important;
+  padding: 8px 12px !important;
+}
+
+@media (max-width: 920px) {
+  body.mygame-soft.bowling-page .layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 620px) {
+  body.mygame-soft.bowling-page .page {
+    width: min(100vw - 18px, 1040px) !important;
+  }
+  body.mygame-soft.bowling-page .canvas-wrap {
+    min-height: 360px !important;
+  }
+}
+
+/* ============================================================
+   my-workspace-portal: game-portal style aliases and hard polish
+   ============================================================ */
+
+body.myworkspace-soft,
+body.workspace-tool {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--my-ink);
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 211, 235, 0.62), transparent 34%),
+    radial-gradient(circle at 88% 10%, rgba(139, 215, 255, 0.48), transparent 32%),
+    radial-gradient(circle at 50% 100%, rgba(199, 183, 255, 0.34), transparent 36%),
+    linear-gradient(135deg, var(--my-bg-a) 0%, var(--my-bg-b) 48%, var(--my-bg-c) 100%) !important;
+  overflow-x: hidden;
+}
+
+.myworkspace-page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.myworkspace-card {
+  border: 1px solid var(--my-line);
+  border-radius: 26px;
+  background: var(--my-card);
+  box-shadow: var(--my-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.myworkspace-topnav {
+  position: relative;
+  z-index: 999;
+  width: min(1180px, calc(100% - 32px));
+  margin: 18px auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+.myworkspace-home,
+.myworkspace-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid var(--my-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 8px 22px rgba(94,120,160,0.12);
+  color: var(--my-ink);
+  font-size: 0.86rem;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.myworkspace-date { color: var(--my-muted); }
+
+.myworkspace-home:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(94,120,160,0.16);
+}
+
+body.workspace-tool,
+body.workspace-tool * {
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+body.workspace-tool h1 {
+  font-size: clamp(1.8rem, 4.2vw, 2.35rem) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.045em !important;
+}
+
+body.workspace-tool p,
+body.workspace-tool li,
+body.workspace-tool button,
+body.workspace-tool input,
+body.workspace-tool select,
+body.workspace-tool textarea,
+body.workspace-tool label {
+  font-size: 0.95rem;
+}
+
+body.workspace-tool button,
+body.workspace-tool .btn,
+body.workspace-tool .action-btn,
+body.workspace-tool .mode-btn,
+body.workspace-tool .set-btn,
+body.workspace-tool .main-btn,
+body.workspace-tool .end-btn,
+body.workspace-tool .clear-btn,
+body.workspace-tool .alarm-btn,
+body.workspace-tool .alarm-delete-btn,
+body.workspace-tool .alarm-stop-btn {
+  border-radius: 14px !important;
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+body.workspace-tool .myworkspace-polish,
+body.workspace-tool .app,
+body.workspace-tool .widget,
+body.workspace-tool .card,
+body.workspace-tool .panel,
+body.workspace-tool .game-container,
+body.workspace-tool .wrapper,
+body.workspace-tool .board,
+body.workspace-tool .clock-card,
+body.workspace-tool .memo-card,
+body.workspace-tool .alarm-card,
+body.workspace-tool .topbar {
+  border-color: var(--my-line) !important;
+  border-radius: 26px !important;
+  background: var(--my-card) !important;
+  box-shadow: var(--my-shadow) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+body.workspace-tool .topbar {
+  border-radius: 999px !important;
+}
+
+body.workspace-tool input,
+body.workspace-tool textarea,
+body.workspace-tool select {
+  border: 1px solid var(--my-line) !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,0.76) !important;
+  color: var(--my-ink) !important;
+}
+
+body.workspace-tool .badge,
+body.workspace-tool .pill,
+body.workspace-tool .eyebrow,
+body.workspace-tool .tag {
+  background: rgba(255,255,255,0.68) !important;
+  border: 1px solid var(--my-line) !important;
+  color: var(--my-muted) !important;
+}
+
+body.workspace-tool .title,
+body.workspace-tool .brand-title,
+body.workspace-tool .memo-title,
+body.workspace-tool .alarm-title,
+body.workspace-tool .check-title,
+body.workspace-tool .input-title {
+  color: var(--my-ink) !important;
+}
+
+body.workspace-tool .subtitle,
+body.workspace-tool .footer-note,
+body.workspace-tool .memo-caption,
+body.workspace-tool .alarm-caption,
+body.workspace-tool .brand-subtitle,
+body.workspace-tool .stat-label,
+body.workspace-tool .field-label {
+  color: var(--my-muted) !important;
+}
+
+body.workspace-tool .title {
+  font-size: clamp(1.65rem, 3.4vw, 2.1rem) !important;
+}
+
+body.workspace-tool .time {
+  font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+@media (max-width: 640px) {
+  .myworkspace-topnav {
+    width: min(100% - 18px, 1180px);
+    margin-top: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .myworkspace-date, .myworkspace-home { font-size: 0.78rem; }
+}
+
+
+/* ============================================================
+   Layout fix for tool pages
+   - Prevent original tool body flex layouts from pushing top nav sideways
+   - Keep tool card visually centered
+   ============================================================ */
+
+body.workspace-tool {
+  display: block !important;
+  align-items: initial !important;
+  justify-content: initial !important;
+  padding: 0 !important;
+  min-height: 100vh !important;
+}
+
+body.workspace-tool .myworkspace-topnav {
+  position: relative !important;
+  z-index: 9999 !important;
+  width: min(1180px, calc(100% - 32px)) !important;
+  margin: 18px auto 0 !important;
+}
+
+body.workspace-tool > .app,
+body.workspace-tool > .wrapper,
+body.workspace-tool > main.app,
+body.workspace-tool > main.widget {
+  margin: 24px auto 48px !important;
+}
+
+body.workspace-tool > .app {
+  max-width: 720px;
+}
+
+body.workspace-tool > .wrapper {
+  max-width: 1200px;
+}
+
+body.workspace-tool > main.app,
+body.workspace-tool > .app,
+body.workspace-tool > .widget {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+}
+
+body.workspace-tool .app {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body.workspace-tool .widget {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body.workspace-tool .topbar {
+  width: min(1180px, calc(100% - 32px)) !important;
+}
+
+/* Pomodoro-specific centering */
+body.workspace-tool .timer-area,
+body.workspace-tool .ring {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Whiteboard keeps full-screen feel but stays below top nav */
+body.workspace-tool:has(#editor) .app {
+  min-height: calc(100vh - 86px) !important;
+}
+
+/* Life 4 cuts wrapper centering */
+body.workspace-tool .wrapper {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Mobile spacing */
+@media (max-width: 640px) {
+  body.workspace-tool .myworkspace-topnav {
+    width: min(100% - 18px, 1180px) !important;
+    margin-top: 10px !important;
+  }
+
+  body.workspace-tool > .app,
+  body.workspace-tool > .wrapper,
+  body.workspace-tool > main.app,
+  body.workspace-tool > main.widget {
+    margin-top: 14px !important;
+  }
+}

@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoonHee's pilates and yoga counter</title>
+  <style>
+    :root {
+      --bg: #f7f8fc;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #4f46e5;
+      --accent-soft: #eef2ff;
+      --danger: #dc2626;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background: linear-gradient(180deg, #f9fafb 0%, #eef2ff 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 720px;
+      background: var(--card);
+      border: 1px solid rgba(229, 231, 235, 0.9);
+      box-shadow: var(--shadow);
+      border-radius: 28px;
+      padding: 28px;
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: #fff;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+    }
+
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .mode-btn, .action-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .mode-btn:hover, .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .mode-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .field-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 18px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    .status {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .stat-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fcfcff;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .action-btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .action-btn.warn {
+      color: var(--danger);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .app { padding: 20px; }
+      .grid, .status, .controls, .modes {
+        grid-template-columns: 1fr;
+      }
+      .title { font-size: 26px; }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared.css" />
+</head>
+<body class="workspace-tool">
+
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← my workspace</a>
+    <span class="myworkspace-date">Created Apr 17, 2026</span>
+  </nav>
+
+  <main class="app">
+    <div class="badge">my workout counter</div>
+    <h1 class="title">JoonHee's pilates and yoga counter</h1>
+    <p class="subtitle">페이스 조절 운동과 휴식 시간을 알려주는 인터벌 타이머</p>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Mode</h2>
+        <div class="modes">
+          <button class="mode-btn active" data-mode="slow">slow<br><span style="font-size:12px;color:#6b7280;">(interval 11s)</span></button>
+          <button class="mode-btn" data-mode="medium">medium<br><span style="font-size:12px;color:#6b7280;">(interval 6s)</span></button>
+          <button class="mode-btn" data-mode="fast">fast<br><span style="font-size:12px;color:#6b7280;">(interval 2s)</span></button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Target</h2>
+        <label for="targetCount" class="field-label">goal</label>
+        <div class="field-row">
+          <input id="targetCount" type="number" min="1" max="999" value="10" />
+        </div>
+      </div>
+    </section>
+
+    <section class="status">
+      <div class="stat-box">
+        <div class="stat-label">Current</div>
+        <div class="stat-value" id="currentCount">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Mode</div>
+        <div class="stat-value" id="currentMode">Slow</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value" id="remainingCount">10</div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <button class="action-btn primary" id="startBtn">Start</button>
+      <button class="action-btn" id="pauseBtn" disabled>Pause</button>
+      <button class="action-btn" id="resumeBtn" disabled>Resume</button>
+      <button class="action-btn warn" id="resetBtn">Reset</button>
+    </section>
+
+    <div class="footer-note">
+      In some browsers, audio playback may require user interaction before speech starts.
+    </div>
+  </main>
+
+  <script>
+    const modeConfig = {
+      slow: { label: 'Slow', interval: 11000 },
+      medium: { label: 'Medium', interval: 6000 },
+      fast: { label: 'Fast', interval: 2000 },
+    };
+
+    let selectedMode = 'slow';
+    let currentCount = 0;
+    let targetCount = 10;
+    let timerId = null;
+    let isRunning = false;
+    let isPaused = false;
+
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    const targetInput = document.getElementById('targetCount');
+    const currentCountEl = document.getElementById('currentCount');
+    const currentModeEl = document.getElementById('currentMode');
+    const remainingCountEl = document.getElementById('remainingCount');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function updateUI() {
+      targetCount = Math.max(1, Number(targetInput.value) || 1);
+      currentCountEl.textContent = String(currentCount);
+      currentModeEl.textContent = modeConfig[selectedMode].label;
+      remainingCountEl.textContent = String(Math.max(0, targetCount - currentCount));
+
+      startBtn.disabled = isRunning;
+      pauseBtn.disabled = !isRunning || isPaused;
+      resumeBtn.disabled = !isPaused;
+    }
+
+    function speak(text) {
+      if (!('speechSynthesis' in window)) {
+        console.warn('not support speechSynthesis browser');
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(String(text));
+      utterance.lang = 'en-US';
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function clearTimer() {
+      if (timerId) {
+        clearTimeout(timerId);
+        timerId = null;
+      }
+    }
+
+    function finishSession() {
+      clearTimer();
+      isRunning = false;
+      isPaused = false;
+      updateUI();
+    }
+
+    function runNextCount() {
+      if (!isRunning || isPaused) return;
+
+      if (currentCount >= targetCount) {
+        finishSession();
+        return;
+      }
+
+      currentCount += 1;
+      updateUI();
+      speak(currentCount);
+
+      if (currentCount >= targetCount) {
+        finishSession();
+        return;
+      }
+
+      timerId = setTimeout(runNextCount, modeConfig[selectedMode].interval);
+    }
+
+    function startTimer() {
+      clearTimer();
+      window.speechSynthesis.cancel();
+
+      targetCount = Math.max(1, Number(targetInput.value) || 1);
+      currentCount = 0;
+      isRunning = true;
+      isPaused = false;
+      updateUI();
+
+      runNextCount();
+    }
+
+    function pauseTimer() {
+      if (!isRunning) return;
+      isPaused = true;
+      clearTimer();
+      window.speechSynthesis.cancel();
+      updateUI();
+    }
+
+    function resumeTimer() {
+      if (!isPaused) return;
+      isPaused = false;
+      isRunning = true;
+      updateUI();
+      timerId = setTimeout(runNextCount, modeConfig[selectedMode].interval);
+    }
+
+    function resetTimer() {
+      clearTimer();
+      window.speechSynthesis.cancel();
+      isRunning = false;
+      isPaused = false;
+      currentCount = 0;
+      updateUI();
+    }
+
+    modeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        if (isRunning) return;
+        modeButtons.forEach((btn) => btn.classList.remove('active'));
+        button.classList.add('active');
+        selectedMode = button.dataset.mode;
+        updateUI();
+      });
+    });
+
+    targetInput.addEventListener('input', updateUI);
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', pauseTimer);
+    resumeBtn.addEventListener('click', resumeTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    updateUI();
+  </script>
+</body>
+</html>

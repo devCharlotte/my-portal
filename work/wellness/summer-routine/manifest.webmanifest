@@ -1,0 +1,17 @@
+{
+  "name": "Summer Routine",
+  "short_name": "Summer Routine",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef8ff",
+  "theme_color": "#eef8ff",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

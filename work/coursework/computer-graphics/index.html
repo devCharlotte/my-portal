@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Computer Graphics</title>
+<link rel="stylesheet" href="../../shared.css">
+<style>
+  body { overflow-x: hidden; }
+
+  /* centered flow area sitting below the top nav */
+  .center {
+    min-height: calc(100vh - 96px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0 48px;
+  }
+  .wrap { width: min(560px, calc(100% - 32px)); }
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(22px, 4vw, 34px);
+    margin-bottom: 18px;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -85px;
+    width: 220px;
+    height: 220px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(255,143,199,0.42), rgba(139,215,255,0.38));
+  }
+  .eyebrow {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.62);
+    border: 1px solid var(--my-line);
+    color: var(--my-muted);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 6px;
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 0.96;
+    letter-spacing: -0.05em;
+    color: #172033;
+  }
+  .hero .sub {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: var(--my-muted);
+    font-size: 0.96rem;
+    line-height: 1.6;
+  }
+
+  /* document list cards */
+  .doc {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    color: var(--my-ink);
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  }
+  .doc:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.02);
+    box-shadow: 0 24px 50px rgba(94,120,160,0.2);
+  }
+  .doc .tag {
+    flex: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+    color: #ff4f9d;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid var(--my-line);
+    border-radius: 999px;
+    padding: 6px 10px;
+  }
+  .doc .t { font-size: 0.98rem; line-height: 1.45; }
+  .doc .t b { font-weight: 700; }
+  .doc .t span { color: var(--my-muted); font-size: 0.85rem; }
+
+  /* password gate card */
+  .card { padding: 28px 26px; }
+  .card h1 { margin: 0 0 6px; font-size: 1.18rem; line-height: 1.35; letter-spacing: -0.03em; }
+  .card p  { margin: 0 0 18px; font-size: 0.9rem; color: var(--my-muted); }
+  .field { display: flex; gap: 10px; }
+  input[type="password"] {
+    flex: 1;
+    min-width: 0;
+    background: rgba(255,255,255,0.76);
+    color: var(--my-ink);
+    border: 1px solid var(--my-line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 0.96rem;
+    outline: none;
+    font-family: inherit;
+  }
+  input[type="password"]:focus { border-color: var(--my-pink); }
+  button {
+    background: linear-gradient(135deg, var(--my-pink), #ff74ba);
+    color: #fff;
+    border: 0;
+    border-radius: 14px;
+    padding: 0 18px;
+    min-height: 46px;
+    font-size: 0.96rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  button:disabled { opacity: .55; cursor: default; }
+  .back {
+    background: rgba(255,255,255,0.72);
+    color: var(--my-ink);
+    border: 1px solid var(--my-line);
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  #msg { margin-top: 14px; font-size: 0.85rem; min-height: 16px; color: var(--my-muted); }
+  #msg.error { color: #ef5b6b; }
+
+  /* viewer: full-screen iframe (Chrome built-in PDF viewer) */
+  #viewer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    flex-direction: column;
+    background: #2b2b2b;
+  }
+  #viewer.on { display: flex; }
+  .vbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 54px;
+    padding: 0 14px;
+    background: var(--my-card);
+    border-bottom: 1px solid var(--my-line);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .vbar button {
+    min-height: 36px;
+    padding: 0 14px;
+    background: rgba(255,255,255,0.78);
+    border: 1px solid var(--my-line);
+    color: var(--my-ink);
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+  .vbar .brand {
+    flex: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+    color: #ff4f9d;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid var(--my-line);
+    border-radius: 999px;
+    padding: 5px 11px;
+  }
+  .vbar .name {
+    font-size: 0.85rem;
+    color: var(--my-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #pdfFrame { flex: 1; width: 100%; border: 0; }
+
+  @media (max-width: 560px) {
+    .center { min-height: calc(100vh - 80px); }
+  }
+</style>
+</head>
+<body class="myworkspace-soft">
+
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← Coursework</a>
+    <span class="myworkspace-date">Created Jun 15, 2026</span>
+  </nav>
+
+  <div id="listView" class="center">
+    <div class="wrap">
+      <div class="myworkspace-card hero">
+        <div class="eyebrow">Computer Graphics</div>
+        <h1>Protected Papers</h1>
+        <p class="sub">문서를 선택한 뒤 비밀번호를 입력하면 열립니다.</p>
+      </div>
+      <div class="myworkspace-card doc" data-id="voca">
+        <span class="tag">CVPR 2019</span>
+        <div class="t"><b>Capture, Learning, and Synthesis of 3D Speaking Styles</b><br><span>VOCA</span></div>
+      </div>
+      <div class="myworkspace-card doc" data-id="codetalker">
+        <span class="tag">CVPR 2023</span>
+        <div class="t"><b>CodeTalker: Speech-Driven 3D Facial Animation with Discrete Motion Prior</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="gateView" class="center" style="display:none">
+    <div class="wrap">
+      <button class="back" id="backBtn">&larr; 목록으로</button>
+      <div class="myworkspace-card card">
+        <h1 id="gateTitle"></h1>
+        <p>비밀번호를 입력하세요.</p>
+        <div class="field">
+          <input id="pw" type="password" placeholder="비밀번호" autocomplete="off">
+          <button id="go">열기</button>
+        </div>
+        <div id="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewer">
+    <div class="vbar">
+      <button id="closeBtn">&larr; 목록으로</button>
+      <span class="brand">성준희 발표자료</span>
+      <span class="name" id="viewName"></span>
+    </div>
+    <iframe id="pdfFrame" title="PDF"></iframe>
+  </div>
+
+  <script>
+    const ITERATIONS = 600000; // encrypt.py와 동일
+    const DOCS = {
+      voca:       { title: "Capture, Learning, and Synthesis of 3D Speaking Styles (CVPR 2019)", file: "voca.enc" },
+      codetalker: { title: "CodeTalker (CVPR 2023)", file: "codetalker.enc" },
+    };
+
+    const listView = document.getElementById("listView");
+    const gateView = document.getElementById("gateView");
+    const viewer   = document.getElementById("viewer");
+    const gateTitle= document.getElementById("gateTitle");
+    const viewName = document.getElementById("viewName");
+    const pwEl     = document.getElementById("pw");
+    const goEl     = document.getElementById("go");
+    const msgEl    = document.getElementById("msg");
+    const frame    = document.getElementById("pdfFrame");
+
+    let currentId = null;
+    let blobUrl = null;
+
+    function clearBlob() {
+      if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
+      frame.removeAttribute("src");
+    }
+    function show(view) {
+      listView.style.display = (view === "list") ? "flex" : "none";
+      gateView.style.display = (view === "gate") ? "flex" : "none";
+      viewer.classList.toggle("on", view === "viewer");
+    }
+    function setMsg(t, err) { msgEl.textContent = t; msgEl.className = err ? "error" : ""; }
+
+    document.querySelectorAll(".doc").forEach(el => {
+      el.addEventListener("click", () => {
+        currentId = el.dataset.id;
+        gateTitle.textContent = DOCS[currentId].title;
+        pwEl.value = ""; setMsg("", false); goEl.disabled = false;
+        show("gate"); pwEl.focus();
+      });
+    });
+    document.getElementById("backBtn").addEventListener("click", () => show("list"));
+    document.getElementById("closeBtn").addEventListener("click", () => { clearBlob(); show("list"); });
+
+
+    /* rekey.py / encrypt.py 의 normalize() 와 반드시 동일하게 유지 */
+    function normalize(s) { return s.replace(/[\s\-_]/g, "").toUpperCase(); }
+
+    async function deriveKey(password, salt) {
+      const baseKey = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: ITERATIONS, hash: "SHA-256" },
+        baseKey, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    }
+
+    async function unlock() {
+      const password = pwEl.value;
+      if (!password) { setMsg("비밀번호를 입력하세요.", true); return; }
+      goEl.disabled = true; setMsg("확인 중…", false);
+      try {
+        const resp = await fetch(DOCS[currentId].file, { cache: "no-store" });
+        if (!resp.ok) throw new Error("FILE");
+        const buf  = new Uint8Array(await resp.arrayBuffer());
+        const salt = buf.slice(0, 16);
+        const iv   = buf.slice(16, 28);
+        const data = buf.slice(28);
+        const key  = await deriveKey(normalize(password), salt);
+        // 비밀번호가 틀리면 여기서 예외 발생
+        const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+
+        clearBlob();
+        const blob = new Blob([plain], { type: "application/pdf" });
+        blobUrl = URL.createObjectURL(blob);
+        frame.src = blobUrl;          // 크롬 내장 PDF 뷰어로 표시
+        viewName.textContent = DOCS[currentId].title;
+        show("viewer");
+      } catch (err) {
+        if (err && err.message === "FILE") setMsg("문서 파일을 불러올 수 없습니다.", true);
+        else setMsg("비밀번호가 올바르지 않습니다.", true);
+        goEl.disabled = false;
+      }
+    }
+
+    goEl.addEventListener("click", unlock);
+    pwEl.addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
+  </script>
+</body>
+</html>
