@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bounce Ball</title>
+  <link rel="stylesheet" href="../../shared.css" />
+  <style>
+    body.mygame-soft {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--my-ink);
+      font-family: 'HakgyoansimNadeuriTTF-B', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .bounce-page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 46px;
+    }
+
+    .bounce-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(250px, 0.45fr);
+      gap: 14px;
+      align-items: stretch;
+      margin-bottom: 14px;
+    }
+
+    .title-card,
+    .info-card,
+    .game-card,
+    .control-card {
+      border: 1px solid var(--my-line);
+      border-radius: 26px;
+      background: var(--my-card);
+      box-shadow: var(--my-shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .title-card {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(22px, 4vw, 38px);
+    }
+
+    .title-card::after {
+      content: "";
+      position: absolute;
+      right: -54px;
+      top: -68px;
+      width: 210px;
+      height: 210px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255,143,199,0.36), rgba(139,215,255,0.36));
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--my-line);
+      background: rgba(255,255,255,0.68);
+      color: var(--my-muted);
+      font-size: 0.88rem;
+      margin-bottom: 13px;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(2rem, 5.5vw, 3.6rem) !important;
+      line-height: 0.95 !important;
+      letter-spacing: -0.06em !important;
+      color: #172033;
+    }
+
+    .subtitle {
+      position: relative;
+      z-index: 1;
+      margin: 14px 0 0;
+      max-width: 720px;
+      color: var(--my-muted);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .info-card {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .level-label {
+      color: var(--my-muted);
+      font-size: 0.86rem;
+    }
+
+    .level-title {
+      margin-top: 5px;
+      font-size: clamp(1.18rem, 2.4vw, 1.58rem);
+      line-height: 1.25;
+      letter-spacing: -0.04em;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      padding: 10px 9px;
+      border-radius: 17px;
+      border: 1px solid rgba(120,144,180,0.18);
+      background: rgba(255,255,255,0.58);
+      text-align: center;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 1.1rem;
+      color: #172033;
+      line-height: 1.1;
+    }
+
+    .stat-name {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: var(--my-muted);
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .game-card {
+      position: relative;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .canvas-shell {
+      position: relative;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(120,144,180,0.18);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(255,255,255,0.82), transparent 28%),
+        linear-gradient(180deg, rgba(239,249,255,0.94), rgba(255,248,253,0.94));
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 330px;
+      touch-action: none;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      max-width: calc(100% - 28px);
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(120,144,180,0.2);
+      background: rgba(255,255,255,0.78);
+      color: #596273;
+      box-shadow: 0 10px 26px rgba(94,120,160,0.14);
+      font-size: 0.85rem;
+      text-align: center;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 220ms ease;
+    }
+
+    .toast.hide {
+      opacity: 0;
+    }
+
+    .mobile-controls {
+      display: none;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .mobile-controls button,
+    .side-actions button {
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+      transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+      user-select: none;
+    }
+
+    .mobile-controls button:hover,
+    .side-actions button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(255,143,199,0.22);
+      filter: brightness(1.02);
+    }
+
+    .control-card {
+      padding: 18px;
+    }
+
+    .side-actions {
+      display: grid;
+      gap: 9px;
+      margin-bottom: 16px;
+    }
+
+    .side-actions button {
+      width: 100%;
+      min-height: 43px;
+      padding: 10px 13px;
+    }
+
+    .side-actions .secondary {
+      background: rgba(255,255,255,0.78) !important;
+      color: var(--my-ink) !important;
+      border: 1px solid var(--my-line) !important;
+    }
+
+    .help-title {
+      margin: 0 0 8px;
+      font-size: 1.08rem;
+      letter-spacing: -0.035em;
+      color: #172033;
+    }
+
+    .help-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      color: var(--my-muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      padding: 3px 7px;
+      margin-right: 4px;
+      border-radius: 9px;
+      border: 1px solid rgba(120,144,180,0.23);
+      background: rgba(255,255,255,0.75);
+      color: #394154;
+      font-size: 0.8rem;
+    }
+
+    .message-box {
+      margin-top: 15px;
+      padding: 13px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(120,144,180,0.18);
+      color: #596273;
+      line-height: 1.55;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 980px) {
+      .bounce-hero,
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .control-card {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+        gap: 14px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .bounce-page {
+        width: min(100% - 18px, 1180px);
+        padding-bottom: 28px;
+      }
+
+      .title-card,
+      .info-card,
+      .control-card,
+      .game-card {
+        border-radius: 22px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      canvas {
+        min-height: 300px;
+      }
+
+      .mobile-controls {
+        display: grid;
+      }
+
+      .control-card {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="mygame-soft">
+  <nav class="mygame-topnav">
+    <a class="mygame-home" href="../../">← my game</a>
+    <span class="mygame-date">Created May 27, 2026</span>
+  </nav>
+
+  <main class="bounce-page">
+    <section class="bounce-hero">
+      <div class="title-card">
+        <div class="eyebrow">🟣 my bounce ball</div>
+        <h1>JoonHee's Bounce Ball</h1>
+        <p class="subtitle">통통 튀는 공을 움직여 별을 모두 모으고 포털까지 도착하세요. 벽과 발판을 이용하고, 가시에 닿으면 현재 스테이지를 다시 시작합니다.</p>
+      </div>
+
+      <aside class="info-card" aria-label="stage information">
+        <div>
+          <div class="level-label">current stage</div>
+          <div class="level-title" id="levelTitle">Stage 1 · Soft Start</div>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="levelStat">1/5</span>
+            <span class="stat-name">stage</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="starStat">0/0</span>
+            <span class="stat-name">stars</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="deathStat">0</span>
+            <span class="stat-name">retry</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="main-layout">
+      <div class="game-card">
+        <div class="canvas-shell">
+          <canvas id="gameCanvas" width="960" height="540" aria-label="Bounce Ball game canvas"></canvas>
+          <div class="toast" id="toast">← → 또는 A D로 이동하고, Space로 더 높게 튀어오르세요.</div>
+        </div>
+        <div class="mobile-controls" aria-label="mobile controls">
+          <button id="leftBtn" type="button">← Left</button>
+          <button id="jumpBtn" type="button">Jump</button>
+          <button id="rightBtn" type="button">Right →</button>
+        </div>
+      </div>
+
+      <aside class="control-card">
+        <div>
+          <div class="side-actions">
+            <button id="restartBtn" type="button">현재 스테이지 다시 시작</button>
+            <button id="prevBtn" class="secondary" type="button">이전 스테이지</button>
+            <button id="nextBtn" class="secondary" type="button">다음 스테이지</button>
+          </div>
+          <div class="message-box" id="statusMessage">별을 모두 모으면 오른쪽 포털이 열립니다.</div>
+        </div>
+
+        <div>
+          <h2 class="help-title">조작 방법</h2>
+          <ul class="help-list">
+            <li><span class="key">←</span><span class="key">→</span> 또는 <span class="key">A</span><span class="key">D</span> 좌우 이동</li>
+            <li><span class="key">Space</span> 착지 직후 누르면 더 높게 점프</li>
+            <li>노란 별을 모두 모으면 포털이 열립니다.</li>
+            <li>빨간 가시와 아래 낭떠러지는 다시 시작입니다.</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const levelTitleEl = document.getElementById('levelTitle');
+    const levelStatEl = document.getElementById('levelStat');
+    const starStatEl = document.getElementById('starStat');
+    const deathStatEl = document.getElementById('deathStat');
+    const statusMessageEl = document.getElementById('statusMessage');
+    const toastEl = document.getElementById('toast');
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const keys = { left: false, right: false, jump: false };
+
+    const levels = [
+      {
+        name: 'Stage 1 · Soft Start',
+        start: { x: 78, y: 410 },
+        portal: { x: 874, y: 385, w: 48, h: 72 },
+        platforms: [
+          { x: 0, y: 492, w: 960, h: 48 },
+          { x: 174, y: 404, w: 150, h: 18 },
+          { x: 404, y: 334, w: 150, h: 18 },
+          { x: 630, y: 420, w: 146, h: 18 }
+        ],
+        spikes: [
+          { x: 348, y: 468, w: 78, h: 24 },
+          { x: 790, y: 468, w: 66, h: 24 }
+        ],
+        stars: [
+          { x: 238, y: 365 },
+          { x: 478, y: 296 },
+          { x: 700, y: 382 }
+        ]
+      },
+      {
+        name: 'Stage 2 · Little Stairs',
+        start: { x: 66, y: 430 },
+        portal: { x: 868, y: 196, w: 48, h: 72 },
+        platforms: [
+          { x: 0, y: 492, w: 260, h: 48 },
+          { x: 320, y: 452, w: 120, h: 18 },
+          { x: 500, y: 386, w: 120, h: 18 },
+          { x: 668, y: 316, w: 120, h: 18 },
+          { x: 812, y: 268, w: 132, h: 18 }
+        ],
+        spikes: [
+          { x: 260, y: 516, w: 180, h: 24 },
+          { x: 620, y: 516, w: 180, h: 24 }
+        ],
+        stars: [
+          { x: 374, y: 414 },
+          { x: 558, y: 348 },
+          { x: 728, y: 278 },
+          { x: 878, y: 230 }
+        ]
+      },
+      {
+        name: 'Stage 3 · Moving Cloud',
+        start: { x: 76, y: 406 },
+        portal: { x: 864, y: 388, w: 48, h: 72 },
+        platforms: [
+          { x: 0, y: 492, w: 180, h: 48 },
+          { x: 270, y: 412, w: 128, h: 18 },
+          { x: 502, y: 330, w: 138, h: 18, moveX: 100, speed: 0.95, baseX: 502 },
+          { x: 738, y: 448, w: 180, h: 18 }
+        ],
+        spikes: [
+          { x: 176, y: 516, w: 250, h: 24 },
+          { x: 640, y: 516, w: 94, h: 24 }
+        ],
+        stars: [
+          { x: 332, y: 374 },
+          { x: 570, y: 292 },
+          { x: 826, y: 410 }
+        ]
+      },
+      {
+        name: 'Stage 4 · Narrow Bridge',
+        start: { x: 72, y: 430 },
+        portal: { x: 852, y: 166, w: 48, h: 72 },
+        platforms: [
+          { x: 0, y: 492, w: 170, h: 48 },
+          { x: 228, y: 432, w: 92, h: 16 },
+          { x: 392, y: 368, w: 92, h: 16 },
+          { x: 556, y: 306, w: 92, h: 16 },
+          { x: 734, y: 238, w: 184, h: 18 }
+        ],
+        spikes: [
+          { x: 170, y: 516, w: 700, h: 24 }
+        ],
+        stars: [
+          { x: 274, y: 392 },
+          { x: 438, y: 328 },
+          { x: 602, y: 266 },
+          { x: 834, y: 198 }
+        ]
+      },
+      {
+        name: 'Stage 5 · Crown Bounce',
+        start: { x: 70, y: 420 },
+        portal: { x: 866, y: 236, w: 48, h: 72 },
+        platforms: [
+          { x: 0, y: 492, w: 156, h: 48 },
+          { x: 224, y: 430, w: 122, h: 18 },
+          { x: 432, y: 362, w: 122, h: 18, moveX: 96, speed: 1.15, baseX: 432 },
+          { x: 666, y: 300, w: 126, h: 18 },
+          { x: 826, y: 308, w: 120, h: 18 }
+        ],
+        spikes: [
+          { x: 156, y: 516, w: 230, h: 24 },
+          { x: 554, y: 516, w: 180, h: 24 },
+          { x: 792, y: 284, w: 34, h: 24 }
+        ],
+        stars: [
+          { x: 286, y: 392 },
+          { x: 498, y: 324 },
+          { x: 724, y: 262 },
+          { x: 884, y: 270 }
+        ]
+      }
+    ];
+
+    let levelIndex = 0;
+    let deaths = 0;
+    let frame = 0;
+    let levelState = null;
+    let messageTimer = 0;
+
+    const ball = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      r: 16,
+      grounded: false,
+      lastGrounded: 0
+    };
+
+    function cloneLevel(level) {
+      return {
+        ...level,
+        platforms: level.platforms.map((p) => ({ ...p })),
+        spikes: level.spikes.map((s) => ({ ...s })),
+        stars: level.stars.map((s) => ({ ...s, collected: false })),
+        portalOpen: false
+      };
+    }
+
+    function loadLevel(index, keepDeaths = true) {
+      levelIndex = Math.max(0, Math.min(levels.length - 1, index));
+      levelState = cloneLevel(levels[levelIndex]);
+      ball.x = levelState.start.x;
+      ball.y = levelState.start.y;
+      ball.vx = 0;
+      ball.vy = 0;
+      ball.grounded = false;
+      ball.lastGrounded = 0;
+      if (!keepDeaths) deaths = 0;
+      updateHud();
+      showMessage(levelState.name + ' 시작! 별을 모두 모아 포털을 여세요.');
+    }
+
+    function resetCurrentLevel() {
+      deaths += 1;
+      loadLevel(levelIndex, true);
+      showMessage('다시 시작! 이번에는 더 부드럽게 튀어보세요.');
+    }
+
+    function updateHud() {
+      const collected = levelState.stars.filter((star) => star.collected).length;
+      levelTitleEl.textContent = levelState.name;
+      levelStatEl.textContent = `${levelIndex + 1}/${levels.length}`;
+      starStatEl.textContent = `${collected}/${levelState.stars.length}`;
+      deathStatEl.textContent = String(deaths);
+      statusMessageEl.textContent = levelState.portalOpen
+        ? '포털이 열렸습니다. 오른쪽 포털로 들어가면 다음 스테이지입니다.'
+        : '별을 모두 모으면 오른쪽 포털이 열립니다.';
+    }
+
+    function showMessage(text) {
+      toastEl.textContent = text;
+      toastEl.classList.remove('hide');
+      messageTimer = 150;
+    }
+
+    function hideMessageTick() {
+      if (messageTimer > 0) {
+        messageTimer -= 1;
+        if (messageTimer === 0) toastEl.classList.add('hide');
+      }
+    }
+
+    function circleRectCollision(cx, cy, r, rect) {
+      const nearestX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
+      const nearestY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
+      const dx = cx - nearestX;
+      const dy = cy - nearestY;
+      return dx * dx + dy * dy <= r * r;
+    }
+
+    function circlePointDistance(cx, cy, px, py) {
+      const dx = cx - px;
+      const dy = cy - py;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function updateMovingPlatforms() {
+      levelState.platforms.forEach((p) => {
+        if (p.moveX) {
+          const prevX = p.x;
+          p.x = p.baseX + Math.sin(frame * 0.018 * p.speed) * p.moveX;
+          p.dx = p.x - prevX;
+        } else {
+          p.dx = 0;
+        }
+      });
+    }
+
+    function updatePhysics() {
+      updateMovingPlatforms();
+
+      const accel = 0.58;
+      const maxSpeed = 6.8;
+      const friction = 0.88;
+      const gravity = 0.42;
+      const bounce = -10.2;
+
+      if (keys.left) ball.vx -= accel;
+      if (keys.right) ball.vx += accel;
+      if (!keys.left && !keys.right) ball.vx *= friction;
+      ball.vx = Math.max(-maxSpeed, Math.min(maxSpeed, ball.vx));
+
+      if (keys.jump && frame - ball.lastGrounded < 8) {
+        ball.vy = -12.6;
+        ball.lastGrounded = -1000;
+      }
+
+      ball.vy += gravity;
+      ball.vy = Math.min(ball.vy, 14);
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+      ball.grounded = false;
+
+      if (ball.x < ball.r) {
+        ball.x = ball.r;
+        ball.vx *= -0.38;
+      }
+      if (ball.x > W - ball.r) {
+        ball.x = W - ball.r;
+        ball.vx *= -0.38;
+      }
+
+      levelState.platforms.forEach((p) => {
+        const wasAbove = ball.y - ball.vy + ball.r <= p.y + 5;
+        const withinX = ball.x + ball.r > p.x && ball.x - ball.r < p.x + p.w;
+        if (wasAbove && withinX && ball.y + ball.r >= p.y && ball.y + ball.r <= p.y + Math.max(22, p.h + 14) && ball.vy >= 0) {
+          ball.y = p.y - ball.r;
+          ball.vy = bounce;
+          ball.grounded = true;
+          ball.lastGrounded = frame;
+          if (p.dx) ball.x += p.dx;
+        } else if (circleRectCollision(ball.x, ball.y, ball.r, p)) {
+          if (ball.x < p.x) {
+            ball.x = p.x - ball.r;
+            ball.vx *= -0.28;
+          } else if (ball.x > p.x + p.w) {
+            ball.x = p.x + p.w + ball.r;
+            ball.vx *= -0.28;
+          }
+        }
+      });
+
+      if (ball.y > H + 80) {
+        resetCurrentLevel();
+        return;
+      }
+
+      levelState.spikes.forEach((spike) => {
+        if (circleRectCollision(ball.x, ball.y, ball.r - 3, spike)) {
+          resetCurrentLevel();
+        }
+      });
+
+      levelState.stars.forEach((star) => {
+        if (!star.collected && circlePointDistance(ball.x, ball.y, star.x, star.y) < ball.r + 17) {
+          star.collected = true;
+          showMessage('별 획득!');
+          if (levelState.stars.every((s) => s.collected)) {
+            levelState.portalOpen = true;
+            showMessage('포털이 열렸습니다! 오른쪽으로 이동하세요.');
+          }
+          updateHud();
+        }
+      });
+
+      if (levelState.portalOpen && circleRectCollision(ball.x, ball.y, ball.r, levelState.portal)) {
+        if (levelIndex === levels.length - 1) {
+          showMessage('모든 스테이지 클리어! 왕관 바운스 성공!');
+          loadLevel(0, true);
+        } else {
+          loadLevel(levelIndex + 1, true);
+        }
+      }
+    }
+
+    function roundedRect(x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, W, H);
+
+      const sky = ctx.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, '#eef8ff');
+      sky.addColorStop(0.55, '#fff7fc');
+      sky.addColorStop(1, '#fff4e6');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H);
+
+      drawCloud(130, 90, 1);
+      drawCloud(740, 92, 0.82);
+      drawCloud(500, 150, 0.58);
+
+      ctx.fillStyle = 'rgba(199, 183, 255, 0.22)';
+      for (let i = 0; i < 8; i += 1) {
+        ctx.beginPath();
+        ctx.arc(65 + i * 130, 515 + Math.sin(frame * 0.01 + i) * 4, 42, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawCloud(x, y, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = 'rgba(255,255,255,0.78)';
+      ctx.beginPath();
+      ctx.arc(0, 12, 28, 0, Math.PI * 2);
+      ctx.arc(32, 0, 35, 0, Math.PI * 2);
+      ctx.arc(72, 13, 26, 0, Math.PI * 2);
+      ctx.roundRect ? ctx.roundRect(-16, 14, 104, 28, 14) : roundedRect(-16, 14, 104, 28, 14);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPlatforms() {
+      levelState.platforms.forEach((p) => {
+        const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(1, '#dff4ff');
+        ctx.fillStyle = grad;
+        roundedRect(p.x, p.y, p.w, p.h, 12);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(120,144,180,0.26)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255,143,199,0.17)';
+        roundedRect(p.x + 10, p.y + 5, Math.max(0, p.w - 20), 4, 4);
+        ctx.fill();
+      });
+    }
+
+    function drawSpikes() {
+      levelState.spikes.forEach((s) => {
+        const count = Math.max(1, Math.floor(s.w / 22));
+        const step = s.w / count;
+        for (let i = 0; i < count; i += 1) {
+          const x = s.x + i * step;
+          ctx.beginPath();
+          ctx.moveTo(x, s.y + s.h);
+          ctx.lineTo(x + step / 2, s.y);
+          ctx.lineTo(x + step, s.y + s.h);
+          ctx.closePath();
+          ctx.fillStyle = '#ff6f8f';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(172,62,91,0.28)';
+          ctx.stroke();
+        }
+      });
+    }
+
+    function drawStars() {
+      levelState.stars.forEach((star) => {
+        if (star.collected) return;
+        const pulse = 1 + Math.sin(frame * 0.08 + star.x) * 0.08;
+        ctx.save();
+        ctx.translate(star.x, star.y);
+        ctx.scale(pulse, pulse);
+        ctx.rotate(frame * 0.018);
+        ctx.fillStyle = '#ffd35a';
+        ctx.strokeStyle = 'rgba(193,133,23,0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < 10; i += 1) {
+          const angle = -Math.PI / 2 + (Math.PI * 2 * i) / 10;
+          const radius = i % 2 === 0 ? 18 : 8;
+          ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    function drawPortal() {
+      const p = levelState.portal;
+      const glow = levelState.portalOpen ? 0.42 + Math.sin(frame * 0.08) * 0.12 : 0.16;
+      ctx.save();
+      ctx.globalAlpha = levelState.portalOpen ? 1 : 0.45;
+      ctx.fillStyle = `rgba(199,183,255,${glow})`;
+      ctx.beginPath();
+      ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w * 0.7, p.h * 0.62, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const grad = ctx.createRadialGradient(p.x + p.w / 2, p.y + p.h / 2, 8, p.x + p.w / 2, p.y + p.h / 2, 44);
+      grad.addColorStop(0, levelState.portalOpen ? '#ffffff' : '#f2f2f5');
+      grad.addColorStop(0.52, levelState.portalOpen ? '#c7b7ff' : '#cfd3df');
+      grad.addColorStop(1, levelState.portalOpen ? '#8bd7ff' : '#aeb6c7');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w * 0.45, p.h * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBall() {
+      const grad = ctx.createRadialGradient(ball.x - 7, ball.y - 9, 3, ball.x, ball.y, ball.r + 7);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.28, '#ffafd2');
+      grad.addColorStop(1, '#ff62ad');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(147,69,103,0.23)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.beginPath();
+      ctx.arc(ball.x - 6, ball.y - 7, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function render() {
+      drawBackground();
+      drawPortal();
+      drawStars();
+      drawPlatforms();
+      drawSpikes();
+      drawBall();
+    }
+
+    function gameLoop() {
+      frame += 1;
+      updatePhysics();
+      hideMessageTick();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function normalizeKey(event, isDown) {
+      if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') keys.left = isDown;
+      if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') keys.right = isDown;
+      if (event.key === ' ' || event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
+        keys.jump = isDown;
+        if (isDown) event.preventDefault();
+      }
+    }
+
+    window.addEventListener('keydown', (event) => normalizeKey(event, true));
+    window.addEventListener('keyup', (event) => normalizeKey(event, false));
+
+    function bindHoldButton(button, keyName) {
+      const set = (value) => {
+        keys[keyName] = value;
+      };
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        button.setPointerCapture(event.pointerId);
+        set(true);
+      });
+      button.addEventListener('pointerup', () => set(false));
+      button.addEventListener('pointercancel', () => set(false));
+      button.addEventListener('pointerleave', () => set(false));
+    }
+
+    bindHoldButton(document.getElementById('leftBtn'), 'left');
+    bindHoldButton(document.getElementById('rightBtn'), 'right');
+    bindHoldButton(document.getElementById('jumpBtn'), 'jump');
+
+    document.getElementById('restartBtn').addEventListener('click', resetCurrentLevel);
+    document.getElementById('prevBtn').addEventListener('click', () => loadLevel(levelIndex - 1, true));
+    document.getElementById('nextBtn').addEventListener('click', () => loadLevel(levelIndex + 1, true));
+
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function polyfillRoundRect(x, y, w, h, r) {
+        roundedRect(x, y, w, h, r);
+        return this;
+      };
+    }
+
+    loadLevel(0, false);
+    gameLoop();
+  </script>
+</body>
+</html>

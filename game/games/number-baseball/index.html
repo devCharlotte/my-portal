@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>숫자 야구 게임</title>
+  <link rel="stylesheet" href="../../shared.css">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'HakgyoansimNadeuriTTF-B', Arial, sans-serif;
+      color: var(--my-ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255, 211, 235, 0.62), transparent 34%),
+        radial-gradient(circle at 88% 10%, rgba(139, 215, 255, 0.48), transparent 32%),
+        linear-gradient(135deg, #fff7ec 0%, #eef8ff 50%, #f8f0ff 100%);
+    }
+    .center-wrap {
+      min-height: calc(100vh - 62px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 22px 16px 44px;
+    }
+    .game-container {
+      background: rgba(255,255,255,0.76);
+      border: 1px solid var(--my-line);
+      padding: 26px;
+      border-radius: 26px;
+      box-shadow: var(--my-shadow);
+      text-align: center;
+      max-width: 420px;
+      width: 100%;
+      backdrop-filter: blur(18px);
+    }
+    h1 {
+      font-size: clamp(1.85rem, 5vw, 2.45rem);
+      color: #172033;
+      margin: 0 0 16px;
+      letter-spacing: -0.04em;
+    }
+    p {
+      font-size: 1rem;
+      margin: 10px 0;
+      color: var(--my-muted);
+      line-height: 1.55;
+    }
+    input {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 11px 12px;
+      width: min(260px, 76%);
+      margin: 14px 0;
+      border: 1px solid rgba(120,144,180,0.28);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.82);
+      transition: all 0.3s ease;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--my-pink);
+      box-shadow: 0 0 0 4px rgba(255,143,199,0.18);
+    }
+    button {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 11px 18px;
+      background-color: var(--my-pink);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background-color: #ff6fba;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(255,143,199,0.25);
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 18px;
+      max-height: 220px;
+      overflow: auto;
+    }
+    li {
+      background-color: rgba(255,255,255,0.62);
+      border: 1px solid rgba(120,144,180,0.16);
+      margin: 7px 0;
+      padding: 9px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    #message {
+      font-size: 1.12rem;
+      color: #ff5f94;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body class="mygame-soft">
+  <nav class="mygame-topnav">
+    <a class="mygame-home" href="../../">← my game</a>
+    <span class="mygame-date">Created Jan 1, 2025</span>
+  </nav>
+  <div class="center-wrap">
+    <div class="game-container">
+      <h1>JoonHee's Number Baseball Game</h1>
+      <p>0~9 사이의 숫자 4개를 입력하세요 (중복 없음).</p>
+      <input type="text" id="userInput" placeholder="숫자 입력">
+      <button onclick="playGame()">확인</button>
+      <p id="message"></p>
+      <ul id="log"></ul>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

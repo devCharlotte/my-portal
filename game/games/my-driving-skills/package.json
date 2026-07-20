@@ -1,0 +1,17 @@
+{
+  "name": "my-driving-skills",
+  "version": "1.0.0",
+  "description": "웹캠 손 제스처(허공 핸들)로 조작하는 운전 연습 시뮬레이터. MediaPipe Hand Landmarker + Three.js 기반 정적 웹앱.",
+  "private": true,
+  "type": "module",
+  "author": "성준희 (JoonHee, devCharlotte)",
+  "license": "MIT",
+  "homepage": "https://github.com/devCharlotte/my-driving-skills",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devCharlotte/my-driving-skills.git"
+  },
+  "scripts": {
+    "start": "python3 -m http.server 8080"
+  }
+}

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Cipher Lab</title>
+  <link rel="stylesheet" href="../../shared.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="mygame-soft">
+  <nav class="mygame-topnav">
+    <a class="mygame-home" href="../../">← my game</a>
+    <span class="mygame-date">Created Jun 3, 2026</span>
+  </nav>
+
+  <main class="cipher-page">
+    <section class="mygame-card cipher-hero">
+      <div>
+        <div class="eyebrow">cipher game</div>
+        <h1>My Cipher Lab</h1>
+        <p>친구가 보내준 암호 해석하기 그리고 나도 암호 만들기 !!</p>
+      </div>
+      <div class="hero-icon">🔐</div>
+    </section>
+
+    <section class="tool-tabs" aria-label="cipher tools">
+      <button class="tab active" data-tab="auto">Auto Solver</button>
+      <button class="tab" data-tab="aes">AES</button>
+      <button class="tab" data-tab="modern">DES · RC4</button>
+      <button class="tab" data-tab="classic">Classical</button>
+      <button class="tab" data-tab="encoding">Encoding</button>
+      <button class="tab" data-tab="hash">Hash</button>
+      <button class="tab" data-tab="identifier">Identifier</button>
+      <button class="tab" data-tab="challenge">Challenge</button>
+    </section>
+
+    <section class="mygame-card tool-panel active" id="auto">
+      <div class="panel-head">
+        <h2>Auto Solver</h2>
+        <p>모르면 일단 넣어보기</p>
+      </div>
+      <textarea id="autoInput" placeholder="암호문 입력"></textarea>
+      <button id="autoRun">후보 찾기</button>
+      <div class="result-list" id="autoResult"></div>
+    </section>
+
+    <section class="mygame-card tool-panel" id="aes">
+      <div class="panel-head">
+        <h2>AES Lab</h2>
+        <p>암호문 + 키로 복호화</p>
+      </div>
+      <div class="grid-form">
+        <label>작업<select id="aesAction"><option value="decrypt">Decrypt</option><option value="encrypt">Encrypt</option></select></label>
+        <label>Mode<select id="aesMode"><option>CBC</option><option>ECB</option><option>CTR</option></select></label>
+        <label>Input<select id="aesInputType"><option>Base64</option><option>Hex</option><option>Text</option></select></label>
+        <label>Output<select id="aesOutputType"><option>Text</option><option>Base64</option><option>Hex</option></select></label>
+      </div>
+      <textarea id="aesInput" placeholder="평문 또는 암호문"></textarea>
+      <div class="grid-form two">
+        <input id="aesKey" placeholder="Secret Key" />
+        <input id="aesIv" placeholder="IV, CBC/CTR에서 사용" />
+      </div>
+      <button id="aesRun">실행</button>
+      <pre class="result-box" id="aesResult"></pre>
+    </section>
+
+    <section class="mygame-card tool-panel" id="modern">
+      <div class="panel-head">
+        <h2>DES · 3DES · RC4</h2>
+        <p>키가 있으면 바로 실행</p>
+      </div>
+      <div class="grid-form">
+        <label>Algorithm<select id="modernAlgo"><option>DES</option><option>TripleDES</option><option>RC4</option></select></label>
+        <label>Action<select id="modernAction"><option value="decrypt">Decrypt</option><option value="encrypt">Encrypt</option></select></label>
+        <label>Input<select id="modernInputType"><option>Base64</option><option>Hex</option><option>Text</option></select></label>
+        <label>Output<select id="modernOutputType"><option>Text</option><option>Base64</option><option>Hex</option></select></label>
+      </div>
+      <textarea id="modernInput" placeholder="평문 또는 암호문"></textarea>
+      <input id="modernKey" placeholder="Key" />
+      <button id="modernRun">실행</button>
+      <pre class="result-box" id="modernResult"></pre>
+    </section>
+
+    <section class="mygame-card tool-panel" id="classic">
+      <div class="panel-head">
+        <h2>Classical Cipher</h2>
+        <p>고전 암호 모음</p>
+      </div>
+      <div class="grid-form">
+        <label>Cipher<select id="classicAlgo"><option>Caesar</option><option>Vigenere</option><option>Atbash</option><option>RailFence</option></select></label>
+        <label>Action<select id="classicAction"><option value="decrypt">Decrypt</option><option value="encrypt">Encrypt</option></select></label>
+        <input id="classicKey" placeholder="Key / Shift / Rails" />
+      </div>
+      <textarea id="classicInput" placeholder="텍스트 입력"></textarea>
+      <button id="classicRun">실행</button>
+      <pre class="result-box" id="classicResult"></pre>
+    </section>
+
+    <section class="mygame-card tool-panel" id="encoding">
+      <div class="panel-head">
+        <h2>Encoding Lab</h2>
+        <p>암호 같은 인코딩 확인</p>
+      </div>
+      <div class="grid-form">
+        <label>Format<select id="encAlgo"><option>Base64</option><option>Hex</option><option>Binary</option><option>URL</option><option>ASCII</option><option>Unicode Escape</option></select></label>
+        <label>Action<select id="encAction"><option value="decode">Decode</option><option value="encode">Encode</option></select></label>
+      </div>
+      <textarea id="encInput" placeholder="텍스트 입력"></textarea>
+      <button id="encRun">실행</button>
+      <pre class="result-box" id="encResult"></pre>
+    </section>
+
+    <section class="mygame-card tool-panel" id="hash">
+      <div class="panel-head">
+        <h2>Hash</h2>
+        <p>생성하거나 후보 비교</p>
+      </div>
+      <div class="grid-form two">
+        <label>Algorithm<select id="hashAlgo"><option>MD5</option><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label>
+        <label>Mode<select id="hashMode"><option value="generate">Generate</option><option value="find">Candidate Finder</option></select></label>
+      </div>
+      <textarea id="hashInput" placeholder="Generate: 평문 입력 / Finder: 해시값 입력"></textarea>
+      <textarea id="hashCandidates" placeholder="후보 단어 입력, 한 줄에 하나씩"></textarea>
+      <button id="hashRun">실행</button>
+      <pre class="result-box" id="hashResult"></pre>
+    </section>
+
+    <section class="mygame-card tool-panel" id="identifier">
+      <div class="panel-head">
+        <h2>Cipher Identifier</h2>
+        <p>뭔지 대충 추측</p>
+      </div>
+      <textarea id="idInput" placeholder="문자열 입력"></textarea>
+      <button id="idRun">분석</button>
+      <div class="result-list" id="idResult"></div>
+    </section>
+
+    <section class="mygame-card tool-panel" id="challenge">
+      <div class="panel-head">
+        <h2>Cipher Challenge</h2>
+        <p>친구한테 문제 내기</p>
+      </div>
+      <div class="grid-form two">
+        <label>Type<select id="challengeType"><option>Random</option><option>Base64</option><option>Hex</option><option>Caesar</option><option>Atbash</option><option>Vigenere</option><option>AES-CBC</option></select></label>
+        <input id="challengeKey" placeholder="Key, 비워두면 자동" />
+      </div>
+      <textarea id="challengeInput" placeholder="평문 입력"></textarea>
+      <button id="challengeRun">문제 만들기</button>
+      <pre class="result-box" id="challengeResult"></pre>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

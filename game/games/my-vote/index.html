@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>우리 반 투표소</title>
+  <link rel="stylesheet" href="../../shared.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="mygame-soft election-page">
+  <nav class="mygame-topnav" aria-label="상단 메뉴">
+    <a class="mygame-home" href="../../" aria-label="게임 포털로 이동">← my game</a>
+    <span class="mygame-date" id="todayLabel">Created Jun 3, 2026</span>
+  </nav>
+
+  <main class="mygame-page">
+    <section class="hero">
+      <div class="mygame-card hero-main">
+        <div class="eyebrow">election day mini game</div>
+        <h1>우리 반<br />투표소</h1>
+        <p class="subtitle">
+          후보를 등록하고 투표용지를 발급한 뒤 투표소에서 도장을 찍어주세요.<br />
+          모든 투표는 이 브라우저 안에 익명으로 저장되고 나중에 하나씩 개표할 수 있습니다.
+        </p>
+        <div class="hero-actions" id="startActions">
+          <button class="primary-btn" id="startBtn" type="button">시작하기</button>
+          <button class="ghost-btn" id="restoreBtn" type="button">이어하기</button>
+        </div>
+      </div>
+      <aside class="mygame-card side-note">
+        <div class="value">투표용지 발급<br />도장 찍기<br />하나씩 개표하기</div>
+        <div class="label">
+          선거일 기념으로 만든 재미있게 투표실 시뮬레이션 게임 !! <br />
+          학급 반장선거처럼 한 컴퓨터에 아이들이 차례대로 와서 투표하는 용도로 만들었습니다.<br />
+          후보자별 결과는 개표실을 열기 전까지 화면에 보이지 않습니다.
+        </div>
+      </aside>
+    </section>
+
+    <section class="mygame-card setup-card hidden" id="setupSection" aria-labelledby="setupTitle">
+      <div class="section-head">
+        <div>
+          <span class="mini-pill">step 1</span>
+          <h2 id="setupTitle">선거 준비</h2>
+          <p>선거 이름과 후보자를 입력하면 바로 투표를 시작할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="setup-grid">
+        <label class="field">
+          <span>선거 이름</span>
+          <input id="electionTitleInput" type="text" maxlength="30" value="우리 반 반장선거" />
+        </label>
+        <label class="field">
+          <span>개표실 비밀번호</span>
+          <input id="adminCodeInput" type="password" inputmode="numeric" maxlength="12" placeholder="예: 1234" />
+          <small>비워두면 0000으로 설정됩니다.</small>
+        </label>
+      </div>
+
+      <div class="candidate-editor">
+        <div class="candidate-input-row">
+          <label class="field grow">
+            <span>후보자 이름</span>
+            <input id="candidateNameInput" type="text" maxlength="16" placeholder="예: 김민준" />
+          </label>
+          <button class="secondary-btn" id="addCandidateBtn" type="button">후보 추가</button>
+        </div>
+        <div class="candidate-list" id="candidateSetupList" aria-live="polite"></div>
+      </div>
+
+      <div class="setup-actions">
+        <button class="primary-btn" id="beginElectionBtn" type="button">선거 시작</button>
+        <button class="ghost-btn" id="sampleCandidateBtn" type="button">예시 후보 넣기</button>
+      </div>
+    </section>
+
+    <section class="mygame-card lobby-card hidden" id="lobbySection" aria-labelledby="lobbyTitle">
+      <div class="section-head lobby-head">
+        <div>
+          <span class="mini-pill">step 2</span>
+          <h2 id="lobbyTitle">투표 진행</h2>
+          <p id="lobbySubtitle">투표용지를 발급한 뒤 투표하기 버튼을 눌러주세요.</p>
+        </div>
+        <div class="status-grid" aria-label="투표 현황">
+          <div class="status-box"><strong id="issuedCount">0</strong><span>발급</span></div>
+          <div class="status-box"><strong id="castCount">0</strong><span>투표 완료</span></div>
+          <div class="status-box"><strong id="candidateCount">0</strong><span>후보</span></div>
+        </div>
+      </div>
+
+      <div class="voting-stage">
+        <div class="printer-area">
+          <div class="printer" aria-hidden="true">
+            <div class="printer-top"></div>
+            <div class="printer-body">
+              <div class="printer-light"></div>
+              <div class="printer-slot"></div>
+            </div>
+            <div class="printed-paper" id="printedPaper">
+              <div class="paper-title">투표용지</div>
+              <div class="paper-line"></div>
+              <div class="paper-line short"></div>
+              <div class="paper-stamp-guide">기표소에서 도장을 찍어주세요</div>
+            </div>
+          </div>
+          <div class="print-message" id="printMessage">아직 발급된 투표용지가 없습니다.</div>
+        </div>
+
+        <div class="lobby-actions">
+          <button class="primary-btn large-btn" id="issueBallotBtn" type="button">투표용지 발급</button>
+          <button class="primary-btn large-btn" id="enterBoothBtn" type="button" disabled>투표하기</button>
+          <button class="ghost-btn" id="openCountBtn" type="button">개표실</button>
+        </div>
+      </div>
+
+      <div class="notice-box">
+        <strong>운영 메모</strong>
+        <p>한 명이 투표를 마치면 다음 학생이 다시 투표용지 발급을 누르면 됩니다. 브라우저 새로고침을 해도 현재 선거 데이터는 유지됩니다.</p>
+      </div>
+    </section>
+
+    <section class="mygame-card booth-card hidden" id="boothSection" aria-labelledby="boothTitle">
+      <div class="section-head">
+        <div>
+          <span class="mini-pill">step 3</span>
+          <h2 id="boothTitle">기표소</h2>
+          <p>원하는 후보 칸에 도장을 찍고 투표함에 넣어주세요.</p>
+        </div>
+        <div class="booth-badge" id="ballotNoLabel">투표용지 #1</div>
+      </div>
+
+      <div class="ballot-sheet" id="ballotSheet" aria-live="polite"></div>
+
+      <div class="booth-actions">
+        <button class="primary-btn" id="castVoteBtn" type="button" disabled>투표함에 넣기</button>
+        <button class="ghost-btn" id="cancelVoteBtn" type="button">돌아가기</button>
+      </div>
+    </section>
+
+    <section class="mygame-card count-card hidden" id="countSection" aria-labelledby="countTitle">
+      <div class="section-head lobby-head">
+        <div>
+          <span class="mini-pill">step 4</span>
+          <h2 id="countTitle">개표실</h2>
+          <p>하나씩 개표하거나 한 번에 최종 결과를 확인할 수 있습니다.</p>
+        </div>
+        <div class="count-actions-top">
+          <button class="ghost-btn" id="backToLobbyBtn" type="button">투표 화면으로</button>
+          <button class="danger-btn" id="resetElectionBtn" type="button">선거 초기화</button>
+        </div>
+      </div>
+
+      <div class="count-layout">
+        <div class="count-left">
+          <div class="opened-ballot" id="openedBallot">
+            <div class="opened-empty">아직 개표한 투표용지가 없습니다.</div>
+          </div>
+          <div class="count-buttons">
+            <button class="primary-btn" id="openOneBtn" type="button">하나씩 개표하기</button>
+            <button class="secondary-btn" id="showFinalBtn" type="button">개표 결과</button>
+            <button class="ghost-btn" id="resetRevealBtn" type="button">개표 다시 보기</button>
+            <button class="ghost-btn" id="downloadCsvBtn" type="button">CSV 저장</button>
+          </div>
+        </div>
+        <div class="count-right">
+          <h3>현재 개표 현황</h3>
+          <div id="resultBoard" class="result-board"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="modal-backdrop hidden" id="adminModal" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+    <div class="modal-card mygame-card">
+      <h2 id="adminModalTitle">개표실 비밀번호</h2>
+      <p>투표 중간에 결과가 보이지 않도록 비밀번호를 확인합니다.</p>
+      <input id="adminCodeCheckInput" type="password" inputmode="numeric" placeholder="비밀번호 입력" />
+      <div class="modal-actions">
+        <button class="primary-btn" id="confirmAdminBtn" type="button">개표실 열기</button>
+        <button class="ghost-btn" id="closeAdminModalBtn" type="button">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

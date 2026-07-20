@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>JoonHee's Life 4 Cuts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ff8fc7" />
+  <link rel="stylesheet" href="../../shared.css" />
+  <style>
+    :root {
+      --life-pink: #ff79b8;
+      --life-pink-dark: #ef4f9b;
+      --life-ink: #253044;
+      --life-muted: #707789;
+      --life-line: rgba(120, 144, 180, 0.24);
+      --life-card: rgba(255, 255, 255, 0.8);
+      --life-shadow: 0 18px 42px rgba(94, 120, 160, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-width: 320px;
+    }
+
+    button,
+    input {
+      font-family: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(255, 121, 184, 0.3);
+      outline-offset: 3px;
+    }
+
+    .life-page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding-bottom: 56px;
+    }
+
+    .life-header {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .life-header::after {
+      content: "📸";
+      position: absolute;
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%) rotate(8deg);
+      font-size: clamp(2.2rem, 7vw, 4.6rem);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .life-header .eyebrow {
+      display: inline-flex;
+      margin-bottom: 8px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      color: var(--life-pink-dark);
+      background: rgba(255, 255, 255, 0.66);
+      border: 1px solid var(--life-line);
+      font-size: 0.78rem;
+    }
+
+    .life-header h1,
+    .life-header p {
+      position: relative;
+      z-index: 1;
+    }
+
+    .life-shell {
+      padding: clamp(16px, 3vw, 28px);
+      border: 1px solid var(--life-line);
+      border-radius: 26px;
+      background: var(--life-card);
+      box-shadow: var(--life-shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 26px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .stepper li {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      padding: 10px 12px;
+      color: #9298a8;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.43);
+      transition: 0.2s ease;
+    }
+
+    .stepper li.active {
+      color: var(--life-ink);
+      border-color: rgba(255, 121, 184, 0.32);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 9px 22px rgba(255, 121, 184, 0.12);
+    }
+
+    .stepper li.done {
+      color: #596277;
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .step-number {
+      display: grid;
+      flex: 0 0 28px;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: #bfc5d0;
+      font-size: 0.78rem;
+    }
+
+    .stepper li.active .step-number,
+    .stepper li.done .step-number {
+      background: linear-gradient(135deg, var(--life-pink), var(--life-pink-dark));
+    }
+
+    .step-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.85rem;
+    }
+
+    .step-section[hidden] {
+      display: none !important;
+    }
+
+    .section-heading {
+      margin-bottom: 22px;
+      text-align: center;
+    }
+
+    .section-heading .section-kicker {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--life-pink-dark);
+      font-size: 0.8rem;
+    }
+
+    .section-heading h2 {
+      margin: 0 0 9px;
+      color: var(--life-ink);
+      font-size: clamp(1.35rem, 3.4vw, 2rem);
+      letter-spacing: -0.04em;
+    }
+
+    .section-heading p {
+      margin: 0;
+      color: var(--life-muted);
+      line-height: 1.65;
+    }
+
+    .frame-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    body.mygame-soft button.frame-card {
+      display: flex;
+      min-height: 310px;
+      margin: 0;
+      padding: 22px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--life-ink) !important;
+      border: 2px solid transparent !important;
+      border-radius: 22px !important;
+      background: rgba(255, 255, 255, 0.72) !important;
+      box-shadow: 0 12px 28px rgba(94, 120, 160, 0.11) !important;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    body.mygame-soft button.frame-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 121, 184, 0.36) !important;
+      box-shadow: 0 18px 34px rgba(255, 121, 184, 0.15) !important;
+    }
+
+    body.mygame-soft button.frame-card.selected {
+      border-color: var(--life-pink) !important;
+      background: rgba(255, 247, 252, 0.96) !important;
+      box-shadow: 0 18px 36px rgba(255, 121, 184, 0.2) !important;
+    }
+
+    .frame-preview {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+      border-radius: 9px;
+      background: #ffb9d6;
+      box-shadow: 0 10px 24px rgba(37, 48, 68, 0.16);
+    }
+
+    .frame-preview span {
+      display: block;
+      min-width: 0;
+      min-height: 0;
+      border-radius: 3px;
+      background:
+        linear-gradient(140deg, rgba(255,255,255,0.78), rgba(224,236,255,0.78)),
+        #fff;
+      box-shadow: inset 0 0 0 1px rgba(60, 72, 92, 0.1);
+    }
+
+    .frame-preview.strip {
+      width: 104px;
+      height: 216px;
+      grid-template-rows: repeat(4, 1fr);
+    }
+
+    .frame-preview.grid {
+      width: 180px;
+      height: 180px;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+    }
+
+    .frame-preview.wide {
+      width: 232px;
+      height: 104px;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .frame-card-copy strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 1.08rem;
+    }
+
+    .frame-card-copy small {
+      color: var(--life-muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .selected-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--life-pink-dark);
+      background: rgba(255, 121, 184, 0.12);
+      font-size: 0.77rem;
+      opacity: 0;
+    }
+
+    .frame-card.selected .selected-mark {
+      opacity: 1;
+    }
+
+    .selection-summary {
+      margin: 20px 0 0;
+      color: var(--life-muted);
+      text-align: center;
+    }
+
+    .stage-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(290px, 0.75fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .camera-card,
+    .side-card,
+    .preview-card,
+    .custom-card {
+      border: 1px solid var(--life-line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.73);
+      box-shadow: 0 13px 32px rgba(94, 120, 160, 0.11);
+    }
+
+    .camera-card,
+    .preview-card {
+      padding: 16px;
+    }
+
+    .camera-view {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      aspect-ratio: 4 / 3;
+      border-radius: 18px;
+      background: #161821;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    #video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .camera-guide {
+      position: absolute;
+      inset: 8%;
+      border: 2px dashed rgba(255, 255, 255, 0.56);
+      border-radius: 18px;
+      pointer-events: none;
+    }
+
+    .camera-badge {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(17, 20, 29, 0.64);
+      backdrop-filter: blur(8px);
+      font-size: 0.82rem;
+    }
+
+    .camera-error {
+      margin: 12px 0 0;
+      color: #db3d71;
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .side-card,
+    .custom-card {
+      padding: 20px;
+    }
+
+    .shot-counter {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .shot-counter strong {
+      font-size: 1.18rem;
+    }
+
+    .shot-counter span {
+      color: var(--life-muted);
+      font-size: 0.83rem;
+    }
+
+    .progress-track {
+      overflow: hidden;
+      height: 9px;
+      margin-bottom: 18px;
+      border-radius: 999px;
+      background: #edf0f5;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--life-pink), #ffb07b);
+      transition: width 0.25s ease;
+    }
+
+    .mini-shots {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .mini-shot {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 4 / 3;
+      border: 1px solid var(--life-line);
+      border-radius: 12px;
+      background: #f0f2f6;
+    }
+
+    .mini-shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .mini-shot span {
+      position: absolute;
+      left: 7px;
+      top: 7px;
+      display: grid;
+      width: 24px;
+      height: 24px;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(31, 38, 53, 0.67);
+      font-size: 0.73rem;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 22px;
+    }
+
+    .canvas-action-row {
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    .canvas-action-row .action-btn {
+      flex: 1 1 240px;
+    }
+
+    .download-row .action-btn {
+      flex: 1 1 150px;
+    }
+
+    .download-status {
+      min-height: 24px;
+      margin-top: 12px;
+      padding: 0 8px;
+      color: #5b6270;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .download-status.success {
+      color: #25764d;
+    }
+
+    .download-status.error {
+      color: #b43855;
+    }
+
+    .download-status a {
+      display: inline-block;
+      margin-left: 6px;
+      color: var(--life-pink-dark);
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    body.mygame-soft button.action-btn {
+      margin: 0;
+      padding: 11px 18px;
+      border: none !important;
+      border-radius: 14px !important;
+      background: linear-gradient(135deg, var(--life-pink), var(--life-pink-dark)) !important;
+      box-shadow: 0 10px 22px rgba(239, 79, 155, 0.2) !important;
+      cursor: pointer;
+    }
+
+    body.mygame-soft button.action-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
+    body.mygame-soft button.action-btn.secondary {
+      color: var(--life-ink) !important;
+      border: 1px solid var(--life-line) !important;
+      background: rgba(255, 255, 255, 0.85) !important;
+      box-shadow: none !important;
+    }
+
+    body.mygame-soft button.action-btn.danger {
+      color: #c43864 !important;
+      border: 1px solid rgba(196, 56, 100, 0.2) !important;
+      background: rgba(255, 241, 246, 0.9) !important;
+      box-shadow: none !important;
+    }
+
+    body.mygame-soft button.action-btn:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .preview-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .canvas-wrap {
+      display: flex;
+      min-height: 360px;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 10px;
+      border-radius: 16px;
+      background:
+        linear-gradient(45deg, #f1f3f7 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f3f7 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f3f7 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f3f7 75%),
+        #fff;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      background-size: 20px 20px;
+    }
+
+    .photo-canvas {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: min(68vh, 720px);
+      border-radius: 8px;
+      box-shadow: 0 18px 38px rgba(37, 48, 68, 0.2);
+    }
+
+    .retake-help {
+      margin: 0 0 15px;
+      color: var(--life-muted);
+      line-height: 1.6;
+    }
+
+    .retake-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    body.mygame-soft button.retake-shot {
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+      aspect-ratio: 4 / 3;
+      color: #fff !important;
+      border: 2px solid transparent !important;
+      border-radius: 15px !important;
+      background: #eef1f6 !important;
+      box-shadow: 0 8px 18px rgba(37, 48, 68, 0.1) !important;
+      cursor: pointer;
+    }
+
+    body.mygame-soft button.retake-shot:hover {
+      border-color: var(--life-pink) !important;
+      transform: translateY(-2px);
+    }
+
+    .retake-shot img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .retake-shot .retake-overlay {
+      position: absolute;
+      inset: auto 7px 7px 7px;
+      padding: 7px 8px;
+      border-radius: 9px;
+      background: rgba(26, 31, 43, 0.7);
+      backdrop-filter: blur(8px);
+      font-size: 0.76rem;
+    }
+
+    .option-group + .option-group {
+      margin-top: 24px;
+    }
+
+    .option-group h3 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .color-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    body.mygame-soft button.color-option {
+      width: 38px;
+      min-width: 38px;
+      height: 38px;
+      min-height: 38px;
+      margin: 0;
+      padding: 0;
+      border: 3px solid rgba(255, 255, 255, 0.95) !important;
+      border-radius: 50% !important;
+      background: var(--swatch) !important;
+      box-shadow: 0 0 0 1px rgba(37, 48, 68, 0.17) !important;
+      cursor: pointer;
+    }
+
+    body.mygame-soft button.color-option.selected {
+      box-shadow: 0 0 0 3px var(--life-pink), 0 5px 14px rgba(37, 48, 68, 0.12) !important;
+      transform: scale(1.04);
+    }
+
+    .caption-input {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      color: var(--life-ink);
+      border: 1px solid var(--life-line);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .caption-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 7px;
+      color: var(--life-muted);
+      font-size: 0.76rem;
+    }
+
+    .layout-name-card {
+      padding: 12px 14px;
+      border: 1px dashed rgba(255, 121, 184, 0.36);
+      border-radius: 13px;
+      color: #8b3c65;
+      background: rgba(255, 245, 250, 0.72);
+      line-height: 1.55;
+    }
+
+    .result-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(260px, 0.55fr);
+      gap: 24px;
+      align-items: center;
+    }
+
+    .result-message {
+      padding: 28px;
+      text-align: center;
+      border: 1px solid var(--life-line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .result-message .result-icon {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 2.7rem;
+    }
+
+    .result-message h3 {
+      margin: 0 0 9px;
+      font-size: 1.35rem;
+    }
+
+    .result-message p {
+      margin: 0;
+      color: var(--life-muted);
+      line-height: 1.65;
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    @media (max-width: 920px) {
+      .step-label {
+        display: none;
+      }
+
+      .stepper li {
+        justify-content: center;
+        padding: 8px;
+      }
+
+      .frame-grid {
+        grid-template-columns: 1fr;
+      }
+
+      body.mygame-soft button.frame-card {
+        min-height: 250px;
+      }
+
+      .stage-layout,
+      .preview-layout,
+      .result-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-layout .preview-card,
+      .result-layout .preview-card {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .life-page {
+        width: min(100% - 18px, 1180px);
+      }
+
+      .life-shell {
+        padding: 14px;
+      }
+
+      .stepper {
+        gap: 5px;
+      }
+
+      .step-number {
+        width: 25px;
+        height: 25px;
+        flex-basis: 25px;
+      }
+
+      .retake-grid,
+      .mini-shots {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .action-row {
+        flex-direction: column;
+      }
+
+      body.mygame-soft button.action-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="mygame-soft">
+  <nav class="mygame-topnav">
+    <a class="mygame-home" href="../../">← my game</a>
+    <span class="mygame-date">Created Apr 1, 2025</span>
+  </nav>
+
+  <header class="life-header mygame-card">
+    <span class="eyebrow">MY GAME PHOTO BOOTH</span>
+    <h1>JoonHee's Life 4 Cuts</h1>
+    <p>프레임을 고르고, 네 장을 찍고, 마음에 들 때까지 다시 찍어보세요.</p>
+  </header>
+
+  <main class="life-page">
+    <div class="life-shell">
+      <ol class="stepper" aria-label="인생네컷 진행 단계">
+        <li class="active" data-step-indicator="1"><span class="step-number">1</span><span class="step-label">프레임 선택</span></li>
+        <li data-step-indicator="2"><span class="step-number">2</span><span class="step-label">사진 촬영</span></li>
+        <li data-step-indicator="3"><span class="step-number">3</span><span class="step-label">사진 확인</span></li>
+        <li data-step-indicator="4"><span class="step-number">4</span><span class="step-label">프레임 꾸미기</span></li>
+        <li data-step-indicator="5"><span class="step-number">5</span><span class="step-label">완성</span></li>
+      </ol>
+
+      <section class="step-section" id="step-1" data-step="1">
+        <div class="section-heading">
+          <span class="section-kicker">STEP 1</span>
+          <h2>먼저 사용할 액자를 골라주세요</h2>
+          <p>픽멤처럼 촬영 전에 배치를 정합니다. 어떤 액자를 골라도 사진은 네 장 촬영합니다.</p>
+        </div>
+
+        <div class="frame-grid" role="radiogroup" aria-label="네 컷 프레임 선택">
+          <button class="frame-card selected" type="button" data-layout="strip" role="radio" aria-checked="true">
+            <span class="frame-preview strip" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+            <span class="frame-card-copy"><strong>클래식 세로 네 컷</strong><small>인생네컷 느낌의 길쭉한 세로형 액자</small></span>
+            <span class="selected-mark">✓ 선택됨</span>
+          </button>
+
+          <button class="frame-card" type="button" data-layout="grid" role="radio" aria-checked="false">
+            <span class="frame-preview grid" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+            <span class="frame-card-copy"><strong>정사각 2 × 2</strong><small>네 장을 한눈에 보기 좋은 앨범형 액자</small></span>
+            <span class="selected-mark">✓ 선택됨</span>
+          </button>
+
+          <button class="frame-card" type="button" data-layout="wide" role="radio" aria-checked="false">
+            <span class="frame-preview wide" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+            <span class="frame-card-copy"><strong>가로 네 컷</strong><small>네 장을 나란히 배치하는 와이드형 액자</small></span>
+            <span class="selected-mark">✓ 선택됨</span>
+          </button>
+        </div>
+
+        <p class="selection-summary" id="selection-summary">선택한 액자: 클래식 세로 네 컷</p>
+        <div class="action-row">
+          <button class="action-btn" id="start-shooting" type="button">이 프레임으로 촬영 시작</button>
+        </div>
+      </section>
+
+      <section class="step-section" id="step-2" data-step="2" hidden>
+        <div class="section-heading">
+          <span class="section-kicker">STEP 2</span>
+          <h2 id="shooting-title">네 장의 사진을 차례대로 찍어주세요</h2>
+          <p id="shooting-description">카메라 권한을 허용한 뒤 촬영 버튼을 누르면 현재 모습이 저장됩니다.</p>
+        </div>
+
+        <div class="stage-layout">
+          <div class="camera-card">
+            <div class="camera-view">
+              <video id="video" autoplay playsinline muted></video>
+              <div class="camera-guide" aria-hidden="true"></div>
+              <div class="camera-badge" id="camera-badge">카메라 준비 중</div>
+            </div>
+            <p class="camera-error" id="camera-error" role="alert" hidden></p>
+          </div>
+
+          <aside class="side-card">
+            <div class="shot-counter">
+              <strong id="shot-label">1번째 컷</strong>
+              <span id="shot-count">0 / 4 촬영 완료</span>
+            </div>
+            <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progress-bar"></div></div>
+            <div class="mini-shots" id="mini-shots" aria-label="촬영한 사진 미리보기"></div>
+            <div class="action-row">
+              <button class="action-btn" id="capture-photo" type="button" disabled>1번째 사진 찍기</button>
+              <button class="action-btn secondary" id="back-to-frame" type="button">프레임 다시 고르기</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="step-section" id="step-3" data-step="3" hidden>
+        <div class="section-heading">
+          <span class="section-kicker">STEP 3</span>
+          <h2>사진을 확인하고 다시 찍을 컷을 눌러주세요</h2>
+          <p>사진을 누르면 해당 컷만 촬영 화면으로 돌아갑니다. 재촬영은 원하는 만큼 반복할 수 있습니다.</p>
+        </div>
+
+        <div class="preview-layout">
+          <div class="preview-card">
+            <div class="canvas-wrap"><canvas class="photo-canvas" id="review-canvas"></canvas></div>
+            <div class="action-row canvas-action-row">
+              <button class="action-btn" id="go-customize" type="button">촬영을 마무리하고 프레임 꾸미기로 이동</button>
+            </div>
+          </div>
+          <aside class="side-card">
+            <p class="retake-help">아래 사진 중 마음에 들지 않는 사진을 클릭하면 바로 해당 번호의 재촬영 단계로 이동합니다. 새로 촬영한 사진은 아래 목록과 프레임 미리보기에 즉시 교체됩니다.</p>
+            <div class="retake-grid" id="retake-grid"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="step-section" id="step-4" data-step="4" hidden>
+        <div class="section-heading">
+          <span class="section-kicker">STEP 4</span>
+          <h2>프레임 색과 문구를 정해주세요</h2>
+          <p>색상과 문구는 오른쪽 미리보기에 즉시 반영됩니다.</p>
+        </div>
+
+        <div class="preview-layout">
+          <div class="preview-card">
+            <div class="canvas-wrap"><canvas class="photo-canvas" id="customize-canvas"></canvas></div>
+          </div>
+          <aside class="custom-card">
+            <div class="option-group">
+              <h3>프레임 색상</h3>
+              <div class="color-options" id="color-options" role="radiogroup" aria-label="프레임 색상 선택">
+                <button class="color-option selected" type="button" style="--swatch:#FFADAD" data-color="#FFADAD" role="radio" aria-checked="true" aria-label="코랄 핑크"></button>
+                <button class="color-option" type="button" style="--swatch:#FFD6A5" data-color="#FFD6A5" role="radio" aria-checked="false" aria-label="살구색"></button>
+                <button class="color-option" type="button" style="--swatch:#CAFFBF" data-color="#CAFFBF" role="radio" aria-checked="false" aria-label="연두색"></button>
+                <button class="color-option" type="button" style="--swatch:#9BF6FF" data-color="#9BF6FF" role="radio" aria-checked="false" aria-label="하늘색"></button>
+                <button class="color-option" type="button" style="--swatch:#A0C4FF" data-color="#A0C4FF" role="radio" aria-checked="false" aria-label="파란색"></button>
+                <button class="color-option" type="button" style="--swatch:#BDB2FF" data-color="#BDB2FF" role="radio" aria-checked="false" aria-label="보라색"></button>
+                <button class="color-option" type="button" style="--swatch:#FFFFFF" data-color="#FFFFFF" role="radio" aria-checked="false" aria-label="흰색"></button>
+                <button class="color-option" type="button" style="--swatch:#252A34" data-color="#252A34" role="radio" aria-checked="false" aria-label="검정색"></button>
+              </div>
+            </div>
+
+            <div class="option-group">
+              <h3>프레임에 넣을 문구</h3>
+              <label class="visually-hidden" for="caption-input">프레임 문구</label>
+              <input class="caption-input" id="caption-input" type="text" maxlength="40" placeholder="예: 오늘도 행복한 하루" autocomplete="off" />
+              <div class="caption-meta"><span>날짜 아래에 표시됩니다.</span><span id="caption-count">0 / 40</span></div>
+            </div>
+
+            <div class="option-group">
+              <h3>선택한 액자</h3>
+              <div class="layout-name-card" id="layout-name-card">클래식 세로 네 컷</div>
+            </div>
+
+            <div class="action-row">
+              <button class="action-btn secondary" id="back-to-review" type="button">사진 다시 확인</button>
+              <button class="action-btn" id="finish-photo" type="button">이대로 완성하기</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="step-section" id="step-5" data-step="5" hidden>
+        <div class="section-heading">
+          <span class="section-kicker">STEP 5</span>
+          <h2>나만의 인생네컷이 완성되었습니다</h2>
+          <p>이미지로 저장하거나 처음부터 새로운 네 컷을 만들 수 있습니다.</p>
+        </div>
+
+        <div class="result-layout">
+          <div class="preview-card">
+            <div class="canvas-wrap"><canvas class="photo-canvas" id="result-canvas"></canvas></div>
+            <div class="action-row canvas-action-row download-row" aria-label="완성 이미지 다운로드">
+              <button class="action-btn" id="download-png" type="button">PNG 다운로드</button>
+              <button class="action-btn" id="download-jpg" type="button">JPG 다운로드</button>
+              <button class="action-btn" id="download-pdf" type="button">PDF 다운로드</button>
+            </div>
+            <div class="download-status" id="download-status" role="status" aria-live="polite"></div>
+          </div>
+          <aside class="result-message">
+            <span class="result-icon">✨</span>
+            <h3>찰칵! 추억 저장 완료</h3>
+            <p id="result-summary">선택한 프레임과 문구가 모두 반영되었습니다.</p>
+            <div class="action-row">
+              <button class="action-btn secondary" id="edit-frame" type="button">프레임 다시 꾸미기</button>
+              <button class="action-btn danger" id="new-photo" type="button">처음부터 새로 만들기</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    'use strict';
+
+    const MAX_PHOTOS = 4;
+    const TITLE_TEXT = "JoonHee's Life 4 Cuts";
+
+    const LAYOUTS = {
+      strip: {
+        name: '클래식 세로 네 컷',
+        width: 720,
+        height: 1840,
+        titleY: 78,
+        dateY: 1740,
+        captionY: 1792,
+        slots: [
+          { x: 50, y: 130, width: 620, height: 350 },
+          { x: 50, y: 504, width: 620, height: 350 },
+          { x: 50, y: 878, width: 620, height: 350 },
+          { x: 50, y: 1252, width: 620, height: 350 }
+        ]
+      },
+      grid: {
+        name: '정사각 2 × 2',
+        width: 1080,
+        height: 1380,
+        titleY: 82,
+        dateY: 1283,
+        captionY: 1331,
+        slots: [
+          { x: 60, y: 145, width: 468, height: 468 },
+          { x: 552, y: 145, width: 468, height: 468 },
+          { x: 60, y: 637, width: 468, height: 468 },
+          { x: 552, y: 637, width: 468, height: 468 }
+        ]
+      },
+      wide: {
+        name: '가로 네 컷',
+        width: 1840,
+        height: 760,
+        titleY: 74,
+        dateY: 680,
+        captionY: 724,
+        slots: [
+          { x: 50, y: 125, width: 417, height: 470 },
+          { x: 491, y: 125, width: 417, height: 470 },
+          { x: 932, y: 125, width: 417, height: 470 },
+          { x: 1373, y: 125, width: 417, height: 470 }
+        ]
+      }
+    };
+
+    const state = {
+      step: 1,
+      layout: 'strip',
+      frameColor: '#FFADAD',
+      caption: '',
+      photos: new Array(MAX_PHOTOS).fill(null),
+      retakeTarget: null,
+      stream: null,
+      cameraReady: false,
+      currentDate: getCurrentDate()
+    };
+
+    const elements = {
+      stepSections: Array.from(document.querySelectorAll('.step-section')),
+      stepIndicators: Array.from(document.querySelectorAll('[data-step-indicator]')),
+      frameCards: Array.from(document.querySelectorAll('.frame-card')),
+      selectionSummary: document.getElementById('selection-summary'),
+      startShooting: document.getElementById('start-shooting'),
+      video: document.getElementById('video'),
+      cameraBadge: document.getElementById('camera-badge'),
+      cameraError: document.getElementById('camera-error'),
+      shootingTitle: document.getElementById('shooting-title'),
+      shootingDescription: document.getElementById('shooting-description'),
+      shotLabel: document.getElementById('shot-label'),
+      shotCount: document.getElementById('shot-count'),
+      progressBar: document.getElementById('progress-bar'),
+      miniShots: document.getElementById('mini-shots'),
+      capturePhoto: document.getElementById('capture-photo'),
+      backToFrame: document.getElementById('back-to-frame'),
+      reviewCanvas: document.getElementById('review-canvas'),
+      retakeGrid: document.getElementById('retake-grid'),
+      goCustomize: document.getElementById('go-customize'),
+      customizeCanvas: document.getElementById('customize-canvas'),
+      colorOptions: Array.from(document.querySelectorAll('.color-option')),
+      captionInput: document.getElementById('caption-input'),
+      captionCount: document.getElementById('caption-count'),
+      layoutNameCard: document.getElementById('layout-name-card'),
+      backToReview: document.getElementById('back-to-review'),
+      finishPhoto: document.getElementById('finish-photo'),
+      resultCanvas: document.getElementById('result-canvas'),
+      resultSummary: document.getElementById('result-summary'),
+      downloadPng: document.getElementById('download-png'),
+      downloadJpg: document.getElementById('download-jpg'),
+      downloadPdf: document.getElementById('download-pdf'),
+      downloadStatus: document.getElementById('download-status'),
+      editFrame: document.getElementById('edit-frame'),
+      newPhoto: document.getElementById('new-photo')
+    };
+
+    function getCurrentDate() {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function completedPhotoCount() {
+      return state.photos.filter(Boolean).length;
+    }
+
+    function nextEmptyPhotoIndex() {
+      return state.photos.findIndex(photo => photo === null);
+    }
+
+    function setStep(step) {
+      state.step = step;
+
+      elements.stepSections.forEach(section => {
+        section.hidden = Number(section.dataset.step) !== step;
+      });
+
+      elements.stepIndicators.forEach(indicator => {
+        const indicatorStep = Number(indicator.dataset.stepIndicator);
+        indicator.classList.toggle('active', indicatorStep === step);
+        indicator.classList.toggle('done', indicatorStep < step);
+      });
+
+      if (step >= 3) {
+        updateAllPreviews();
+      }
+
+      if (step === 3) {
+        refreshReviewStep();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function selectLayout(layoutKey) {
+      if (!LAYOUTS[layoutKey]) return;
+
+      state.layout = layoutKey;
+      elements.frameCards.forEach(card => {
+        const selected = card.dataset.layout === layoutKey;
+        card.classList.toggle('selected', selected);
+        card.setAttribute('aria-checked', String(selected));
+      });
+
+      elements.selectionSummary.textContent = `선택한 액자: ${LAYOUTS[layoutKey].name}`;
+      elements.layoutNameCard.textContent = LAYOUTS[layoutKey].name;
+    }
+
+    async function startCamera() {
+      if (state.stream && state.cameraReady) {
+        elements.capturePhoto.disabled = false;
+        return true;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showCameraError('이 브라우저에서는 카메라 기능을 사용할 수 없습니다. HTTPS 환경 또는 localhost에서 실행해주세요.');
+        return false;
+      }
+
+      elements.cameraError.hidden = true;
+      elements.cameraBadge.textContent = '카메라 준비 중';
+      elements.capturePhoto.disabled = true;
+
+      try {
+        state.stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 960 }
+          }
+        });
+
+        elements.video.srcObject = state.stream;
+        await elements.video.play();
+
+        if (!elements.video.videoWidth || !elements.video.videoHeight) {
+          await new Promise(resolve => {
+            elements.video.addEventListener('loadedmetadata', resolve, { once: true });
+          });
+        }
+
+        state.cameraReady = true;
+        elements.cameraBadge.textContent = '카메라 연결됨';
+        elements.capturePhoto.disabled = false;
+        return true;
+      } catch (error) {
+        console.error(error);
+        showCameraError('카메라 권한을 허용하지 않았거나 카메라를 사용할 수 없습니다. 브라우저 주소창의 카메라 권한을 확인해주세요.');
+        return false;
+      }
+    }
+
+    function stopCamera() {
+      if (state.stream) {
+        state.stream.getTracks().forEach(track => track.stop());
+      }
+      state.stream = null;
+      state.cameraReady = false;
+      elements.video.srcObject = null;
+      elements.capturePhoto.disabled = true;
+      elements.cameraBadge.textContent = '카메라 준비 중';
+    }
+
+    function showCameraError(message) {
+      state.cameraReady = false;
+      elements.cameraError.textContent = message;
+      elements.cameraError.hidden = false;
+      elements.cameraBadge.textContent = '카메라 연결 실패';
+      elements.capturePhoto.disabled = true;
+    }
+
+    function updateShootingUI() {
+      const completed = completedPhotoCount();
+      const target = state.retakeTarget !== null ? state.retakeTarget : nextEmptyPhotoIndex();
+      const safeTarget = target < 0 ? MAX_PHOTOS - 1 : target;
+
+      elements.shotCount.textContent = `${completed} / ${MAX_PHOTOS} 촬영 완료`;
+      elements.progressBar.style.width = `${(completed / MAX_PHOTOS) * 100}%`;
+
+      if (state.retakeTarget !== null) {
+        elements.shootingTitle.textContent = `${safeTarget + 1}번째 사진을 다시 찍어주세요`;
+        elements.shootingDescription.textContent = '촬영 버튼을 누르면 선택한 사진 한 장만 새 사진으로 교체됩니다.';
+        elements.shotLabel.textContent = `${safeTarget + 1}번째 컷 재촬영`;
+        elements.capturePhoto.textContent = `${safeTarget + 1}번째 사진 다시 찍기`;
+      } else {
+        elements.shootingTitle.textContent = '네 장의 사진을 차례대로 찍어주세요';
+        elements.shootingDescription.textContent = '카메라 권한을 허용한 뒤 촬영 버튼을 누르면 현재 모습이 저장됩니다.';
+        elements.shotLabel.textContent = `${safeTarget + 1}번째 컷`;
+        elements.capturePhoto.textContent = `${safeTarget + 1}번째 사진 찍기`;
+      }
+
+      renderMiniShots();
+    }
+
+    function renderMiniShots() {
+      elements.miniShots.innerHTML = '';
+
+      state.photos.forEach((photo, index) => {
+        const item = document.createElement('div');
+        item.className = 'mini-shot';
+
+        if (photo) {
+          const image = document.createElement('img');
+          image.src = photo.toDataURL('image/jpeg', 0.9);
+          image.alt = `${index + 1}번째 촬영 사진`;
+          item.appendChild(image);
+        }
+
+        const number = document.createElement('span');
+        number.textContent = String(index + 1);
+        item.appendChild(number);
+        elements.miniShots.appendChild(item);
+      });
+    }
+
+    function drawVideoCoverMirrored(context, video, targetWidth, targetHeight) {
+      const sourceWidth = video.videoWidth;
+      const sourceHeight = video.videoHeight;
+      const sourceRatio = sourceWidth / sourceHeight;
+      const targetRatio = targetWidth / targetHeight;
+
+      let sx = 0;
+      let sy = 0;
+      let sw = sourceWidth;
+      let sh = sourceHeight;
+
+      if (sourceRatio > targetRatio) {
+        sw = sourceHeight * targetRatio;
+        sx = (sourceWidth - sw) / 2;
+      } else {
+        sh = sourceWidth / targetRatio;
+        sy = (sourceHeight - sh) / 2;
+      }
+
+      context.save();
+      context.translate(targetWidth, 0);
+      context.scale(-1, 1);
+      context.drawImage(video, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+      context.restore();
+    }
+
+    function captureCurrentPhoto() {
+      if (!state.cameraReady || !elements.video.videoWidth || !elements.video.videoHeight) {
+        showCameraError('카메라가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+
+      const targetIndex = state.retakeTarget !== null ? state.retakeTarget : nextEmptyPhotoIndex();
+      if (targetIndex < 0 || targetIndex >= MAX_PHOTOS) {
+        setStep(3);
+        return;
+      }
+
+      const slot = LAYOUTS[state.layout].slots[targetIndex];
+      const photoCanvas = document.createElement('canvas');
+      const photoContext = photoCanvas.getContext('2d');
+      photoCanvas.width = slot.width;
+      photoCanvas.height = slot.height;
+      drawVideoCoverMirrored(photoContext, elements.video, slot.width, slot.height);
+      state.photos[targetIndex] = photoCanvas;
+
+      if (state.retakeTarget !== null) {
+        state.retakeTarget = null;
+        updateShootingUI();
+        setStep(3);
+        refreshReviewStep();
+        requestAnimationFrame(refreshReviewStep);
+        return;
+      }
+
+      updateShootingUI();
+      if (completedPhotoCount() === MAX_PHOTOS) {
+        setStep(3);
+        refreshReviewStep();
+      }
+    }
+
+    async function beginRetake(index) {
+      if (!state.photos[index]) return;
+      state.retakeTarget = index;
+      updateShootingUI();
+      setStep(2);
+      await startCamera();
+    }
+
+    function renderRetakeGrid() {
+      elements.retakeGrid.innerHTML = '';
+
+      state.photos.forEach((photo, index) => {
+        // 촬영 전에는 배열 항목이 null이므로 이미지 변환을 시도하지 않습니다.
+        // 기존에는 여기서 null.toDataURL() 오류가 발생해 STEP 2 전환이 중단되었습니다.
+        if (!photo) return;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'retake-shot';
+        button.setAttribute('aria-label', `${index + 1}번째 사진 다시 찍기`);
+
+        const image = document.createElement('img');
+        image.src = photo.toDataURL('image/jpeg', 0.92);
+        image.alt = `${index + 1}번째 촬영 사진`;
+
+        const overlay = document.createElement('span');
+        overlay.className = 'retake-overlay';
+        overlay.textContent = `${index + 1}컷 클릭해서 재촬영`;
+
+        button.append(image, overlay);
+        button.addEventListener('click', () => beginRetake(index));
+        elements.retakeGrid.appendChild(button);
+      });
+    }
+
+    function refreshReviewStep() {
+      renderRetakeGrid();
+      drawComposite(elements.reviewCanvas);
+    }
+
+    function getTextColor(backgroundHex) {
+      const normalized = backgroundHex.replace('#', '');
+      const red = parseInt(normalized.substring(0, 2), 16);
+      const green = parseInt(normalized.substring(2, 4), 16);
+      const blue = parseInt(normalized.substring(4, 6), 16);
+      const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+      return luminance > 0.61 ? '#252A34' : '#FFFFFF';
+    }
+
+    function drawFittedText(context, text, x, y, maxWidth, preferredSize, minimumSize, color) {
+      if (!text) return;
+      let size = preferredSize;
+      context.fillStyle = color;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.font = `700 ${size}px HakgyoansimNadeuriTTF-B, sans-serif`;
+
+      while (context.measureText(text).width > maxWidth && size > minimumSize) {
+        size -= 1;
+        context.font = `700 ${size}px HakgyoansimNadeuriTTF-B, sans-serif`;
+      }
+
+      context.fillText(text, x, y);
+    }
+
+    function drawComposite(targetCanvas) {
+      const layout = LAYOUTS[state.layout];
+      targetCanvas.width = layout.width;
+      targetCanvas.height = layout.height;
+      const context = targetCanvas.getContext('2d');
+      const textColor = getTextColor(state.frameColor);
+
+      context.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+      context.fillStyle = state.frameColor;
+      context.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+      layout.slots.forEach((slot, index) => {
+        context.save();
+        context.fillStyle = '#FFFFFF';
+        context.fillRect(slot.x, slot.y, slot.width, slot.height);
+
+        if (state.photos[index]) {
+          context.drawImage(state.photos[index], slot.x, slot.y, slot.width, slot.height);
+        } else {
+          context.fillStyle = '#F1F3F7';
+          context.fillRect(slot.x, slot.y, slot.width, slot.height);
+          drawFittedText(context, `${index + 1}`, slot.x + slot.width / 2, slot.y + slot.height / 2, slot.width * 0.8, Math.min(slot.width, slot.height) * 0.18, 22, '#A4AAB6');
+        }
+
+        context.strokeStyle = 'rgba(37, 48, 68, 0.12)';
+        context.lineWidth = Math.max(2, layout.width / 450);
+        context.strokeRect(slot.x, slot.y, slot.width, slot.height);
+        context.restore();
+      });
+
+      const titleSize = state.layout === 'wide' ? 34 : state.layout === 'grid' ? 38 : 31;
+      const dateSize = state.layout === 'wide' ? 26 : state.layout === 'grid' ? 28 : 25;
+      const captionSize = state.layout === 'wide' ? 24 : state.layout === 'grid' ? 26 : 23;
+      const maxTextWidth = layout.width - 90;
+
+      drawFittedText(context, TITLE_TEXT, layout.width / 2, layout.titleY, maxTextWidth, titleSize, 18, textColor);
+      drawFittedText(context, state.currentDate, layout.width / 2, layout.dateY, maxTextWidth, dateSize, 16, textColor);
+      drawFittedText(context, state.caption, layout.width / 2, layout.captionY, maxTextWidth, captionSize, 15, textColor);
+    }
+
+    function updateAllPreviews() {
+      [elements.reviewCanvas, elements.customizeCanvas, elements.resultCanvas].forEach(drawComposite);
+    }
+
+    function clearPhotos() {
+      state.photos = new Array(MAX_PHOTOS).fill(null);
+      state.retakeTarget = null;
+      updateShootingUI();
+      renderRetakeGrid();
+      updateAllPreviews();
+    }
+
+    function resetAll() {
+      stopCamera();
+      state.layout = 'strip';
+      state.frameColor = '#FFADAD';
+      state.caption = '';
+      state.currentDate = getCurrentDate();
+      state.photos = new Array(MAX_PHOTOS).fill(null);
+      state.retakeTarget = null;
+      elements.captionInput.value = '';
+      elements.captionCount.textContent = '0 / 40';
+      selectLayout('strip');
+
+      elements.colorOptions.forEach(option => {
+        const selected = option.dataset.color === state.frameColor;
+        option.classList.toggle('selected', selected);
+        option.setAttribute('aria-checked', String(selected));
+      });
+
+      updateShootingUI();
+      renderRetakeGrid();
+      updateAllPreviews();
+      setStep(1);
+    }
+
+    elements.frameCards.forEach(card => {
+      card.addEventListener('click', () => selectLayout(card.dataset.layout));
+    });
+
+    elements.startShooting.addEventListener('click', async () => {
+      clearPhotos();
+      setStep(2);
+      updateShootingUI();
+      await startCamera();
+    });
+
+    elements.capturePhoto.addEventListener('click', captureCurrentPhoto);
+
+    elements.backToFrame.addEventListener('click', () => {
+      if (completedPhotoCount() > 0) {
+        const shouldDiscard = window.confirm('지금까지 촬영한 사진을 지우고 프레임 선택으로 돌아갈까요?');
+        if (!shouldDiscard) return;
+      }
+      clearPhotos();
+      stopCamera();
+      setStep(1);
+    });
+
+    elements.goCustomize.addEventListener('click', () => {
+      elements.layoutNameCard.textContent = LAYOUTS[state.layout].name;
+      updateAllPreviews();
+      setStep(4);
+    });
+
+    elements.colorOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        state.frameColor = option.dataset.color;
+        elements.colorOptions.forEach(current => {
+          const selected = current === option;
+          current.classList.toggle('selected', selected);
+          current.setAttribute('aria-checked', String(selected));
+        });
+        updateAllPreviews();
+      });
+    });
+
+    elements.captionInput.addEventListener('input', event => {
+      state.caption = event.target.value;
+      elements.captionCount.textContent = `${state.caption.length} / 40`;
+      updateAllPreviews();
+    });
+
+    elements.backToReview.addEventListener('click', () => {
+      renderRetakeGrid();
+      updateAllPreviews();
+      setStep(3);
+    });
+
+    elements.finishPhoto.addEventListener('click', () => {
+      updateAllPreviews();
+      elements.resultSummary.textContent = `${LAYOUTS[state.layout].name} · ${state.frameColor.toUpperCase()}${state.caption ? ` · “${state.caption}”` : ''}`;
+      stopCamera();
+      setStep(5);
+    });
+
+    function getDownloadBaseName() {
+      const safeLayoutName = LAYOUTS[state.layout].name.replace(/\s+/g, '-').replace(/×/g, 'x');
+      return `JoonHee-Life-4-Cuts_${safeLayoutName}_${state.currentDate}`;
+    }
+
+    let activeDownloadUrl = null;
+
+    function clearActiveDownloadUrl() {
+      if (activeDownloadUrl) {
+        URL.revokeObjectURL(activeDownloadUrl);
+        activeDownloadUrl = null;
+      }
+    }
+
+    function setDownloadStatus(message, type = '', blob = null, filename = '') {
+      elements.downloadStatus.className = `download-status${type ? ` ${type}` : ''}`;
+      elements.downloadStatus.replaceChildren();
+
+      const messageNode = document.createElement('span');
+      messageNode.textContent = message;
+      elements.downloadStatus.appendChild(messageNode);
+
+      if (!blob || !filename) return null;
+
+      clearActiveDownloadUrl();
+      activeDownloadUrl = URL.createObjectURL(blob);
+
+      const fallbackLink = document.createElement('a');
+      fallbackLink.href = activeDownloadUrl;
+      fallbackLink.download = filename;
+      fallbackLink.textContent = '파일을 직접 저장하기';
+      fallbackLink.setAttribute('aria-label', `${filename} 직접 저장`);
+      elements.downloadStatus.appendChild(fallbackLink);
+      return fallbackLink;
+    }
+
+    function canvasToBlob(canvas, mimeType, quality) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('이미지 파일 생성에 실패했습니다.'));
+          }
+        }, mimeType, quality);
+      });
+    }
+
+    async function saveGeneratedFile({ filename, mimeType, extension, createBlob }) {
+      elements.downloadStatus.className = 'download-status';
+      elements.downloadStatus.textContent = '파일을 생성하고 있습니다.';
+
+      let fileHandle = null;
+      if (window.isSecureContext && 'showSaveFilePicker' in window) {
+        try {
+          fileHandle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{
+              description: `${extension.toUpperCase()} 파일`,
+              accept: { [mimeType]: [`.${extension}`] }
+            }]
+          });
+        } catch (error) {
+          if (error && error.name === 'AbortError') {
+            setDownloadStatus('저장이 취소되었습니다.');
+            return;
+          }
+          fileHandle = null;
+        }
+      }
+
+      try {
+        const blob = await createBlob();
+
+        if (fileHandle) {
+          try {
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            clearActiveDownloadUrl();
+            setDownloadStatus(`${filename} 저장을 완료했습니다.`, 'success');
+            return;
+          } catch (pickerWriteError) {
+            console.warn('저장 창을 통한 파일 쓰기에 실패하여 일반 다운로드로 전환합니다.', pickerWriteError);
+          }
+        }
+
+        const fallbackLink = setDownloadStatus(
+          '자동 다운로드를 시작했습니다. 반응이 없으면',
+          'success',
+          blob,
+          filename
+        );
+
+        // 일반 브라우저에서는 바로 다운로드를 시작합니다. 샌드박스형 미리보기에서
+        // 자동 클릭이 차단되더라도 위의 직접 저장 링크는 계속 사용할 수 있습니다.
+        window.requestAnimationFrame(() => {
+          try {
+            fallbackLink.click();
+          } catch (error) {
+            elements.downloadStatus.classList.remove('success');
+            elements.downloadStatus.classList.add('error');
+          }
+        });
+      } catch (error) {
+        console.error(error);
+        setDownloadStatus(
+          `파일 저장에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`,
+          'error'
+        );
+      }
+    }
+
+    function downloadCanvasImage(format) {
+      drawComposite(elements.resultCanvas);
+      const isJpeg = format === 'jpg';
+      const mimeType = isJpeg ? 'image/jpeg' : 'image/png';
+      const quality = isJpeg ? 0.95 : undefined;
+      const filename = `${getDownloadBaseName()}.${format}`;
+
+      return saveGeneratedFile({
+        filename,
+        mimeType,
+        extension: format,
+        createBlob: () => canvasToBlob(elements.resultCanvas, mimeType, quality)
+      });
+    }
+
+    function asciiBytes(text) {
+      return new TextEncoder().encode(text);
+    }
+
+    function concatBytes(chunks) {
+      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const result = new Uint8Array(totalLength);
+      let offset = 0;
+
+      chunks.forEach(chunk => {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      });
+
+      return result;
+    }
+
+    function dataUrlToBytes(dataUrl) {
+      const base64 = dataUrl.split(',')[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+
+      return bytes;
+    }
+
+    function createPdfFromCanvas(canvas) {
+      const jpegBytes = dataUrlToBytes(canvas.toDataURL('image/jpeg', 0.95));
+      const landscape = canvas.width > canvas.height;
+      const pageWidth = landscape ? 841.89 : 595.28;
+      const pageHeight = landscape ? 595.28 : 841.89;
+      const margin = 24;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2;
+      const scale = Math.min(availableWidth / canvas.width, availableHeight / canvas.height);
+      const drawWidth = canvas.width * scale;
+      const drawHeight = canvas.height * scale;
+      const drawX = (pageWidth - drawWidth) / 2;
+      const drawY = (pageHeight - drawHeight) / 2;
+      const content = `q\n${drawWidth.toFixed(3)} 0 0 ${drawHeight.toFixed(3)} ${drawX.toFixed(3)} ${drawY.toFixed(3)} cm\n/Im0 Do\nQ\n`;
+      const contentBytes = asciiBytes(content);
+      const objects = [
+        asciiBytes('<< /Type /Catalog /Pages 2 0 R >>'),
+        asciiBytes('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'),
+        asciiBytes(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth.toFixed(2)} ${pageHeight.toFixed(2)}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`),
+        concatBytes([
+          asciiBytes(`<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`),
+          jpegBytes,
+          asciiBytes('\nendstream')
+        ]),
+        concatBytes([
+          asciiBytes(`<< /Length ${contentBytes.length} >>\nstream\n`),
+          contentBytes,
+          asciiBytes('endstream')
+        ])
+      ];
+
+      const chunks = [asciiBytes('%PDF-1.4\n% Generated by Life 4 Cuts\n')];
+      const offsets = [0];
+      let byteOffset = chunks[0].length;
+
+      objects.forEach((objectBytes, index) => {
+        offsets[index + 1] = byteOffset;
+        const objectChunk = concatBytes([
+          asciiBytes(`${index + 1} 0 obj\n`),
+          objectBytes,
+          asciiBytes('\nendobj\n')
+        ]);
+        chunks.push(objectChunk);
+        byteOffset += objectChunk.length;
+      });
+
+      const xrefOffset = byteOffset;
+      let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+      offsets.slice(1).forEach(offset => {
+        xref += `${String(offset).padStart(10, '0')} 00000 n \n`;
+      });
+      xref += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+      chunks.push(asciiBytes(xref));
+
+      return new Blob(chunks, { type: 'application/pdf' });
+    }
+
+    elements.downloadPng.addEventListener('click', () => {
+      void downloadCanvasImage('png');
+    });
+
+    elements.downloadJpg.addEventListener('click', () => {
+      void downloadCanvasImage('jpg');
+    });
+
+    elements.downloadPdf.addEventListener('click', () => {
+      drawComposite(elements.resultCanvas);
+      const filename = `${getDownloadBaseName()}.pdf`;
+      void saveGeneratedFile({
+        filename,
+        mimeType: 'application/pdf',
+        extension: 'pdf',
+        createBlob: () => Promise.resolve(createPdfFromCanvas(elements.resultCanvas))
+      });
+    });
+
+    elements.editFrame.addEventListener('click', () => {
+      clearActiveDownloadUrl();
+      elements.downloadStatus.textContent = '';
+      updateAllPreviews();
+      setStep(4);
+    });
+
+    elements.newPhoto.addEventListener('click', resetAll);
+
+    window.addEventListener('beforeunload', () => {
+      clearActiveDownloadUrl();
+      stopCamera();
+    });
+
+    window.addEventListener('load', () => {
+      selectLayout(state.layout);
+      updateShootingUI();
+      updateAllPreviews();
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(updateAllPreviews);
+      }
+    });
+  </script>
+</body>
+</html>
