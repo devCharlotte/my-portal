@@ -36,6 +36,9 @@
   .back { background: rgba(255,255,255,0.72); color: var(--my-ink); border: 1px solid var(--my-line); border-radius: 999px; padding: 8px 14px; min-height: 0; font-size: 0.85rem; font-weight: 500; margin-bottom: 16px; }
   #msg { margin-top: 14px; font-size: 0.85rem; min-height: 16px; color: var(--my-muted); }
   #msg.error { color: #ef5b6b; }
+  .gate-tabs { display: flex; gap: 8px; margin-top: 18px; padding-top: 4px; border-bottom: 2px solid var(--my-line); }
+  .gate-tab { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; margin-bottom: -2px; border: 1px solid var(--my-line); border-bottom: 2px solid transparent; border-radius: 12px 12px 0 0; background: rgba(255,255,255,0.62); color: var(--my-ink); font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: transform 140ms ease, background 140ms ease, border-color 140ms ease; }
+  .gate-tab:hover, .gate-tab:focus-visible { background: rgba(255,255,255,0.92); border-color: var(--my-pink); border-bottom-color: var(--my-pink); color: #ff4f9d; transform: translateY(-2px); outline: none; }
   #viewer { display: none; position: fixed; inset: 0; z-index: 1000; flex-direction: column; background: #2b2b2b; }
   #viewer.on { display: flex; }
   .vbar { flex: none; display: flex; align-items: center; gap: 12px; height: 54px; padding: 0 14px; background: var(--my-card); border-bottom: 1px solid var(--my-line); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
@@ -68,7 +71,7 @@
       <section class="year-section" aria-labelledby="year-2026">
         <div class="year-heading">
           <h2 id="year-2026">2026</h2>
-          <span>6 papers</span>
+          <span>12 papers</span>
         </div>
       <div class="myworkspace-card doc" data-id="paper-01" tabindex="0" role="button" aria-label="Tiered Memory Management: Access Latency is the Key! 열기">
         <span class="tag">SOSP&#x27;24</span>
@@ -110,6 +113,48 @@
         <div class="t">
           <b>Unleashing Zoned UFS: Cross-Layer Optimizations for Next-Generation Mobile Storage</b><br>
           <span>Jul 3, 2026 (Fri) · 성준희</span>
+        </div>
+      </div>
+      <div class="myworkspace-card doc" data-id="paper-21" tabindex="0" role="button" aria-label="Rearchitecting Buffered I/O in the Era of High-Bandwidth SSDs 열기">
+        <span class="tag">FAST&#x27;26</span>
+        <div class="t">
+          <b>Rearchitecting Buffered I/O in the Era of High-Bandwidth SSDs</b><br>
+          <span>Jul 16, 2026 (Thu) · 성준희</span>
+        </div>
+      </div>
+      <div class="myworkspace-card doc" data-id="paper-22" tabindex="0" role="button" aria-label="Accelerating Model Loading in LLM Inference by Programmable Page Cache 열기">
+        <span class="tag">FAST&#x27;26</span>
+        <div class="t">
+          <b>Accelerating Model Loading in LLM Inference by Programmable Page Cache</b><br>
+          <span>Aug 14, 2026 (Fri) · 성준희</span>
+        </div>
+      </div>
+      <div class="myworkspace-card doc" data-id="paper-23" tabindex="0" role="button" aria-label="PaCaR: Improved Buffered I/O Locality on NUMA Systems with Page Cache Replication 열기">
+        <span class="tag">EuroSys&#x27;26</span>
+        <div class="t">
+          <b>PaCaR: Improved Buffered I/O Locality on NUMA Systems with Page Cache Replication</b><br>
+          <span>Sep 4, 2026 (Fri) · 성준희</span>
+        </div>
+      </div>
+      <div class="myworkspace-card doc" data-id="paper-24" tabindex="0" role="button" aria-label="uCache: A Customizable Unikernel-based IO Cache 열기">
+        <span class="tag">FAST&#x27;26</span>
+        <div class="t">
+          <b>uCache: A Customizable Unikernel-based IO Cache</b><br>
+          <span>Sep 25, 2026 (Fri) · 성준희</span>
+        </div>
+      </div>
+      <div class="myworkspace-card doc" data-id="paper-25" tabindex="0" role="button" aria-label="StreamCache: Revisiting Page Cache for File Scanning on Fast Storage Devices 열기">
+        <span class="tag">ATC&#x27;24</span>
+        <div class="t">
+          <b>StreamCache: Revisiting Page Cache for File Scanning on Fast Storage Devices</b><br>
+          <span>Oct 16, 2026 (Fri) · 성준희</span>
+        </div>
+      </div>
+      <div class="myworkspace-card doc" data-id="paper-26" tabindex="0" role="button" aria-label="ScalaCache: Scalable User-Space Page Cache Management with Software-Hardware Coordination 열기">
+        <span class="tag">ATC&#x27;24</span>
+        <div class="t">
+          <b>ScalaCache: Scalable User-Space Page Cache Management with Software-Hardware Coordination</b><br>
+          <span>Nov 6, 2026 (Fri) · 성준희</span>
         </div>
       </div>
       </section>
@@ -237,6 +282,9 @@
           <button id="go">열기</button>
         </div>
         <div id="msg" role="status" aria-live="polite"></div>
+        <div class="gate-tabs">
+          <a id="paperLink" class="gate-tab" href="#" target="_blank" rel="noopener noreferrer">📄 논문 원문 바로가기</a>
+        </div>
       </div>
     </div>
   </div>
@@ -256,26 +304,32 @@
     /* rekey.py 의 normalize() 와 반드시 동일하게 유지 */
     function normalize(s) { return s.replace(/[\s\-_]/g, "").toUpperCase(); }
     const DOCS = {
-      "paper-01": { title: "Tiered Memory Management: Access Latency is the Key! (SOSP'24)", file: "2026-01-09-tiered-memory-management.enc" },
-      "paper-02": { title: "M5: Mastering Page Migration and Memory Management for CXL-based Tiered Memory Systems (ASPLOS '25)", file: "2026-02-13-m5.enc" },
-      "paper-03": { title: "Decentralized, Epoch-based F2FS Journaling with Fine-grained Crash Recovery (OSDI'25)", file: "2026-04-03-decentralized-f2fs-journaling.enc" },
-      "paper-04": { title: "D2FS: Device-Driven Filesystem Garbage Collection (FAST'25)", file: "2026-04-24-d2fs.enc" },
-      "paper-05": { title: "DPAS: A Prompt, Accurate and Safe I/O Completion Method for SSDs (FAST'26)", file: "2026-05-29-dpas.enc" },
-      "paper-06": { title: "Unleashing Zoned UFS: Cross-Layer Optimizations for Next-Generation Mobile Storage (FAST '26)", file: "2026-07-03-zoned-ufs.enc" },
-      "paper-07": { title: "OmniCache: Collaborative Caching for Near-storage Accelerators (FAST'24)", file: "2025-02-06-omnicache.enc" },
-      "paper-08": { title: "MIDAS: Minimizing Write Amplification in Log-Structured Systems through Adaptive Group Number and Size Configuration (FAST'24)", file: "2025-03-06-midas.enc" },
-      "paper-09": { title: "MadFS: Per-File Virtualization for Userspace Persistent Memory Filesystems (FAST'23)", file: "2025-05-01-madfs.enc" },
-      "paper-10": { title: "UKSM: Swift Memory Deduplication via Hierarchical and Adaptive Memory Region Distilling (FAST'18)", file: "2025-05-15-uksm.enc" },
-      "paper-11": { title: "MedFS: Pursuing Low Update Overhead via Metadata-Enabled Delta Compression for Log-structured File System on Mobile Device (FAST '25)", file: "2025-06-19-medfs.enc" },
-      "paper-12": { title: "SWAM: Revisiting Swap and OOMK for Improving App Responsiveness on Mobile Devices (MobiCom'23)", file: "2025-07-10-swam.enc" },
-      "paper-13": { title: "De²Dup: Extended Deduplication for Multi-Tenant Databases (DaMoN '25)", file: "2025-08-07-de2dup.enc" },
-      "paper-14": { title: "ScaleLFS: A Log-Structured File System with Scalable Garbage Collection for Commodity SSDs (FAST'25)", file: "2025-09-04-scalelfs.enc" },
-      "paper-15": { title: "Don't Maintain Twice, It's Alright: Merged Metadata Management in Deduplication File System with GogetaFS (FAST'25)", file: "2025-10-10-gogetafs.enc" },
-      "paper-16": { title: "How to Copy Memory? Coordinated Asynchronous Copy as a First-Class OS Service (SOSP'25)", file: "2025-11-14-how-to-copy-memory.enc" },
-      "paper-17": { title: "I/O Passthru: Upstreaming a flexible and efficient I/O Path in Linux (FAST'24)", file: "2024-07-25-io-passthru.enc" },
-      "paper-18": { title: "Exploring the Asynchrony of Slow Memory Filesystem with EasyIO (EuroSys'24)", file: "2024-09-26-easyio.enc" },
-      "paper-19": { title: "When Caching Systems Meet Emerging Storage Devices: A Case Study (HotStorage'23)", file: "2024-11-12-caching-emerging-storage.enc" },
-      "paper-20": { title: "MEMTIS: Efficient Memory Tiering with Dynamic Page Classification and Page Size Determination (SOSP'23)", file: "2024-12-26-memtis.enc" }
+      "paper-01": { title: "Tiered Memory Management: Access Latency is the Key! (SOSP'24)", file: "2026-01-09-tiered-memory-management.enc", url: "https://dl.acm.org/doi/10.1145/3694715.3695968" },
+      "paper-02": { title: "M5: Mastering Page Migration and Memory Management for CXL-based Tiered Memory Systems (ASPLOS '25)", file: "2026-02-13-m5.enc", url: "https://dl.acm.org/doi/10.1145/3676641.3711999" },
+      "paper-03": { title: "Decentralized, Epoch-based F2FS Journaling with Fine-grained Crash Recovery (OSDI'25)", file: "2026-04-03-decentralized-f2fs-journaling.enc", url: "https://www.usenix.org/conference/osdi25/presentation/cui" },
+      "paper-04": { title: "D2FS: Device-Driven Filesystem Garbage Collection (FAST'25)", file: "2026-04-24-d2fs.enc", url: "https://www.usenix.org/conference/fast25/presentation/kim-juwon" },
+      "paper-05": { title: "DPAS: A Prompt, Accurate and Safe I/O Completion Method for SSDs (FAST'26)", file: "2026-05-29-dpas.enc", url: "https://www.usenix.org/conference/fast26/presentation/seo" },
+      "paper-06": { title: "Unleashing Zoned UFS: Cross-Layer Optimizations for Next-Generation Mobile Storage (FAST '26)", file: "2026-07-03-zoned-ufs.enc", url: "https://www.usenix.org/conference/fast26/presentation/kim-jungae" },
+      "paper-21": { title: "Rearchitecting Buffered I/O in the Era of High-Bandwidth SSDs (FAST'26)", file: "2026-07-16-rearchitecting-buffered-io.enc", url: "https://www.usenix.org/conference/fast26/presentation/zhan" },
+      "paper-22": { title: "Accelerating Model Loading in LLM Inference by Programmable Page Cache (FAST'26)", file: "2026-08-14-programmable-page-cache.enc", url: "https://www.usenix.org/conference/fast26/presentation/liu-yubo" },
+      "paper-23": { title: "PaCaR: Improved Buffered I/O Locality on NUMA Systems with Page Cache Replication (EuroSys'26)", file: "2026-09-04-pacar.enc", url: "https://dl.acm.org/doi/10.1145/3767295.3769359" },
+      "paper-24": { title: "uCache: A Customizable Unikernel-based IO Cache (FAST'26)", file: "2026-09-25-ucache.enc", url: "https://www.usenix.org/conference/fast26/presentation/meignan-masson" },
+      "paper-25": { title: "StreamCache: Revisiting Page Cache for File Scanning on Fast Storage Devices (ATC'24)", file: "2026-10-16-streamcache.enc", url: "https://www.usenix.org/conference/atc24/presentation/li-zhiyue" },
+      "paper-26": { title: "ScalaCache: Scalable User-Space Page Cache Management with Software-Hardware Coordination (ATC'24)", file: "2026-11-06-scalacache.enc", url: "https://www.usenix.org/conference/atc24/presentation/peng" },
+      "paper-07": { title: "OmniCache: Collaborative Caching for Near-storage Accelerators (FAST'24)", file: "2025-02-06-omnicache.enc", url: "https://www.usenix.org/conference/fast24/presentation/zhang-jian" },
+      "paper-08": { title: "MIDAS: Minimizing Write Amplification in Log-Structured Systems through Adaptive Group Number and Size Configuration (FAST'24)", file: "2025-03-06-midas.enc", url: "https://www.usenix.org/conference/fast24/presentation/oh" },
+      "paper-09": { title: "MadFS: Per-File Virtualization for Userspace Persistent Memory Filesystems (FAST'23)", file: "2025-05-01-madfs.enc", url: "https://www.usenix.org/conference/fast23/presentation/zhong" },
+      "paper-10": { title: "UKSM: Swift Memory Deduplication via Hierarchical and Adaptive Memory Region Distilling (FAST'18)", file: "2025-05-15-uksm.enc", url: "https://www.usenix.org/conference/fast18/presentation/xia" },
+      "paper-11": { title: "MedFS: Pursuing Low Update Overhead via Metadata-Enabled Delta Compression for Log-structured File System on Mobile Device (FAST '25)", file: "2025-06-19-medfs.enc", url: "https://www.usenix.org/conference/fast25/presentation/wu" },
+      "paper-12": { title: "SWAM: Revisiting Swap and OOMK for Improving App Responsiveness on Mobile Devices (MobiCom'23)", file: "2025-07-10-swam.enc", url: "https://dl.acm.org/doi/10.1145/3570361.3592518" },
+      "paper-13": { title: "De²Dup: Extended Deduplication for Multi-Tenant Databases (DaMoN '25)", file: "2025-08-07-de2dup.enc", url: "https://dl.acm.org/doi/10.1145/3736227.3736236" },
+      "paper-14": { title: "ScaleLFS: A Log-Structured File System with Scalable Garbage Collection for Commodity SSDs (FAST'25)", file: "2025-09-04-scalelfs.enc", url: "https://www.usenix.org/conference/fast25/presentation/ha" },
+      "paper-15": { title: "Don't Maintain Twice, It's Alright: Merged Metadata Management in Deduplication File System with GogetaFS (FAST'25)", file: "2025-10-10-gogetafs.enc", url: "https://www.usenix.org/conference/fast25/presentation/pan" },
+      "paper-16": { title: "How to Copy Memory? Coordinated Asynchronous Copy as a First-Class OS Service (SOSP'25)", file: "2025-11-14-how-to-copy-memory.enc", url: "https://dl.acm.org/doi/10.1145/3731569.3764800" },
+      "paper-17": { title: "I/O Passthru: Upstreaming a flexible and efficient I/O Path in Linux (FAST'24)", file: "2024-07-25-io-passthru.enc", url: "https://www.usenix.org/conference/fast24/presentation/joshi" },
+      "paper-18": { title: "Exploring the Asynchrony of Slow Memory Filesystem with EasyIO (EuroSys'24)", file: "2024-09-26-easyio.enc", url: "https://dl.acm.org/doi/10.1145/3627703.3629586" },
+      "paper-19": { title: "When Caching Systems Meet Emerging Storage Devices: A Case Study (HotStorage'23)", file: "2024-11-12-caching-emerging-storage.enc", url: "https://dl.acm.org/doi/10.1145/3599691.3603413" },
+      "paper-20": { title: "MEMTIS: Efficient Memory Tiering with Dynamic Page Classification and Page Size Determination (SOSP'23)", file: "2024-12-26-memtis.enc", url: "https://dl.acm.org/doi/10.1145/3600006.3613167" }
     };
 
     const listView = document.getElementById("listView");
@@ -287,6 +341,7 @@
     const goEl = document.getElementById("go");
     const msgEl = document.getElementById("msg");
     const frame = document.getElementById("pdfFrame");
+    const paperLink = document.getElementById("paperLink");
 
     let currentId = null;
     let blobUrl = null;
@@ -307,6 +362,8 @@
     function openGate(id) {
       currentId = id;
       gateTitle.textContent = DOCS[currentId].title;
+      paperLink.href = DOCS[currentId].url;
+      paperLink.setAttribute("aria-label", DOCS[currentId].title + " 원문 바로가기");
       pwEl.value = "";
       setMsg("", false);
       goEl.disabled = false;
@@ -339,16 +396,17 @@
       if (!password) { setMsg("비밀번호를 입력하세요.", true); return; }
       goEl.disabled = true;
       setMsg("확인 중…", false);
+      let derived = false;
       try {
         const resp = await fetch(DOCS[currentId].file, { cache: "no-store" });
-        if (!resp.ok) throw new Error("FILE_NOT_UPLOADED");
+        if (!resp.ok) throw new Error();
         const buf = new Uint8Array(await resp.arrayBuffer());
-        if (buf.length < 45) throw new Error("INVALID_FILE");
+        if (buf.length < 45) throw new Error();
         const salt = buf.slice(0, 16);
         const iv = buf.slice(16, 28);
         const data = buf.slice(28);
+        derived = true;
         const key = await deriveKey(normalize(password), salt, ITERATIONS);
-        // 비밀번호가 틀리면 GCM 인증 태그 검증 실패로 여기서 예외가 납니다.
         const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
 
         clearBlob();
@@ -358,13 +416,10 @@
         viewName.textContent = DOCS[currentId].title;
         show("viewer");
       } catch (err) {
-        if (err && err.message === "FILE_NOT_UPLOADED") {
-          setMsg("문서 파일이 아직 업로드되지 않았습니다.", true);
-        } else if (err && err.message === "INVALID_FILE") {
-          setMsg("문서 파일 형식이 올바르지 않습니다.", true);
-        } else {
-          setMsg("비밀번호가 올바르지 않습니다.", true);
+        if (!derived) {
+          try { await deriveKey(normalize(password), crypto.getRandomValues(new Uint8Array(16)), ITERATIONS); } catch (_) {}
         }
+        setMsg("비밀번호가 올바르지 않습니다.", true);
         goEl.disabled = false;
       }
     }

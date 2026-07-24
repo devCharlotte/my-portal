@@ -2,7 +2,6 @@
 
 - Created: Jun 23, 2026
 - Presenter: 성준희
-- PDF files are not included yet.
 
 | Year | Date | Venue | Paper | Filename |
 |---|---|---|---|---|
@@ -12,6 +11,12 @@
 | 2026 | Apr 24, 2026 (Fri) | FAST'25 | D2FS: Device-Driven Filesystem Garbage Collection | `2026-04-24-d2fs.enc` |
 | 2026 | May 29, 2026 (Fri) | FAST'26 | DPAS: A Prompt, Accurate and Safe I/O Completion Method for SSDs | `2026-05-29-dpas.enc` |
 | 2026 | Jul 3, 2026 (Fri) | FAST '26 | Unleashing Zoned UFS: Cross-Layer Optimizations for Next-Generation Mobile Storage | `2026-07-03-zoned-ufs.enc` |
+| 2026 | Jul 16, 2026 (Thu) | FAST'26 | Rearchitecting Buffered I/O in the Era of High-Bandwidth SSDs | `2026-07-16-rearchitecting-buffered-io.enc` |
+| 2026 | Aug 14, 2026 (Fri) | FAST'26 | Accelerating Model Loading in LLM Inference by Programmable Page Cache | `2026-08-14-programmable-page-cache.enc` |
+| 2026 | Sep 4, 2026 (Fri) | EuroSys'26 | PaCaR: Improved Buffered I/O Locality on NUMA Systems with Page Cache Replication | `2026-09-04-pacar.enc` |
+| 2026 | Sep 25, 2026 (Fri) | FAST'26 | uCache: A Customizable Unikernel-based IO Cache | `2026-09-25-ucache.enc` |
+| 2026 | Oct 16, 2026 (Fri) | ATC'24 | StreamCache: Revisiting Page Cache for File Scanning on Fast Storage Devices | `2026-10-16-streamcache.enc` |
+| 2026 | Nov 6, 2026 (Fri) | ATC'24 | ScalaCache: Scalable User-Space Page Cache Management with Software-Hardware Coordination | `2026-11-06-scalacache.enc` |
 | 2025 | Feb 6, 2025 (Thu) | FAST'24 | OmniCache: Collaborative Caching for Near-storage Accelerators | `2025-02-06-omnicache.enc` |
 | 2025 | Mar 6, 2025 (Thu) | FAST'24 | MIDAS: Minimizing Write Amplification in Log-Structured Systems through Adaptive Group Number and Size Configuration | `2025-03-06-midas.enc` |
 | 2025 | May 1, 2025 (Thu) | FAST'23 | MadFS: Per-File Virtualization for Userspace Persistent Memory Filesystems | `2025-05-01-madfs.enc` |
