@@ -8,7 +8,7 @@
   const VAULT_RECORD_KEY = 'primary';
   const VAULT_FORMAT = 'MY_PORTAL_RUNNING_SESSION_LOG';
   const VAULT_VERSION = 1;
-  const STATE_VERSION = 4;
+  const STATE_VERSION = 7;
   const KDF_ITERATIONS = 600000;
   const KDF_HASH = 'SHA-256';
   const SALT_BYTES = 16;
@@ -89,7 +89,9 @@
       'metricAverage','metricAverageUnit','trendSummary','trendCanvas','sessionHeading','sessionIdBadge','sessionClock',
       'sessionDate','speedValue','inclineValue','paceValue','stabilityPanel','stabilityTitle','stabilityText','stabilityProgress',
       'stabilitySeconds','startButton','stopButton','liveSegments','liveValidDuration','liveDistance','liveAverageSpeed',
-      'liveAverageIncline','logSubtitle','segmentTableBody','emptyLog','exportButton','backupButton','settingsDialog',
+      'liveAverageIncline','logElapsedTime','logAccumulatedDistance','logSubtitle','segmentTableBody','emptyLog','exportButton','backupButton',
+      'previousComparisonSubtitle','previousSessionCount','previousTotalDuration','previousTotalDistance','previousAverageDuration',
+      'previousAverageDistance','previousAverageSettings','settingsDialog',
       'stableSecondsInput','autoLockMinutesInput','exportVaultButton','mergeVaultButton','mergeVaultInput','changePasswordButton',
       'lockFromSettingsButton','deleteVaultButton','saveSettingsButton','passwordDialog','passwordDialogForm',
       'passwordDialogTitle','passwordDialogDescription','passwordDialogInput','newPasswordFields','newPasswordInput',
@@ -179,7 +181,7 @@
       settings: {
         speed: 0.3,
         incline: 0.0,
-        stableSeconds: 60,
+        stableSeconds: 10,
         autoLockMinutes: 15
       },
       sessions: [],
@@ -317,15 +319,24 @@
     els.stabilityTitle.textContent = '설정값 대기';
     els.stabilityText.textContent = 'START를 누르면 기록 로그인 후 새 세션을 시작합니다.';
     els.stabilityProgress.style.width = '0%';
-    els.stabilitySeconds.textContent = '0 / 60초';
+    els.stabilitySeconds.textContent = '0 / 10초';
     els.startButton.disabled = false;
     els.stopButton.disabled = true;
 
+    els.previousComparisonSubtitle.textContent = '기록 로그인 후 이번 세션 이전의 누적·평균을 확인할 수 있습니다.';
+    els.previousSessionCount.textContent = '—';
+    els.previousTotalDuration.textContent = '—';
+    els.previousTotalDistance.textContent = '—';
+    els.previousAverageDuration.textContent = '—';
+    els.previousAverageDistance.textContent = '—';
+    els.previousAverageSettings.textContent = '—';
     els.liveSegments.textContent = '—';
     els.liveValidDuration.textContent = '—';
     els.liveDistance.textContent = '—';
     els.liveAverageSpeed.textContent = '—';
     els.liveAverageIncline.textContent = '—';
+    els.logElapsedTime.textContent = '00:00:00';
+    els.logAccumulatedDistance.textContent = '—';
     els.segmentTableBody.replaceChildren();
     els.emptyLog.hidden = false;
     els.emptyLog.innerHTML = '<strong>현재 세션 기록은 잠겨 있습니다</strong><span>START를 누르면 로그인 후 현재 세션 구간별 로그가 표시됩니다.</span>';
@@ -343,21 +354,21 @@
     const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
-    ctx.strokeStyle = '#dfe6e1';
+    ctx.strokeStyle = '#e5dff0';
     ctx.lineWidth = 1;
     [0.2, 0.5, 0.8].forEach(ratio => {
       const y = height * ratio;
       ctx.beginPath(); ctx.moveTo(12, y); ctx.lineTo(width - 12, y); ctx.stroke();
     });
     ctx.setLineDash([6, 7]);
-    ctx.strokeStyle = '#9baaa0';
+    ctx.strokeStyle = '#aa9aca';
     ctx.beginPath();
     ctx.moveTo(16, height * .72);
     ctx.bezierCurveTo(width * .25, height * .56, width * .42, height * .62, width * .58, height * .4);
     ctx.bezierCurveTo(width * .72, height * .25, width * .84, height * .45, width - 16, height * .22);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = '#77827b';
+    ctx.fillStyle = '#786f8d';
     ctx.font = '12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('PRIVATE · LOGIN TO VIEW RECORDS', width / 2, height - 8);
@@ -438,13 +449,15 @@
       ...input,
       settings: { ...base.settings, ...(input?.settings || {}) }
     };
+    const sourceVersion = Number(input?.version) || 0;
     normalized.version = STATE_VERSION;
     normalized.sessions = Array.isArray(input?.sessions) ? input.sessions : [];
     normalized.dashboard = input?.dashboard || base.dashboard;
     normalized.deviceId = input?.deviceId || base.deviceId;
     normalized.settings.speed = clamp(round1(Number(normalized.settings.speed) || 0.3), 0.3, 20.0);
     normalized.settings.incline = clamp(round1(Number(normalized.settings.incline) || 0), 0, 16.0);
-    normalized.settings.stableSeconds = Math.max(60, Math.min(600, Number(normalized.settings.stableSeconds) || 60));
+    // v7에서도 구간 확정 시간은 10초로 고정합니다. 기존 암호화 세션 데이터와 저장소는 그대로 유지합니다.
+    normalized.settings.stableSeconds = 10;
     normalized.settings.autoLockMinutes = Math.max(1, Math.min(120, Number(normalized.settings.autoLockMinutes) || 15));
     if (!normalized.dashboard.anchor) normalized.dashboard.anchor = kstDateKey(Date.now());
     if (!['day','week','month'].includes(normalized.dashboard.period)) normalized.dashboard.period = 'day';
@@ -610,7 +623,7 @@
     session.activeSegment = {
       speed: pending.speed,
       incline: pending.incline,
-      startAt: pending.candidateStartedAt,
+      startAt: pending.transitionStartedAt,
       confirmedAt
     };
     session.pending = null;
@@ -663,10 +676,29 @@
 
   function sessionMetrics(session, includeLive = true) {
     const rows = [...(session?.segments || [])];
-    if (includeLive && session?.activeSegment) {
-      const endAt = Date.now();
-      if (endAt > session.activeSegment.startAt) {
-        rows.push({ ...session.activeSegment, endAt, number: rows.length + 1, live: true });
+    if (includeLive && session) {
+      if (session.activeSegment) {
+        // 새 설정을 확인하는 동안 기존 확정 구간은 첫 변경 입력 시각까지만 계산합니다.
+        const endAt = session.pending ? session.pending.transitionStartedAt : Date.now();
+        if (endAt > session.activeSegment.startAt) {
+          rows.push({ ...session.activeSegment, endAt, number: rows.length + 1, live: !session.pending });
+        }
+      }
+      if (session.pending) {
+        // 첫 변경 입력부터 새 최종값 후보 구간으로 즉시 표시·누적합니다.
+        // 마지막 입력값이 10초 유지되면, 여러 번 조절한 전환 시간까지 최종값 구간에 포함해 공백 없이 확정합니다.
+        const endAt = Date.now();
+        if (endAt > session.pending.transitionStartedAt) {
+          rows.push({
+            number: rows.length + 1,
+            startAt: session.pending.transitionStartedAt,
+            endAt,
+            speed: session.pending.speed,
+            incline: session.pending.incline,
+            pending: true,
+            live: false
+          });
+        }
       }
     }
     const validSeconds = rows.reduce((sum, segment) => sum + Math.max(0, segment.endAt - segment.startAt) / 1000, 0);
@@ -681,6 +713,31 @@
       maxSpeed: rows.length ? Math.max(...rows.map(row => row.speed)) : 0,
       maxIncline: rows.length ? Math.max(...rows.map(row => row.incline)) : 0,
       ascent: rows.reduce((sum, segment) => sum + segment.speed * ((segment.endAt - segment.startAt) / 3600000) * 1000 * segment.incline / 100, 0)
+    };
+  }
+
+  function previousSessionMetrics(referenceSession = displayedSession()) {
+    const cutoff = referenceSession?.startAt ?? Number.POSITIVE_INFINITY;
+    const sessions = completedSessions()
+      .filter(session => session.id !== referenceSession?.id && session.startAt < cutoff)
+      .sort((a, b) => a.startAt - b.startAt);
+    let totalSeconds = 0;
+    let totalDistance = 0;
+    let weightedIncline = 0;
+    sessions.forEach(session => {
+      const metrics = sessionMetrics(session, false);
+      totalSeconds += metrics.validSeconds;
+      totalDistance += metrics.distance;
+      weightedIncline += metrics.averageIncline * metrics.validSeconds;
+    });
+    return {
+      sessions,
+      totalSeconds,
+      totalDistance,
+      averageDuration: sessions.length ? totalSeconds / sessions.length : 0,
+      averageDistance: sessions.length ? totalDistance / sessions.length : 0,
+      averageSpeed: totalSeconds > 0 ? totalDistance / (totalSeconds / 3600) : 0,
+      averageIncline: totalSeconds > 0 ? weightedIncline / totalSeconds : 0
     };
   }
 
@@ -754,6 +811,7 @@
     renderClock();
     renderStability();
     renderDisplayedLog();
+    renderPreviousComparison();
     renderLiveSummary();
     renderDashboard();
     renderStorageState('saved');
@@ -777,7 +835,7 @@
       : (display?.endAt ? `${formatKstDate(display.endAt)} 종료` : '한국시간');
     els.heroStatusTitle.textContent = active ? '현재 세션을 기록하고 있습니다' : (display ? '현재 세션 기록을 확인하고 있습니다' : '새 세션을 시작할 수 있습니다');
     els.heroStatusText.textContent = active
-      ? `속도 또는 경사가 바뀌면 마지막 입력값의 ${state.settings.stableSeconds}초 유지 여부를 확인합니다.`
+      ? `마지막 입력값을 ${state.settings.stableSeconds}초 유지하면 대기 시간과 거리부터 새 구간에 포함합니다.`
       : (display ? '다음 START를 누르면 화면이 새로운 현재 세션으로 교체됩니다.' : 'START를 누르면 새 현재 세션 기록을 시작합니다.');
   }
 
@@ -806,7 +864,7 @@
       const percent = Math.min(100, elapsed / required * 100);
       els.stabilityPanel.dataset.state = session.activeSegment ? 'transition' : 'idle';
       els.stabilityTitle.textContent = session.activeSegment ? '새 설정 확인 중' : '첫 구간 확인 중';
-      els.stabilityText.textContent = `${session.pending.speed.toFixed(1)} km/h · 경사 ${session.pending.incline.toFixed(1)}% 유지 여부를 확인합니다.`;
+      els.stabilityText.textContent = `${session.pending.speed.toFixed(1)} km/h · 경사 ${session.pending.incline.toFixed(1)}% 확인 중 · 완료되면 대기 시간부터 누적합니다.`;
       els.stabilityProgress.style.width = `${percent}%`;
       els.stabilitySeconds.textContent = `${Math.min(required, Math.floor(elapsed))} / ${required}초`;
       return;
@@ -826,38 +884,69 @@
     if (!session) {
       els.emptyLog.hidden = false;
       els.logSubtitle.textContent = '현재 세션을 시작하면 구간별 로그가 표시됩니다.';
+      els.logElapsedTime.textContent = '00:00:00';
+      els.logAccumulatedDistance.textContent = state ? '0.000 km' : '—';
       return;
     }
-    const metrics = sessionMetrics(session, session.status === 'active');
-    els.logSubtitle.textContent = `${session.id} · ${session.status === 'active' ? '진행 중' : `${formatKstTime(session.startAt)}–${formatKstTime(session.endAt)}`}`;
-    if (!metrics.rows.length) {
+
+    const includeLive = session.status === 'active';
+    const metrics = sessionMetrics(session, includeLive);
+    els.logElapsedTime.textContent = formatDuration(metrics.validSeconds);
+    els.logAccumulatedDistance.textContent = `${metrics.distance.toFixed(3)} km`;
+    els.logSubtitle.textContent = `${session.id} · ${includeLive ? '진행 중' : `${formatKstTime(session.startAt)}–${formatKstTime(session.endAt)}`}`;
+
+    const displayRows = [...metrics.rows];
+
+    if (!displayRows.length) {
       els.emptyLog.hidden = false;
       return;
     }
+
     els.emptyLog.hidden = true;
-    metrics.rows.forEach((segment, index) => {
+    displayRows.forEach((segment, index) => {
       const durationSec = Math.max(0, (segment.endAt - segment.startAt) / 1000);
       const distance = segment.speed * durationSec / 3600;
+      const pendingElapsed = Math.min(state.settings.stableSeconds, Math.floor(durationSec));
+      const status = segment.pending
+        ? `${pendingElapsed}/${state.settings.stableSeconds}초 확인 중`
+        : (segment.live ? '기록 중' : '확정');
+      const endLabel = segment.pending || segment.live ? '진행 중' : formatKstTime(segment.endAt);
       const row = document.createElement('tr');
+      if (segment.pending) row.classList.add('is-pending');
       row.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${formatKstTime(segment.startAt)}</td>
-        <td>${segment.live ? '진행 중' : formatKstTime(segment.endAt)}</td>
-        <td>${formatDuration(durationSec)}</td>
-        <td><strong>${segment.speed.toFixed(1)}</strong></td>
-        <td>${formatPace(segment.speed)}/km</td>
-        <td>${segment.incline.toFixed(1)}%</td>
-        <td>${distance.toFixed(3)} km</td>
-        <td>${segment.live ? '기록 중' : '확정'}</td>`;
+        <td data-label="구간">${index + 1}</td>
+        <td data-label="시작">${formatKstTime(segment.startAt)}</td>
+        <td data-label="종료">${endLabel}</td>
+        <td data-label="지속시간">${formatDuration(durationSec)}</td>
+        <td data-label="속도"><strong>${segment.speed.toFixed(1)} km/h</strong></td>
+        <td data-label="페이스">${formatPace(segment.speed)}/km</td>
+        <td data-label="경사">${segment.incline.toFixed(1)}%</td>
+        <td data-label="거리">${distance.toFixed(3)} km</td>
+        <td data-label="상태">${status}</td>`;
       els.segmentTableBody.appendChild(row);
     });
+  }
+
+  function renderPreviousComparison() {
+    if (!state) return;
+    const referenceSession = displayedSession();
+    const metrics = previousSessionMetrics(referenceSession);
+    els.previousSessionCount.textContent = `${metrics.sessions.length}회`;
+    els.previousTotalDuration.textContent = formatDuration(metrics.totalSeconds);
+    els.previousTotalDistance.textContent = `${metrics.totalDistance.toFixed(3)} km`;
+    els.previousAverageDuration.textContent = formatDuration(metrics.averageDuration);
+    els.previousAverageDistance.textContent = `${metrics.averageDistance.toFixed(3)} km`;
+    els.previousAverageSettings.textContent = `${metrics.averageSpeed.toFixed(1)} km/h · ${metrics.averageIncline.toFixed(1)}%`;
+    els.previousComparisonSubtitle.textContent = metrics.sessions.length
+      ? `${formatKstDate(metrics.sessions[0].startAt)}부터 이번 세션 직전까지의 완료 기록`
+      : '이번 세션 전에 완료된 기록이 없습니다.';
   }
 
   function renderLiveSummary() {
     const session = displayedSession();
     const metrics = session ? sessionMetrics(session, session.status === 'active') : sessionMetrics(null, false);
-    els.liveSegments.textContent = `${metrics.rows.length}개`;
-    els.liveValidDuration.textContent = `${(metrics.validSeconds / 60).toFixed(1)}분`;
+    els.liveSegments.textContent = `${metrics.rows.filter(row => !row.pending).length}개`;
+    els.liveValidDuration.textContent = `${formatDuration(metrics.validSeconds)} · ${(metrics.validSeconds / 60).toFixed(1)}분`;
     els.liveDistance.textContent = `${metrics.distance.toFixed(3)} km`;
     els.liveAverageSpeed.textContent = `${metrics.averageSpeed.toFixed(1)} km/h`;
     els.liveAverageIncline.textContent = `${metrics.averageIncline.toFixed(1)}%`;
@@ -930,7 +1019,7 @@
     const innerW = width - pad.left - pad.right;
     const innerH = height - pad.top - pad.bottom;
 
-    ctx.strokeStyle = '#dfe6e1';
+    ctx.strokeStyle = '#e5dff0';
     ctx.lineWidth = 1;
     [0, .5, 1].forEach(ratio => {
       const y = pad.top + innerH * ratio;
@@ -944,8 +1033,8 @@
     }));
 
     const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + innerH);
-    gradient.addColorStop(0, 'rgba(84,115,94,.25)');
-    gradient.addColorStop(1, 'rgba(84,115,94,0)');
+    gradient.addColorStop(0, 'rgba(255,143,199,.25)');
+    gradient.addColorStop(1, 'rgba(139,215,255,0)');
     if (coordinates.length) {
       ctx.beginPath();
       ctx.moveTo(coordinates[0].x, pad.top + innerH);
@@ -957,7 +1046,7 @@
 
       ctx.beginPath();
       coordinates.forEach((point, index) => index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y));
-      ctx.strokeStyle = '#4b715b';
+      ctx.strokeStyle = '#8068ce';
       ctx.lineWidth = 2.2;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
@@ -966,11 +1055,11 @@
       coordinates.forEach(point => {
         ctx.beginPath(); ctx.arc(point.x, point.y, 3.2, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff'; ctx.fill();
-        ctx.strokeStyle = '#4b715b'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = '#8068ce'; ctx.lineWidth = 2; ctx.stroke();
       });
     }
 
-    ctx.fillStyle = '#77827b';
+    ctx.fillStyle = '#786f8d';
     ctx.font = '11px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
     ctx.textAlign = 'center';
     coordinates.forEach((point, index) => {
@@ -1012,13 +1101,13 @@
 
   function openSettings() {
     if (!state) return openAccessGate('settings');
-    els.stableSecondsInput.value = state.settings.stableSeconds;
+    els.stableSecondsInput.value = 10;
     els.autoLockMinutesInput.value = state.settings.autoLockMinutes;
     els.settingsDialog.showModal();
   }
 
   function saveSettings() {
-    state.settings.stableSeconds = Math.max(60, Math.min(600, Number(els.stableSecondsInput.value) || 60));
+    state.settings.stableSeconds = 10;
     state.settings.autoLockMinutes = Math.max(1, Math.min(120, Number(els.autoLockMinutesInput.value) || 15));
     saveState({ immediate: true });
     els.settingsDialog.close();

@@ -68,9 +68,12 @@
     <main class="page-shell">
       <section class="hero" aria-labelledby="pageTitle">
         <div>
-          <p class="kicker">WELLNESS · TREADMILL</p>
+          <div class="hero-badges">
+            <p class="kicker">WELLNESS · TREADMILL</p>
+            <span class="mobile-badge">MOBILE OPTIMIZED</span>
+          </div>
           <h1 id="pageTitle">Running Session Log</h1>
-          <p class="hero-copy">버튼 조작은 즉시 남기고, 최종 속도와 경사가 1분 이상 유지된 구간만 운동 기록으로 확정합니다.</p>
+          <p class="hero-copy">러닝머신의 운동 기록 화면처럼 세션 중 속도·경사 구간, 누적 시간·거리와 요약을 바로 보여주고, 종료 후에는 기록을 일·주·월로 계속 누적 관리합니다. 모바일에 우선 최적화되며 넓은 웹 화면에서도 안정적이고 매끄럽게 동작합니다.</p>
         </div>
         <div class="hero-status">
           <span class="status-dot" aria-hidden="true"></span>
@@ -81,11 +84,102 @@
         </div>
       </section>
 
+      <section class="workout-stage" aria-label="러닝 세션 기록 흐름">
+        <article class="session-card">
+          <div class="session-topline">
+            <div><p class="section-kicker">STEP 1 · START & CONTROL</p><h2 id="sessionHeading">운동 준비</h2></div>
+            <span id="sessionIdBadge" class="session-id">세션 없음</span>
+          </div>
+
+          <div class="session-clock-wrap"><span>START–STOP</span><strong id="sessionClock">00:00:00</strong><small id="sessionDate">한국시간</small></div>
+
+          <div class="control-grid">
+            <section class="value-control incline-control" aria-labelledby="inclineLabel">
+              <div class="control-title-row"><div><span id="inclineLabel">경사</span><small>INCLINE · %</small></div><span class="sub-value">0.0–16.0</span></div>
+              <div class="stepper">
+                <button class="step-button" type="button" data-control="incline" data-delta="-0.1" aria-label="경사 0.1 감소">−</button>
+                <output id="inclineValue" aria-live="polite">0.0</output>
+                <button class="step-button" type="button" data-control="incline" data-delta="0.1" aria-label="경사 0.1 증가">＋</button>
+              </div>
+            </section>
+            <section class="value-control speed-control" aria-labelledby="speedLabel">
+              <div class="control-title-row"><div><span id="speedLabel">속도</span><small>SPEED · km/h</small></div><span id="paceValue" class="sub-value">200:00 /km</span></div>
+              <div class="stepper">
+                <button class="step-button" type="button" data-control="speed" data-delta="-0.1" aria-label="속도 0.1 감소">−</button>
+                <output id="speedValue" aria-live="polite">0.3</output>
+                <button class="step-button" type="button" data-control="speed" data-delta="0.1" aria-label="속도 0.1 증가">＋</button>
+              </div>
+            </section>
+          </div>
+
+          <div id="stabilityPanel" class="stability-panel" data-state="idle">
+            <div class="stability-copy"><strong id="stabilityTitle">설정값 대기</strong><span id="stabilityText">START 후 현재 값이 10초 유지되면 첫 구간이 확정됩니다.</span></div>
+            <div class="stability-track" aria-hidden="true"><span id="stabilityProgress"></span></div>
+            <span id="stabilitySeconds" class="stability-seconds">0 / 10초</span>
+          </div>
+
+          <button id="startButton" class="primary-action start-action" type="button">START RUNNING SESSION</button>
+          <p class="session-rule">버튼 입력은 즉시 기록합니다. 마지막 입력값이 10초 유지되면 첫 조절 시점부터의 전환 시간과 거리를 최종 속도·경사 구간으로 묶어 공백 없이 누적합니다.</p>
+        </article>
+
+        <section class="log-panel" aria-labelledby="logTitle">
+          <div class="section-heading log-heading">
+            <div><p class="section-kicker">STEP 2 · CURRENT SESSION LOG</p><h2 id="logTitle">현재 세션 구간별 로그</h2><p id="logSubtitle">현재 세션을 시작하면 구간별 로그가 표시됩니다.</p></div>
+            <div class="log-actions"><button id="exportButton" class="quiet-button" type="button">CSV 내보내기</button><button id="backupButton" class="quiet-button" type="button">암호화 백업</button></div>
+          </div>
+
+          <section class="previous-session-comparison" aria-label="이번 세션 이전 완료 세션의 누적과 평균">
+            <div class="previous-comparison-heading">
+              <div><span>BEFORE THIS SESSION</span><strong>이전 세션 누적·평균</strong></div>
+              <small id="previousComparisonSubtitle">이전 완료 세션이 없습니다.</small>
+            </div>
+            <div class="previous-comparison-grid">
+              <div><span>완료 세션</span><strong id="previousSessionCount">0회</strong></div>
+              <div><span>누적 기록시간</span><strong id="previousTotalDuration">00:00:00</strong></div>
+              <div><span>누적 거리</span><strong id="previousTotalDistance">0.000 km</strong></div>
+              <div><span>세션 평균시간</span><strong id="previousAverageDuration">00:00:00</strong></div>
+              <div><span>세션 평균거리</span><strong id="previousAverageDistance">0.000 km</strong></div>
+              <div><span>전체 평균 속도·경사</span><strong id="previousAverageSettings">0.0 km/h · 0.0%</strong></div>
+            </div>
+          </section>
+
+          <div class="current-session-strip-label">이번 세션 누적</div>
+          <div class="log-live-strip" aria-label="현재 세션 누적값">
+            <div><span>누적 기록 시간</span><strong id="logElapsedTime">00:00:00</strong></div>
+            <div><span>누적 거리</span><strong id="logAccumulatedDistance">0.000 km</strong></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>구간</th><th>시작</th><th>종료</th><th>지속시간</th><th>속도</th><th>페이스</th><th>경사</th><th>거리</th><th>상태</th></tr></thead>
+              <tbody id="segmentTableBody"></tbody>
+            </table>
+            <div id="emptyLog" class="empty-log"><strong>표시할 구간이 없습니다</strong><span>START를 누른 뒤 속도와 경사를 10초 이상 유지해 주세요.</span></div>
+          </div>
+        </section>
+
+        <aside class="live-summary-card">
+          <div class="section-heading compact"><div><p class="section-kicker">STEP 3 · CURRENT SESSION SUMMARY</p><h2>현재 세션 요약</h2></div></div>
+          <dl class="summary-list">
+            <div><dt>확정 구간</dt><dd id="liveSegments">0개</dd></div>
+            <div><dt>누적 기록시간</dt><dd id="liveValidDuration">0분</dd></div>
+            <div><dt>누적 거리</dt><dd id="liveDistance">0.000 km</dd></div>
+            <div><dt>평균 속도</dt><dd id="liveAverageSpeed">0.0 km/h</dd></div>
+            <div><dt>평균 경사</dt><dd id="liveAverageIncline">0.0%</dd></div>
+          </dl>
+          <div class="privacy-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10"/><rect x="5" y="10" width="14" height="10" rx="3"/></svg>
+            <div><strong>기기 내부 암호화 저장</strong><span>STOP 후 기록을 암호화해 저장하고, 외부 서버로 전송하지 않습니다.</span></div>
+          </div>
+          <button id="stopButton" class="danger-action stop-action" type="button" disabled>STOP & SAVE SESSION</button>
+        </aside>
+      </section>
+
       <section class="dashboard-panel" aria-labelledby="dashboardTitle">
         <div class="section-heading dashboard-heading">
           <div>
-            <p class="section-kicker">PROGRESS</p>
-            <h2 id="dashboardTitle">성장 대시보드</h2>
+            <p class="section-kicker">AFTER SESSION · PROGRESS</p>
+            <h2 id="dashboardTitle">일·주·월 성장 대시보드</h2>
           </div>
           <div class="period-tabs" role="tablist" aria-label="대시보드 기간">
             <button class="period-tab is-active" data-period="day" role="tab" aria-selected="true">일별</button>
@@ -114,77 +208,6 @@
           <canvas id="trendCanvas" width="980" height="220" aria-label="거리 성장 추이 그래프"></canvas>
         </div>
       </section>
-
-      <section class="tracker-layout" aria-label="러닝 기록 조작 영역">
-        <article class="session-card">
-          <div class="session-topline">
-            <div><p class="section-kicker">CURRENT SESSION</p><h2 id="sessionHeading">운동 준비</h2></div>
-            <span id="sessionIdBadge" class="session-id">세션 없음</span>
-          </div>
-
-          <div class="session-clock-wrap"><span>START–STOP</span><strong id="sessionClock">00:00:00</strong><small id="sessionDate">한국시간</small></div>
-
-          <div class="control-grid">
-            <section class="value-control" aria-labelledby="speedLabel">
-              <div class="control-title-row"><div><span id="speedLabel">속도</span><small>km/h</small></div><span id="paceValue" class="sub-value">200:00 /km</span></div>
-              <div class="stepper">
-                <button class="step-button" type="button" data-control="speed" data-delta="-0.1" aria-label="속도 0.1 감소">−</button>
-                <output id="speedValue" aria-live="polite">0.3</output>
-                <button class="step-button" type="button" data-control="speed" data-delta="0.1" aria-label="속도 0.1 증가">＋</button>
-              </div>
-            </section>
-            <section class="value-control" aria-labelledby="inclineLabel">
-              <div class="control-title-row"><div><span id="inclineLabel">경사</span><small>%</small></div><span class="sub-value">0.0–16.0</span></div>
-              <div class="stepper">
-                <button class="step-button" type="button" data-control="incline" data-delta="-0.1" aria-label="경사 0.1 감소">−</button>
-                <output id="inclineValue" aria-live="polite">0.0</output>
-                <button class="step-button" type="button" data-control="incline" data-delta="0.1" aria-label="경사 0.1 증가">＋</button>
-              </div>
-            </section>
-          </div>
-
-          <div id="stabilityPanel" class="stability-panel" data-state="idle">
-            <div class="stability-copy"><strong id="stabilityTitle">설정값 대기</strong><span id="stabilityText">START 후 현재 값이 60초 유지되면 첫 구간이 확정됩니다.</span></div>
-            <div class="stability-track" aria-hidden="true"><span id="stabilityProgress"></span></div>
-            <span id="stabilitySeconds" class="stability-seconds">0 / 60초</span>
-          </div>
-
-          <div class="session-actions">
-            <button id="startButton" class="primary-action" type="button">START</button>
-            <button id="stopButton" class="danger-action" type="button" disabled>STOP</button>
-          </div>
-          <p class="session-rule">현재 세션 기록은 STOP 후 암호화되어 저장됩니다. 로그아웃하면 과거 기록과 수치는 화면에서 즉시 제거됩니다.</p>
-        </article>
-
-        <aside class="live-summary-card">
-          <div class="section-heading compact"><div><p class="section-kicker">CURRENT SESSION SUMMARY</p><h2>현재 세션 요약</h2></div></div>
-          <dl class="summary-list">
-            <div><dt>확정 구간</dt><dd id="liveSegments">0개</dd></div>
-            <div><dt>유효 시간</dt><dd id="liveValidDuration">0분</dd></div>
-            <div><dt>거리</dt><dd id="liveDistance">0.000 km</dd></div>
-            <div><dt>평균 속도</dt><dd id="liveAverageSpeed">0.0 km/h</dd></div>
-            <div><dt>평균 경사</dt><dd id="liveAverageIncline">0.0%</dd></div>
-          </dl>
-          <div class="privacy-note">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10"/><rect x="5" y="10" width="14" height="10" rx="3"/></svg>
-            <div><strong>기기 내부 암호화 저장</strong><span>서버·API·클라우드로 기록을 전송하지 않습니다.</span></div>
-          </div>
-        </aside>
-      </section>
-
-      <section class="log-panel" aria-labelledby="logTitle">
-        <div class="section-heading log-heading">
-          <div><p class="section-kicker">CURRENT SESSION LOG</p><h2 id="logTitle">현재 세션 구간별 로그</h2><p id="logSubtitle">로그인 후 현재 세션의 확정 구간만 표시됩니다.</p></div>
-          <div class="log-actions"><button id="exportButton" class="quiet-button" type="button">CSV 내보내기</button><button id="backupButton" class="quiet-button" type="button">암호화 백업</button></div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>구간</th><th>시작</th><th>종료</th><th>지속시간</th><th>속도</th><th>페이스</th><th>경사</th><th>거리</th><th>상태</th></tr></thead>
-            <tbody id="segmentTableBody"></tbody>
-          </table>
-          <div id="emptyLog" class="empty-log"><strong>표시할 구간이 없습니다</strong><span>START를 누른 뒤 속도와 경사를 1분 이상 유지해 주세요.</span></div>
-        </div>
-      </section>
     </main>
 
     <dialog id="settingsDialog" class="settings-dialog">
@@ -196,8 +219,8 @@
 
         <div class="settings-section">
           <label for="stableSecondsInput">구간 확정 유지시간</label>
-          <div class="suffix-field"><input id="stableSecondsInput" type="number" min="60" max="600" step="1" /><span>초</span></div>
-          <small>기본 60초입니다. 최종 속도와 경사가 이 시간 이상 유지되어야 구간으로 확정됩니다.</small>
+          <div class="suffix-field fixed-value-field"><input id="stableSecondsInput" type="number" value="10" readonly aria-readonly="true" /><span>초</span></div>
+          <small>10초로 고정됩니다. 유지시간이 끝나면 첫 조절 시점부터의 전환 시간과 거리를 최종 설정값 구간에 포함합니다.</small>
         </div>
 
         <div class="settings-section">
