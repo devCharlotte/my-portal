@@ -456,3 +456,70 @@ td strong { color: var(--accent-strong); }
   .settings-actions-grid { grid-template-columns: 1fr; }
   .vault-gate-card { padding: 28px 22px; border-radius: 25px; }
 }
+
+/* Public shell + on-demand private record login */
+.vault-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  min-height: 100vh;
+  overflow-y: auto;
+  background: rgba(27, 39, 32, 0.48);
+  backdrop-filter: blur(8px);
+}
+.vault-gate-card { position: relative; }
+.gate-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  background: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.access-button {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid #bfd0c4;
+  border-radius: 999px;
+  color: var(--accent-strong);
+  background: var(--accent-pale);
+  font-size: 0.78rem;
+  font-weight: 780;
+}
+.storage-chip.is-locked {
+  color: #6e746f;
+  border-color: #d8ded9;
+  background: #f5f7f5;
+}
+.app-root.is-locked .metric-card strong,
+.app-root.is-locked .summary-list dd {
+  color: #7b8880;
+}
+.app-root.is-locked .status-dot {
+  background: #9ba79f;
+  box-shadow: 0 0 0 5px rgba(155,167,159,.14);
+}
+.app-root.is-locked .step-button,
+.app-root.is-locked .period-arrow,
+.app-root.is-locked .period-tab,
+.app-root.is-locked .quiet-button,
+.app-root.is-locked .icon-button,
+.app-root.is-locked .primary-action {
+  position: relative;
+}
+.app-root.is-locked .dashboard-panel,
+.app-root.is-locked .live-summary-card,
+.app-root.is-locked .log-panel {
+  border-color: #dde4df;
+}
+
+@media (max-width: 650px) {
+  .access-button { padding: 8px 11px; font-size: 0.72rem; }
+  .gate-close { top: 12px; right: 12px; }
+}
+body.modal-open { overflow: hidden; }

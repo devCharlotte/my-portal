@@ -7,54 +7,56 @@
   <meta name="referrer" content="no-referrer" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
-  <title>Running Vault · Wellness</title>
+  <title>Running Session Log · Wellness</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <section id="vaultGate" class="vault-gate" aria-labelledby="vaultGateTitle">
-    <div class="vault-gate-card">
+  <section id="vaultGate" class="vault-gate" aria-labelledby="vaultGateTitle" hidden>
+    <div class="vault-gate-card" role="dialog" aria-modal="true">
+      <button id="gateCloseButton" class="gate-close" type="button" aria-label="로그인 창 닫기">×</button>
       <div class="vault-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10"/><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M12 14v2.5"/></svg>
       </div>
-      <p class="kicker">WELLNESS · PRIVATE RUNNING LOG</p>
-      <h1 id="vaultGateTitle">Running Vault</h1>
-      <p id="vaultGateDescription" class="gate-description">이 기기에 암호화된 러닝 기록 금고를 만듭니다.</p>
+      <p class="kicker">PRIVATE RUNNING RECORDS</p>
+      <h1 id="vaultGateTitle">Running Session Log</h1>
+      <p id="vaultGateDescription" class="gate-description">기록을 시작하거나 이전 기록을 확인하려면 비밀번호를 입력하세요.</p>
 
       <form id="vaultForm" class="vault-form" autocomplete="off">
-        <label for="vaultPassword">금고 비밀번호</label>
+        <label for="vaultPassword">기록 비밀번호</label>
         <div class="password-field">
-          <input id="vaultPassword" name="vault-password" type="password" minlength="12" required autocomplete="new-password" spellcheck="false" />
+          <input id="vaultPassword" name="record-password" type="password" minlength="12" required autocomplete="current-password" spellcheck="false" />
           <button id="togglePassword" type="button" class="text-button" aria-label="비밀번호 표시 전환">보기</button>
         </div>
-        <div id="confirmPasswordWrap" class="password-confirm">
+        <div id="confirmPasswordWrap" class="password-confirm" hidden>
           <label for="vaultPasswordConfirm">비밀번호 확인</label>
-          <input id="vaultPasswordConfirm" name="vault-password-confirm" type="password" minlength="12" autocomplete="new-password" spellcheck="false" />
+          <input id="vaultPasswordConfirm" name="record-password-confirm" type="password" minlength="12" autocomplete="new-password" spellcheck="false" />
         </div>
         <p id="vaultError" class="form-error" role="alert"></p>
-        <button id="vaultSubmit" class="gate-primary" type="submit">새 금고 만들기</button>
+        <button id="vaultSubmit" class="gate-primary" type="submit">기록 로그인</button>
       </form>
 
       <div class="gate-actions">
         <button id="gateImportButton" class="gate-secondary" type="button">암호화 백업 불러오기</button>
-        <input id="gateImportInput" type="file" accept=".runvault,application/json" hidden />
+        <input id="gateImportInput" type="file" accept=".runlog,.runvault,application/json" hidden />
       </div>
 
       <div class="security-copy">
-        <strong>비밀번호는 저장소와 ZIP에 포함되지 않습니다.</strong>
-        <span>기록은 브라우저에서 AES-256-GCM으로 암호화되고, 비밀번호를 잊으면 복구할 수 없습니다.</span>
+        <strong>GitHub와 배포 ZIP에는 비밀번호와 기록이 들어 있지 않습니다.</strong>
+        <span>기록은 이 브라우저에서 AES-256-GCM으로 암호화하며, 잠긴 상태에서는 과거 수치와 세션 내용을 화면에 만들지 않습니다.</span>
       </div>
     </div>
   </section>
 
-  <div id="appRoot" class="app-root" hidden>
+  <div id="appRoot" class="app-root is-locked">
     <header class="topbar">
       <a class="back-link" href="../" aria-label="Wellness로 돌아가기">
         <span aria-hidden="true">←</span>
         <span>Wellness</span>
       </a>
       <div class="topbar-actions">
-        <span id="storageChip" class="storage-chip">암호화 저장</span>
-        <button id="lockButton" class="icon-button" type="button" aria-label="금고 잠그기" title="금고 잠그기">
+        <span id="storageChip" class="storage-chip is-locked">PRIVATE RECORDS LOCKED</span>
+        <button id="recordAccessButton" class="access-button" type="button">기록 로그인</button>
+        <button id="lockButton" class="icon-button" type="button" aria-label="기록 잠그기" title="기록 잠그기" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10"/><rect x="5" y="10" width="14" height="10" rx="3"/></svg>
         </button>
         <button id="settingsButton" class="icon-button" type="button" aria-label="설정 열기" title="설정">
@@ -67,14 +69,14 @@
       <section class="hero" aria-labelledby="pageTitle">
         <div>
           <p class="kicker">WELLNESS · TREADMILL</p>
-          <h1 id="pageTitle">Running Vault</h1>
+          <h1 id="pageTitle">Running Session Log</h1>
           <p class="hero-copy">버튼 조작은 즉시 남기고, 최종 속도와 경사가 1분 이상 유지된 구간만 운동 기록으로 확정합니다.</p>
         </div>
         <div class="hero-status">
           <span class="status-dot" aria-hidden="true"></span>
           <div>
             <strong id="heroStatusTitle">새 세션을 시작할 수 있습니다</strong>
-            <span id="heroStatusText">최근 세션 로그는 다음 START 전까지 유지됩니다.</span>
+            <span id="heroStatusText">기록은 잠겨 있으며 START를 누르면 비밀번호 입력 창이 열립니다.</span>
           </div>
         </div>
       </section>
@@ -151,11 +153,11 @@
             <button id="startButton" class="primary-action" type="button">START</button>
             <button id="stopButton" class="danger-action" type="button" disabled>STOP</button>
           </div>
-          <p class="session-rule">STOP 후 최근 세션은 그대로 표시됩니다. 다음 START에서 화면 표시만 새 세션으로 교체되고, 이전 기록은 암호화된 통계 데이터로 계속 남습니다.</p>
+          <p class="session-rule">현재 세션 기록은 STOP 후 암호화되어 저장됩니다. 로그아웃하면 과거 기록과 수치는 화면에서 즉시 제거됩니다.</p>
         </article>
 
         <aside class="live-summary-card">
-          <div class="section-heading compact"><div><p class="section-kicker">LIVE SUMMARY</p><h2>현재 세션</h2></div></div>
+          <div class="section-heading compact"><div><p class="section-kicker">CURRENT SESSION SUMMARY</p><h2>현재 세션 요약</h2></div></div>
           <dl class="summary-list">
             <div><dt>확정 구간</dt><dd id="liveSegments">0개</dd></div>
             <div><dt>유효 시간</dt><dd id="liveValidDuration">0분</dd></div>
@@ -172,7 +174,7 @@
 
       <section class="log-panel" aria-labelledby="logTitle">
         <div class="section-heading log-heading">
-          <div><p class="section-kicker">ENCRYPTED DEVICE LOG</p><h2 id="logTitle">최근 세션 구간</h2><p id="logSubtitle">새 START를 누르기 전까지 유지됩니다.</p></div>
+          <div><p class="section-kicker">CURRENT SESSION LOG</p><h2 id="logTitle">현재 세션 구간별 로그</h2><p id="logSubtitle">로그인 후 현재 세션의 확정 구간만 표시됩니다.</p></div>
           <div class="log-actions"><button id="exportButton" class="quiet-button" type="button">CSV 내보내기</button><button id="backupButton" class="quiet-button" type="button">암호화 백업</button></div>
         </div>
         <div class="table-wrap">
@@ -188,7 +190,7 @@
     <dialog id="settingsDialog" class="settings-dialog">
       <form method="dialog" class="settings-card">
         <div class="settings-header">
-          <div><p class="section-kicker">PRIVATE VAULT</p><h2>보안과 백업</h2></div>
+          <div><p class="section-kicker">PRIVATE RECORDS</p><h2>보안과 백업</h2></div>
           <button class="icon-button" value="cancel" aria-label="설정 닫기" type="submit">×</button>
         </div>
 
@@ -205,15 +207,15 @@
         </div>
 
         <div class="settings-section settings-actions-grid">
-          <button id="exportVaultButton" class="secondary-button" type="button">.runvault 내보내기</button>
+          <button id="exportVaultButton" class="secondary-button" type="button">암호화 백업 내보내기</button>
           <button id="mergeVaultButton" class="secondary-button" type="button">백업 병합</button>
-          <input id="mergeVaultInput" type="file" accept=".runvault,application/json" hidden />
+          <input id="mergeVaultInput" type="file" accept=".runlog,.runvault,application/json" hidden />
           <button id="changePasswordButton" class="secondary-button" type="button">비밀번호 변경</button>
-          <button id="lockFromSettingsButton" class="secondary-button" type="button">지금 잠그기</button>
+          <button id="lockFromSettingsButton" class="secondary-button" type="button">기록 로그아웃</button>
         </div>
 
         <div class="settings-section danger-zone">
-          <strong>이 기기의 금고 삭제</strong>
+          <strong>이 기기의 암호화 기록 삭제</strong>
           <span>암호화 백업이 없다면 복구할 수 없습니다.</span>
           <button id="deleteVaultButton" class="danger-outline" type="button">기기 데이터 완전 삭제</button>
         </div>

@@ -1,11 +1,12 @@
 (() => {
   'use strict';
 
-  const DB_NAME = 'myPortal.runningVault';
+  const DB_NAME = 'myPortal.runningSessionLog.v2';
+  const LEGACY_DB_NAME = 'myPortal.runningVault';
   const DB_VERSION = 1;
   const STORE_NAME = 'vault';
   const VAULT_RECORD_KEY = 'primary';
-  const VAULT_FORMAT = 'MY_PORTAL_RUNNING_VAULT';
+  const VAULT_FORMAT = 'MY_PORTAL_RUNNING_SESSION_LOG';
   const VAULT_VERSION = 1;
   const STATE_VERSION = 4;
   const KDF_ITERATIONS = 600000;
@@ -47,6 +48,7 @@
   let lastActivityAt = Date.now();
   let passwordDialogContext = null;
   let pendingImportedEnvelope = null;
+  let pendingGateAction = null;
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -55,27 +57,33 @@
     bindEvents();
 
     if (!window.crypto?.subtle || !window.indexedDB) {
-      showGateError('이 브라우저는 암호화 저장에 필요한 Web Crypto 또는 IndexedDB를 지원하지 않습니다.');
-      els.vaultSubmit.disabled = true;
+      renderPublicState();
+      els.startButton.disabled = true;
+      els.recordAccessButton.disabled = true;
+      showToast('이 브라우저는 암호화 저장에 필요한 Web Crypto 또는 IndexedDB를 지원하지 않습니다.');
       return;
     }
 
+    await deleteLegacyTestDatabase();
     hasVault = Boolean(await getStoredEnvelope());
-    configureGate();
+    showPublicApp();
     tickTimer = window.setInterval(tick, 250);
-    window.addEventListener('resize', () => state && renderDashboard());
+    window.addEventListener('resize', () => state ? renderDashboard() : drawLockedTrend());
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) lastActivityAt = Date.now();
     });
     ['pointerdown', 'keydown', 'touchstart'].forEach(name => {
       document.addEventListener(name, registerActivity, { passive: true });
     });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !els.vaultGate.hidden) closeAccessGate();
+    });
   }
 
   function cacheElements() {
     const ids = [
       'vaultGate','vaultGateDescription','vaultForm','vaultPassword','vaultPasswordConfirm','confirmPasswordWrap','vaultError',
-      'vaultSubmit','togglePassword','gateImportButton','gateImportInput','appRoot','storageChip','lockButton','settingsButton',
+      'vaultSubmit','togglePassword','gateImportButton','gateImportInput','gateCloseButton','appRoot','storageChip','recordAccessButton','lockButton','settingsButton',
       'heroStatusTitle','heroStatusText','periodPrev','periodNext','periodLabel','periodSubLabel','participationLabel',
       'metricSessions','metricSessionsUnit','metricDuration','metricDistance','metricSpeed','metricIncline','averageLabel',
       'metricAverage','metricAverageUnit','trendSummary','trendCanvas','sessionHeading','sessionIdBadge','sessionClock',
@@ -95,18 +103,24 @@
   function bindEvents() {
     els.vaultForm.addEventListener('submit', handleGateSubmit);
     els.togglePassword.addEventListener('click', toggleGatePassword);
+    els.gateCloseButton.addEventListener('click', closeAccessGate);
+    els.vaultGate.addEventListener('click', event => { if (event.target === els.vaultGate) closeAccessGate(); });
     els.gateImportButton.addEventListener('click', () => els.gateImportInput.click());
     els.gateImportInput.addEventListener('change', handleGateImport);
+    els.recordAccessButton.addEventListener('click', () => openAccessGate('view'));
 
-    els.periodTabs.forEach(button => button.addEventListener('click', () => setDashboardPeriod(button.dataset.period)));
-    els.periodPrev.addEventListener('click', () => shiftDashboard(-1));
-    els.periodNext.addEventListener('click', () => shiftDashboard(1));
-    els.startButton.addEventListener('click', startSession);
+    els.periodTabs.forEach(button => button.addEventListener('click', () => {
+      if (!state) return openAccessGate('view');
+      setDashboardPeriod(button.dataset.period);
+    }));
+    els.periodPrev.addEventListener('click', () => state ? shiftDashboard(-1) : openAccessGate('view'));
+    els.periodNext.addEventListener('click', () => state ? shiftDashboard(1) : openAccessGate('view'));
+    els.startButton.addEventListener('click', () => state ? startSession() : openAccessGate('start'));
     els.stopButton.addEventListener('click', stopSession);
-    els.settingsButton.addEventListener('click', openSettings);
-    els.lockButton.addEventListener('click', () => lockVault('수동 잠금'));
-    els.exportButton.addEventListener('click', exportDisplayedSessionCsv);
-    els.backupButton.addEventListener('click', exportVaultBackup);
+    els.settingsButton.addEventListener('click', () => state ? openSettings() : openAccessGate('settings'));
+    els.lockButton.addEventListener('click', () => lockVault('기록 로그아웃'));
+    els.exportButton.addEventListener('click', () => state ? exportDisplayedSessionCsv() : openAccessGate('view'));
+    els.backupButton.addEventListener('click', () => state ? exportVaultBackup() : openAccessGate('backup'));
 
     els.saveSettingsButton.addEventListener('click', saveSettings);
     els.exportVaultButton.addEventListener('click', exportVaultBackup);
@@ -115,7 +129,7 @@
     els.changePasswordButton.addEventListener('click', () => openPasswordDialog('change'));
     els.lockFromSettingsButton.addEventListener('click', () => {
       els.settingsDialog.close();
-      lockVault('수동 잠금');
+      lockVault('기록 로그아웃');
     });
     els.deleteVaultButton.addEventListener('click', deleteLocalVault);
 
@@ -123,7 +137,10 @@
     els.passwordDialogCancel.addEventListener('click', closePasswordDialog);
 
     els.stepButtons.forEach(button => {
-      const run = () => adjustValue(button.dataset.control, Number(button.dataset.delta));
+      const run = () => {
+        if (!state) return openAccessGate('record');
+        adjustValue(button.dataset.control, Number(button.dataset.delta));
+      };
       button.addEventListener('click', event => {
         if (event.detail === 0) run();
       });
@@ -131,6 +148,7 @@
         if (event.button !== 0) return;
         event.preventDefault();
         run();
+        if (!state) return;
         clearHoldTimer();
         holdTimer = window.setTimeout(() => {
           holdTimer = window.setInterval(run, 90);
@@ -171,37 +189,51 @@
     };
   }
 
-  function configureGate() {
+  function openAccessGate(action = 'view') {
+    pendingGateAction = action;
     els.vaultGate.hidden = false;
-    els.appRoot.hidden = true;
+    document.body.classList.add('modal-open');
     els.vaultPassword.value = '';
     els.vaultPasswordConfirm.value = '';
     els.vaultError.textContent = '';
     els.vaultPassword.type = 'password';
+    els.vaultPasswordConfirm.type = 'password';
     els.togglePassword.textContent = '보기';
 
     if (hasVault) {
-      els.vaultGateDescription.textContent = '비밀번호를 입력해 이 기기의 암호화된 러닝 기록을 여세요.';
+      els.vaultGateDescription.textContent = action === 'start'
+        ? '새 러닝 세션을 시작하려면 기록 비밀번호를 입력하세요.'
+        : '암호화된 이전 기록을 확인하려면 기록 비밀번호를 입력하세요.';
       els.confirmPasswordWrap.hidden = true;
       els.vaultPasswordConfirm.required = false;
       els.vaultPassword.autocomplete = 'current-password';
-      els.vaultSubmit.textContent = '기록 금고 열기';
+      els.vaultSubmit.textContent = action === 'start' ? '로그인하고 START' : '기록 로그인';
     } else {
-      els.vaultGateDescription.textContent = '처음 한 번 비밀번호를 입력해 이 기기에 암호화된 러닝 기록 금고를 만드세요.';
+      els.vaultGateDescription.textContent = '첫 기록을 시작하기 전에 이 기기용 암호화 비밀번호를 설정하세요. 비밀번호는 코드와 GitHub에 저장되지 않습니다.';
       els.confirmPasswordWrap.hidden = false;
       els.vaultPasswordConfirm.required = true;
       els.vaultPassword.autocomplete = 'new-password';
-      els.vaultSubmit.textContent = '새 금고 만들기';
+      els.vaultSubmit.textContent = action === 'start' ? '암호화 기록 만들고 START' : '암호화 기록 시작';
     }
     window.setTimeout(() => els.vaultPassword.focus(), 60);
+  }
+
+  function closeAccessGate() {
+    pendingGateAction = null;
+    els.vaultGate.hidden = true;
+    document.body.classList.remove('modal-open');
+    els.vaultPassword.value = '';
+    els.vaultPasswordConfirm.value = '';
+    els.vaultError.textContent = '';
   }
 
   async function handleGateSubmit(event) {
     event.preventDefault();
     const password = els.vaultPassword.value;
+    const requestedAction = pendingGateAction;
     els.vaultError.textContent = '';
     els.vaultSubmit.disabled = true;
-    els.vaultSubmit.textContent = hasVault ? '여는 중…' : '만드는 중…';
+    els.vaultSubmit.textContent = hasVault ? '로그인 중…' : '암호화 준비 중…';
 
     try {
       if (password.length < MIN_PASSWORD_LENGTH) {
@@ -213,14 +245,18 @@
         if (password !== els.vaultPasswordConfirm.value) throw new Error('비밀번호 확인이 일치하지 않습니다.');
         await createVault(password);
       }
+      closeAccessGate();
+      if (requestedAction === 'start' && !activeSession()) startSession();
+      if (requestedAction === 'settings') openSettings();
+      if (requestedAction === 'backup') exportVaultBackup();
       els.vaultPassword.value = '';
       els.vaultPasswordConfirm.value = '';
     } catch (error) {
       console.error(error);
-      showGateError(hasVault ? '비밀번호가 올바르지 않거나 금고 파일이 손상되었습니다.' : error.message);
+      showGateError(hasVault ? '비밀번호가 올바르지 않거나 암호화 기록이 손상되었습니다.' : error.message);
     } finally {
       els.vaultSubmit.disabled = false;
-      els.vaultSubmit.textContent = hasVault ? '기록 금고 열기' : '새 금고 만들기';
+      els.vaultSubmit.textContent = hasVault ? '기록 로그인' : '암호화 기록 시작';
     }
   }
 
@@ -233,6 +269,108 @@
 
   function showGateError(message) {
     els.vaultError.textContent = message;
+  }
+
+  function showPublicApp() {
+    els.vaultGate.hidden = true;
+    document.body.classList.remove('modal-open');
+    els.appRoot.hidden = false;
+    els.appRoot.classList.add('is-locked');
+    els.recordAccessButton.hidden = false;
+    els.lockButton.hidden = true;
+    renderPublicState();
+  }
+
+  function renderPublicState() {
+    els.storageChip.textContent = 'PRIVATE RECORDS LOCKED';
+    els.storageChip.classList.add('is-locked');
+    els.storageChip.dataset.state = 'locked';
+    els.heroStatusTitle.textContent = '사이트를 둘러볼 수 있습니다';
+    els.heroStatusText.textContent = 'START 또는 기록 조회 기능을 누르면 비밀번호 입력 창이 열립니다.';
+    els.periodLabel.textContent = '오늘';
+    els.periodSubLabel.textContent = '기록 로그인 후 조회';
+    els.periodTabs.forEach((button, index) => {
+      button.classList.toggle('is-active', index === 0);
+      button.setAttribute('aria-selected', String(index === 0));
+    });
+    els.participationLabel.textContent = '러닝 횟수';
+    els.metricSessions.textContent = '—';
+    els.metricSessionsUnit.textContent = '비공개';
+    els.metricDuration.textContent = '—';
+    els.metricDistance.textContent = '—';
+    els.metricSpeed.textContent = '—';
+    els.metricIncline.textContent = '—';
+    els.averageLabel.textContent = '평균 거리';
+    els.metricAverage.textContent = '—';
+    els.metricAverageUnit.textContent = '비공개';
+    els.trendSummary.textContent = '기록 로그인 후 암호화된 성장 추이를 확인할 수 있습니다.';
+    drawLockedTrend();
+
+    els.sessionHeading.textContent = '운동 준비';
+    els.sessionIdBadge.textContent = '로그인 필요';
+    els.sessionClock.textContent = '00:00:00';
+    els.sessionDate.textContent = '한국시간';
+    els.speedValue.textContent = '0.3';
+    els.inclineValue.textContent = '0.0';
+    els.paceValue.textContent = '200:00 /km';
+    els.stabilityPanel.dataset.state = 'idle';
+    els.stabilityTitle.textContent = '설정값 대기';
+    els.stabilityText.textContent = 'START를 누르면 기록 로그인 후 새 세션을 시작합니다.';
+    els.stabilityProgress.style.width = '0%';
+    els.stabilitySeconds.textContent = '0 / 60초';
+    els.startButton.disabled = false;
+    els.stopButton.disabled = true;
+
+    els.liveSegments.textContent = '—';
+    els.liveValidDuration.textContent = '—';
+    els.liveDistance.textContent = '—';
+    els.liveAverageSpeed.textContent = '—';
+    els.liveAverageIncline.textContent = '—';
+    els.segmentTableBody.replaceChildren();
+    els.emptyLog.hidden = false;
+    els.emptyLog.innerHTML = '<strong>현재 세션 기록은 잠겨 있습니다</strong><span>START를 누르면 로그인 후 현재 세션 구간별 로그가 표시됩니다.</span>';
+    els.logSubtitle.textContent = '잠긴 상태에서는 이전 기록을 화면에 표시하지 않습니다.';
+  }
+
+  function drawLockedTrend() {
+    const canvas = els.trendCanvas;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(300, Math.floor(rect.width || 600));
+    const height = Math.max(110, Math.floor(rect.height || 132));
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    ctx.strokeStyle = '#dfe6e1';
+    ctx.lineWidth = 1;
+    [0.2, 0.5, 0.8].forEach(ratio => {
+      const y = height * ratio;
+      ctx.beginPath(); ctx.moveTo(12, y); ctx.lineTo(width - 12, y); ctx.stroke();
+    });
+    ctx.setLineDash([6, 7]);
+    ctx.strokeStyle = '#9baaa0';
+    ctx.beginPath();
+    ctx.moveTo(16, height * .72);
+    ctx.bezierCurveTo(width * .25, height * .56, width * .42, height * .62, width * .58, height * .4);
+    ctx.bezierCurveTo(width * .72, height * .25, width * .84, height * .45, width - 16, height * .22);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#77827b';
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('PRIVATE · LOGIN TO VIEW RECORDS', width / 2, height - 8);
+  }
+
+  async function deleteLegacyTestDatabase() {
+    if (!window.indexedDB || LEGACY_DB_NAME === DB_NAME) return;
+    await new Promise(resolve => {
+      const request = indexedDB.deleteDatabase(LEGACY_DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    });
   }
 
   async function createVault(password) {
@@ -249,12 +387,12 @@
     persistedRevision = 0;
     await requestPersistentStorage();
     showUnlockedApp();
-    showToast('암호화된 러닝 기록 금고를 만들었습니다.');
+    showToast('암호화된 러닝 기록 저장소를 만들었습니다.');
   }
 
   async function unlockVault(password) {
     const envelope = await getStoredEnvelope();
-    if (!envelope) throw new Error('저장된 금고가 없습니다.');
+    if (!envelope) throw new Error('저장된 암호화 기록이 없습니다.');
     const result = await decryptEnvelope(envelope, password);
     state = normalizeState(result.state);
     vaultKey = result.key;
@@ -263,17 +401,22 @@
     dirtyRevision = 0;
     persistedRevision = 0;
     showUnlockedApp();
-    showToast('기록 금고를 열었습니다.');
+    showToast('암호화된 기록에 로그인했습니다.');
   }
 
   function showUnlockedApp() {
     els.vaultGate.hidden = true;
+    document.body.classList.remove('modal-open');
     els.appRoot.hidden = false;
+    els.appRoot.classList.remove('is-locked');
+    els.recordAccessButton.hidden = true;
+    els.lockButton.hidden = false;
+    els.storageChip.classList.remove('is-locked');
     lastActivityAt = Date.now();
     renderAll();
   }
 
-  async function lockVault(reason = '잠금') {
+  async function lockVault(reason = '기록 로그아웃') {
     if (!state) return;
     clearHoldTimer();
     await flushSave();
@@ -284,8 +427,8 @@
     persistedRevision = 0;
     if (els.settingsDialog.open) els.settingsDialog.close();
     if (els.passwordDialog.open) els.passwordDialog.close();
-    configureGate();
-    showToast(`${reason}: 금고를 잠갔습니다.`);
+    showPublicApp();
+    showToast(`${reason}: 기록을 잠갔습니다.`);
   }
 
   function normalizeState(input) {
@@ -627,15 +770,15 @@
     const display = displayedSession();
     els.startButton.disabled = Boolean(active);
     els.stopButton.disabled = !active;
-    els.sessionHeading.textContent = active ? '운동 진행 중' : (display?.status === 'completed' ? '최근 세션 완료' : '운동 준비');
+    els.sessionHeading.textContent = active ? '운동 진행 중' : (display?.status === 'completed' ? '현재 세션 완료' : '운동 준비');
     els.sessionIdBadge.textContent = active?.id || display?.id || '세션 없음';
     els.sessionDate.textContent = active
       ? `${formatKstDate(active.startAt)} 시작`
       : (display?.endAt ? `${formatKstDate(display.endAt)} 종료` : '한국시간');
-    els.heroStatusTitle.textContent = active ? '현재 세션을 기록하고 있습니다' : (display ? '최근 세션 로그를 유지하고 있습니다' : '새 세션을 시작할 수 있습니다');
+    els.heroStatusTitle.textContent = active ? '현재 세션을 기록하고 있습니다' : (display ? '현재 세션 기록을 확인하고 있습니다' : '새 세션을 시작할 수 있습니다');
     els.heroStatusText.textContent = active
       ? `속도 또는 경사가 바뀌면 마지막 입력값의 ${state.settings.stableSeconds}초 유지 여부를 확인합니다.`
-      : (display ? '다음 START를 누를 때 화면 로그가 새 세션으로 교체됩니다.' : '최근 세션 로그는 다음 START 전까지 유지됩니다.');
+      : (display ? '다음 START를 누르면 화면이 새로운 현재 세션으로 교체됩니다.' : 'START를 누르면 새 현재 세션 기록을 시작합니다.');
   }
 
   function renderClock() {
@@ -682,7 +825,7 @@
     els.segmentTableBody.innerHTML = '';
     if (!session) {
       els.emptyLog.hidden = false;
-      els.logSubtitle.textContent = '새 START를 누르기 전까지 유지됩니다.';
+      els.logSubtitle.textContent = '현재 세션을 시작하면 구간별 로그가 표시됩니다.';
       return;
     }
     const metrics = sessionMetrics(session, session.status === 'active');
@@ -868,6 +1011,7 @@
   }
 
   function openSettings() {
+    if (!state) return openAccessGate('settings');
     els.stableSecondsInput.value = state.settings.stableSeconds;
     els.autoLockMinutesInput.value = state.settings.autoLockMinutes;
     els.settingsDialog.showModal();
@@ -887,7 +1031,7 @@
     els.storageChip.dataset.state = mode;
     if (mode === 'saving') els.storageChip.textContent = '암호화 저장 중';
     else if (mode === 'error') els.storageChip.textContent = '저장 오류';
-    else els.storageChip.textContent = '암호화 저장 완료';
+    else els.storageChip.textContent = 'PRIVATE RECORDS ENCRYPTED';
   }
 
   function saveState({ immediate = false } = {}) {
@@ -940,15 +1084,15 @@
     await flushSave();
     const envelope = await getStoredEnvelope();
     if (!envelope) {
-      showToast('내보낼 금고가 없습니다.');
+      showToast('내보낼 암호화 기록이 없습니다.');
       return;
     }
-    const backup = { ...envelope, exportedAt: new Date().toISOString() };
+    const backup = { ...envelope };
     downloadBlob(
       new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }),
-      `running-vault-${compactKstTimestamp(Date.now())}.runvault`
+      'running-session-log.runlog'
     );
-    showToast('비밀번호로 암호화된 .runvault 백업을 만들었습니다.');
+    showToast('비밀번호로 암호화된 .runlog 백업을 만들었습니다.');
   }
 
   async function handleGateImport() {
@@ -957,11 +1101,11 @@
     if (!file) return;
     try {
       const envelope = await readEnvelopeFile(file);
-      if (hasVault && !window.confirm('현재 기기의 금고를 이 백업으로 교체하시겠습니까? 기존 금고는 먼저 내보내는 것이 안전합니다.')) return;
+      if (hasVault && !window.confirm('현재 기기의 암호화 기록을 이 백업으로 교체하시겠습니까? 기존 기록은 먼저 내보내는 것이 안전합니다.')) return;
       await putStoredEnvelope(envelope);
       hasVault = true;
-      configureGate();
-      showGateError('백업을 불러왔습니다. 해당 백업의 비밀번호로 금고를 여세요.');
+      openAccessGate('view');
+      showGateError('백업을 불러왔습니다. 해당 백업의 비밀번호로 기록에 로그인하세요.');
     } catch (error) {
       console.error(error);
       showGateError(error.message || '암호화 백업 파일을 읽지 못했습니다.');
@@ -989,12 +1133,12 @@
     els.newPasswordConfirmInput.value = '';
     if (mode === 'merge') {
       els.passwordDialogTitle.textContent = '암호화 백업 병합';
-      els.passwordDialogDescription.textContent = '선택한 백업을 열 수 있는 비밀번호를 입력하세요. 완료된 세션만 현재 금고에 병합합니다.';
+      els.passwordDialogDescription.textContent = '선택한 백업을 열 수 있는 비밀번호를 입력하세요. 완료된 세션만 현재 암호화 기록에 병합합니다.';
       els.newPasswordFields.hidden = true;
       els.passwordDialogSubmit.textContent = '백업 병합';
     } else {
-      els.passwordDialogTitle.textContent = '금고 비밀번호 변경';
-      els.passwordDialogDescription.textContent = '현재 비밀번호를 확인한 뒤 새로운 비밀번호로 금고 전체를 다시 암호화합니다.';
+      els.passwordDialogTitle.textContent = '기록 비밀번호 변경';
+      els.passwordDialogDescription.textContent = '현재 비밀번호를 확인한 뒤 새로운 비밀번호로 기록 전체를 다시 암호화합니다.';
       els.newPasswordFields.hidden = false;
       els.passwordDialogSubmit.textContent = '비밀번호 변경';
     }
@@ -1025,14 +1169,14 @@
         showToast(`${result.added}개 완료 세션을 병합했습니다${result.skipped ? ` · 진행 중 세션 ${result.skipped}개 제외` : ''}.`);
       } else if (passwordDialogContext === 'change') {
         const currentEnvelope = await getStoredEnvelope();
-        if (!currentEnvelope) throw new Error('현재 금고를 찾지 못했습니다.');
+        if (!currentEnvelope) throw new Error('현재 암호화 기록을 찾지 못했습니다.');
         await decryptEnvelope(currentEnvelope, password);
         const nextPassword = els.newPasswordInput.value;
         if (nextPassword.length < MIN_PASSWORD_LENGTH) throw new Error(`새 비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.`);
         if (nextPassword !== els.newPasswordConfirmInput.value) throw new Error('새 비밀번호 확인이 일치하지 않습니다.');
         await reencryptWithNewPassword(nextPassword);
         closePasswordDialog();
-        showToast('새 비밀번호로 금고 전체를 다시 암호화했습니다.');
+        showToast('새 비밀번호로 기록 전체를 다시 암호화했습니다.');
       }
     } catch (error) {
       console.error(error);
@@ -1091,8 +1235,8 @@
     dirtyRevision = 0;
     persistedRevision = 0;
     els.settingsDialog.close();
-    configureGate();
-    showToast('이 기기의 암호화 금고를 삭제했습니다.');
+    showPublicApp();
+    showToast('이 기기의 암호화 기록을 완전히 삭제했습니다.');
   }
 
   function exportDisplayedSessionCsv() {
@@ -1149,8 +1293,7 @@
       version: VAULT_VERSION,
       kdf: { name: 'PBKDF2', hash: KDF_HASH, iterations, salt: bytesToBase64(salt) },
       cipher: { name: 'AES-GCM', iv: bytesToBase64(iv) },
-      ciphertext: bytesToBase64(new Uint8Array(ciphertext)),
-      updatedAt: new Date().toISOString()
+      ciphertext: bytesToBase64(new Uint8Array(ciphertext))
     };
   }
 
@@ -1172,7 +1315,7 @@
     }
     const payload = JSON.parse(new TextDecoder().decode(plaintext));
     if (payload.magic !== VAULT_FORMAT || payload.version !== VAULT_VERSION || !payload.state) {
-      throw new Error('지원하지 않는 금고 형식입니다.');
+      throw new Error('지원하지 않는 암호화 기록 형식입니다.');
     }
     return { key, state: payload.state };
   }
@@ -1184,7 +1327,7 @@
       && typeof envelope.kdf?.salt === 'string'
       && envelope.cipher?.name === 'AES-GCM' && typeof envelope.cipher?.iv === 'string'
       && typeof envelope.ciphertext === 'string';
-    if (!valid) throw new Error('올바른 .runvault 파일이 아닙니다.');
+    if (!valid) throw new Error('올바른 .runlog 암호화 백업 파일이 아닙니다.');
   }
 
   function envelopeMeta(envelope) {
@@ -1221,7 +1364,7 @@
       const transaction = db.transaction(STORE_NAME, 'readonly');
       const request = transaction.objectStore(STORE_NAME).get(VAULT_RECORD_KEY);
       request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => reject(request.error || new Error('금고를 읽지 못했습니다.'));
+      request.onerror = () => reject(request.error || new Error('암호화 기록을 읽지 못했습니다.'));
     });
   }
 
@@ -1231,8 +1374,8 @@
       const transaction = db.transaction(STORE_NAME, 'readwrite');
       transaction.objectStore(STORE_NAME).put({ ...envelope, key: VAULT_RECORD_KEY });
       transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error || new Error('금고를 저장하지 못했습니다.'));
-      transaction.onabort = () => reject(transaction.error || new Error('금고 저장이 중단되었습니다.'));
+      transaction.onerror = () => reject(transaction.error || new Error('암호화 기록을 저장하지 못했습니다.'));
+      transaction.onabort = () => reject(transaction.error || new Error('암호화 기록 저장이 중단되었습니다.'));
     });
   }
 
@@ -1242,7 +1385,7 @@
       const transaction = db.transaction(STORE_NAME, 'readwrite');
       transaction.objectStore(STORE_NAME).delete(VAULT_RECORD_KEY);
       transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error || new Error('금고를 삭제하지 못했습니다.'));
+      transaction.onerror = () => reject(transaction.error || new Error('암호화 기록을 삭제하지 못했습니다.'));
     });
   }
 
