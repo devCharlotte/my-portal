@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f3f5f1" />
+  <meta name="referrer" content="no-referrer" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'none'" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <title>Running Vault · Wellness</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <section id="vaultGate" class="vault-gate" aria-labelledby="vaultGateTitle">
+    <div class="vault-gate-card">
+      <div class="vault-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10"/><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M12 14v2.5"/></svg>
+      </div>
+      <p class="kicker">WELLNESS · PRIVATE RUNNING LOG</p>
+      <h1 id="vaultGateTitle">Running Vault</h1>
+      <p id="vaultGateDescription" class="gate-description">이 기기에 암호화된 러닝 기록 금고를 만듭니다.</p>
+
+      <form id="vaultForm" class="vault-form" autocomplete="off">
+        <label for="vaultPassword">금고 비밀번호</label>
+        <div class="password-field">
+          <input id="vaultPassword" name="vault-password" type="password" minlength="12" required autocomplete="new-password" spellcheck="false" />
+          <button id="togglePassword" type="button" class="text-button" aria-label="비밀번호 표시 전환">보기</button>
+        </div>
+        <div id="confirmPasswordWrap" class="password-confirm">
+          <label for="vaultPasswordConfirm">비밀번호 확인</label>
+          <input id="vaultPasswordConfirm" name="vault-password-confirm" type="password" minlength="12" autocomplete="new-password" spellcheck="false" />
+        </div>
+        <p id="vaultError" class="form-error" role="alert"></p>
+        <button id="vaultSubmit" class="gate-primary" type="submit">새 금고 만들기</button>
+      </form>
+
+      <div class="gate-actions">
+        <button id="gateImportButton" class="gate-secondary" type="button">암호화 백업 불러오기</button>
+        <input id="gateImportInput" type="file" accept=".runvault,application/json" hidden />
+      </div>
+
+      <div class="security-copy">
+        <strong>비밀번호는 저장소와 ZIP에 포함되지 않습니다.</strong>
+        <span>기록은 브라우저에서 AES-256-GCM으로 암호화되고, 비밀번호를 잊으면 복구할 수 없습니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <div id="appRoot" class="app-root" hidden>
+    <header class="topbar">
+      <a class="back-link" href="../" aria-label="Wellness로 돌아가기">
+        <span aria-hidden="true">←</span>
+        <span>Wellness</span>
+      </a>
+      <div class="topbar-actions">
+        <span id="storageChip" class="storage-chip">암호화 저장</span>
+        <button id="lockButton" class="icon-button" type="button" aria-label="금고 잠그기" title="금고 잠그기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10"/><rect x="5" y="10" width="14" height="10" rx="3"/></svg>
+        </button>
+        <button id="settingsButton" class="icon-button" type="button" aria-label="설정 열기" title="설정">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.8 1.8-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.55V20h-2.55v-.09a1.7 1.7 0 0 0-1.03-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06-1.8-1.8.06-.06A1.7 1.7 0 0 0 8.1 15a1.7 1.7 0 0 0-1.55-1.03H6.5v-2.55h.09a1.7 1.7 0 0 0 1.55-1.03 1.7 1.7 0 0 0-.34-1.87l-.06-.06 1.8-1.8.06.06a1.7 1.7 0 0 0 1.87.34A1.7 1.7 0 0 0 12.5 5.5v-.09h2.55v.09a1.7 1.7 0 0 0 1.03 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.8 1.8-.06.06a1.7 1.7 0 0 0-.34 1.87 1.7 1.7 0 0 0 1.55 1.03H21v2.55h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="hero" aria-labelledby="pageTitle">
+        <div>
+          <p class="kicker">WELLNESS · TREADMILL</p>
+          <h1 id="pageTitle">Running Vault</h1>
+          <p class="hero-copy">버튼 조작은 즉시 남기고, 최종 속도와 경사가 1분 이상 유지된 구간만 운동 기록으로 확정합니다.</p>
+        </div>
+        <div class="hero-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <div>
+            <strong id="heroStatusTitle">새 세션을 시작할 수 있습니다</strong>
+            <span id="heroStatusText">최근 세션 로그는 다음 START 전까지 유지됩니다.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-panel" aria-labelledby="dashboardTitle">
+        <div class="section-heading dashboard-heading">
+          <div>
+            <p class="section-kicker">PROGRESS</p>
+            <h2 id="dashboardTitle">성장 대시보드</h2>
+          </div>
+          <div class="period-tabs" role="tablist" aria-label="대시보드 기간">
+            <button class="period-tab is-active" data-period="day" role="tab" aria-selected="true">일별</button>
+            <button class="period-tab" data-period="week" role="tab" aria-selected="false">주별</button>
+            <button class="period-tab" data-period="month" role="tab" aria-selected="false">월별</button>
+          </div>
+        </div>
+
+        <div class="period-row">
+          <button id="periodPrev" class="period-arrow" type="button" aria-label="이전 기간">‹</button>
+          <div><strong id="periodLabel">오늘</strong><span id="periodSubLabel">한국시간 기준</span></div>
+          <button id="periodNext" class="period-arrow" type="button" aria-label="다음 기간">›</button>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card"><span class="metric-label" id="participationLabel">러닝 횟수</span><strong id="metricSessions">0</strong><small id="metricSessionsUnit">세션</small></article>
+          <article class="metric-card"><span class="metric-label">총 운동시간</span><strong id="metricDuration">0</strong><small>분</small></article>
+          <article class="metric-card"><span class="metric-label">총거리</span><strong id="metricDistance">0.00</strong><small>km</small></article>
+          <article class="metric-card"><span class="metric-label">평균 속도</span><strong id="metricSpeed">0.0</strong><small>km/h</small></article>
+          <article class="metric-card"><span class="metric-label">평균 경사</span><strong id="metricIncline">0.0</strong><small>%</small></article>
+          <article class="metric-card emphasis"><span class="metric-label" id="averageLabel">평균 거리</span><strong id="metricAverage">0.00</strong><small id="metricAverageUnit">km / 참여일</small></article>
+        </div>
+
+        <div class="trend-card">
+          <div class="trend-copy"><span>최근 추이</span><strong id="trendSummary">기록이 쌓이면 변화가 표시됩니다.</strong></div>
+          <canvas id="trendCanvas" width="980" height="220" aria-label="거리 성장 추이 그래프"></canvas>
+        </div>
+      </section>
+
+      <section class="tracker-layout" aria-label="러닝 기록 조작 영역">
+        <article class="session-card">
+          <div class="session-topline">
+            <div><p class="section-kicker">CURRENT SESSION</p><h2 id="sessionHeading">운동 준비</h2></div>
+            <span id="sessionIdBadge" class="session-id">세션 없음</span>
+          </div>
+
+          <div class="session-clock-wrap"><span>START–STOP</span><strong id="sessionClock">00:00:00</strong><small id="sessionDate">한국시간</small></div>
+
+          <div class="control-grid">
+            <section class="value-control" aria-labelledby="speedLabel">
+              <div class="control-title-row"><div><span id="speedLabel">속도</span><small>km/h</small></div><span id="paceValue" class="sub-value">200:00 /km</span></div>
+              <div class="stepper">
+                <button class="step-button" type="button" data-control="speed" data-delta="-0.1" aria-label="속도 0.1 감소">−</button>
+                <output id="speedValue" aria-live="polite">0.3</output>
+                <button class="step-button" type="button" data-control="speed" data-delta="0.1" aria-label="속도 0.1 증가">＋</button>
+              </div>
+            </section>
+            <section class="value-control" aria-labelledby="inclineLabel">
+              <div class="control-title-row"><div><span id="inclineLabel">경사</span><small>%</small></div><span class="sub-value">0.0–16.0</span></div>
+              <div class="stepper">
+                <button class="step-button" type="button" data-control="incline" data-delta="-0.1" aria-label="경사 0.1 감소">−</button>
+                <output id="inclineValue" aria-live="polite">0.0</output>
+                <button class="step-button" type="button" data-control="incline" data-delta="0.1" aria-label="경사 0.1 증가">＋</button>
+              </div>
+            </section>
+          </div>
+
+          <div id="stabilityPanel" class="stability-panel" data-state="idle">
+            <div class="stability-copy"><strong id="stabilityTitle">설정값 대기</strong><span id="stabilityText">START 후 현재 값이 60초 유지되면 첫 구간이 확정됩니다.</span></div>
+            <div class="stability-track" aria-hidden="true"><span id="stabilityProgress"></span></div>
+            <span id="stabilitySeconds" class="stability-seconds">0 / 60초</span>
+          </div>
+
+          <div class="session-actions">
+            <button id="startButton" class="primary-action" type="button">START</button>
+            <button id="stopButton" class="danger-action" type="button" disabled>STOP</button>
+          </div>
+          <p class="session-rule">STOP 후 최근 세션은 그대로 표시됩니다. 다음 START에서 화면 표시만 새 세션으로 교체되고, 이전 기록은 암호화된 통계 데이터로 계속 남습니다.</p>
+        </article>
+
+        <aside class="live-summary-card">
+          <div class="section-heading compact"><div><p class="section-kicker">LIVE SUMMARY</p><h2>현재 세션</h2></div></div>
+          <dl class="summary-list">
+            <div><dt>확정 구간</dt><dd id="liveSegments">0개</dd></div>
+            <div><dt>유효 시간</dt><dd id="liveValidDuration">0분</dd></div>
+            <div><dt>거리</dt><dd id="liveDistance">0.000 km</dd></div>
+            <div><dt>평균 속도</dt><dd id="liveAverageSpeed">0.0 km/h</dd></div>
+            <div><dt>평균 경사</dt><dd id="liveAverageIncline">0.0%</dd></div>
+          </dl>
+          <div class="privacy-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10"/><rect x="5" y="10" width="14" height="10" rx="3"/></svg>
+            <div><strong>기기 내부 암호화 저장</strong><span>서버·API·클라우드로 기록을 전송하지 않습니다.</span></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="log-panel" aria-labelledby="logTitle">
+        <div class="section-heading log-heading">
+          <div><p class="section-kicker">ENCRYPTED DEVICE LOG</p><h2 id="logTitle">최근 세션 구간</h2><p id="logSubtitle">새 START를 누르기 전까지 유지됩니다.</p></div>
+          <div class="log-actions"><button id="exportButton" class="quiet-button" type="button">CSV 내보내기</button><button id="backupButton" class="quiet-button" type="button">암호화 백업</button></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>구간</th><th>시작</th><th>종료</th><th>지속시간</th><th>속도</th><th>페이스</th><th>경사</th><th>거리</th><th>상태</th></tr></thead>
+            <tbody id="segmentTableBody"></tbody>
+          </table>
+          <div id="emptyLog" class="empty-log"><strong>표시할 구간이 없습니다</strong><span>START를 누른 뒤 속도와 경사를 1분 이상 유지해 주세요.</span></div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="settingsDialog" class="settings-dialog">
+      <form method="dialog" class="settings-card">
+        <div class="settings-header">
+          <div><p class="section-kicker">PRIVATE VAULT</p><h2>보안과 백업</h2></div>
+          <button class="icon-button" value="cancel" aria-label="설정 닫기" type="submit">×</button>
+        </div>
+
+        <div class="settings-section">
+          <label for="stableSecondsInput">구간 확정 유지시간</label>
+          <div class="suffix-field"><input id="stableSecondsInput" type="number" min="60" max="600" step="1" /><span>초</span></div>
+          <small>기본 60초입니다. 최종 속도와 경사가 이 시간 이상 유지되어야 구간으로 확정됩니다.</small>
+        </div>
+
+        <div class="settings-section">
+          <label for="autoLockMinutesInput">자동 잠금</label>
+          <div class="suffix-field"><input id="autoLockMinutesInput" type="number" min="1" max="120" step="1" /><span>분</span></div>
+          <small>운동 중에는 자동 잠금하지 않습니다. STOP 이후 미사용 시간에만 적용됩니다.</small>
+        </div>
+
+        <div class="settings-section settings-actions-grid">
+          <button id="exportVaultButton" class="secondary-button" type="button">.runvault 내보내기</button>
+          <button id="mergeVaultButton" class="secondary-button" type="button">백업 병합</button>
+          <input id="mergeVaultInput" type="file" accept=".runvault,application/json" hidden />
+          <button id="changePasswordButton" class="secondary-button" type="button">비밀번호 변경</button>
+          <button id="lockFromSettingsButton" class="secondary-button" type="button">지금 잠그기</button>
+        </div>
+
+        <div class="settings-section danger-zone">
+          <strong>이 기기의 금고 삭제</strong>
+          <span>암호화 백업이 없다면 복구할 수 없습니다.</span>
+          <button id="deleteVaultButton" class="danger-outline" type="button">기기 데이터 완전 삭제</button>
+        </div>
+
+        <div class="settings-footer"><button id="saveSettingsButton" class="primary-action compact-action" type="button">설정 저장</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="passwordDialog" class="password-dialog">
+      <form id="passwordDialogForm" method="dialog" class="password-card">
+        <h2 id="passwordDialogTitle">비밀번호 확인</h2>
+        <p id="passwordDialogDescription">암호화 백업을 열기 위한 비밀번호를 입력하세요.</p>
+        <label for="passwordDialogInput">비밀번호</label>
+        <input id="passwordDialogInput" type="password" minlength="12" autocomplete="current-password" required />
+        <div id="newPasswordFields" hidden>
+          <label for="newPasswordInput">새 비밀번호</label>
+          <input id="newPasswordInput" type="password" minlength="12" autocomplete="new-password" />
+          <label for="newPasswordConfirmInput">새 비밀번호 확인</label>
+          <input id="newPasswordConfirmInput" type="password" minlength="12" autocomplete="new-password" />
+        </div>
+        <p id="passwordDialogError" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button id="passwordDialogCancel" class="secondary-button" type="button">취소</button><button id="passwordDialogSubmit" class="primary-action compact-action" type="submit">확인</button></div>
+      </form>
+    </dialog>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
