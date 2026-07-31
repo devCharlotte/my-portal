@@ -70,10 +70,10 @@
         <div>
           <div class="hero-badges">
             <p class="kicker">WELLNESS · TREADMILL</p>
-            <span class="mobile-badge">MOBILE OPTIMIZED</span>
+            <span class="mobile-badge">MOBILE-FIRST · WEB READY</span>
           </div>
           <h1 id="pageTitle">Running Session Log</h1>
-          <p class="hero-copy">러닝머신의 운동 기록 화면처럼 세션 중 속도·경사 구간, 누적 시간·거리와 요약을 바로 보여주고, 종료 후에는 기록을 일·주·월로 계속 누적 관리합니다. 모바일에 우선 최적화되며 넓은 웹 화면에서도 안정적이고 매끄럽게 동작합니다.</p>
+          <p class="hero-copy">트레드밀 구간별 로그 정리!</p>
         </div>
         <div class="hero-status">
           <span class="status-dot" aria-hidden="true"></span>
@@ -96,18 +96,18 @@
           <div class="control-grid">
             <section class="value-control incline-control" aria-labelledby="inclineLabel">
               <div class="control-title-row"><div><span id="inclineLabel">경사</span><small>INCLINE · %</small></div><span class="sub-value">0.0–16.0</span></div>
-              <div class="stepper">
-                <button class="step-button" type="button" data-control="incline" data-delta="-0.1" aria-label="경사 0.1 감소">−</button>
+              <div class="stepper vertical-stepper">
+                <button class="step-button step-increase" type="button" data-control="incline" data-delta="0.1" aria-label="경사 0.1 증가">＋</button>
                 <output id="inclineValue" aria-live="polite">0.0</output>
-                <button class="step-button" type="button" data-control="incline" data-delta="0.1" aria-label="경사 0.1 증가">＋</button>
+                <button class="step-button step-decrease" type="button" data-control="incline" data-delta="-0.1" aria-label="경사 0.1 감소">−</button>
               </div>
             </section>
             <section class="value-control speed-control" aria-labelledby="speedLabel">
               <div class="control-title-row"><div><span id="speedLabel">속도</span><small>SPEED · km/h</small></div><span id="paceValue" class="sub-value">200:00 /km</span></div>
-              <div class="stepper">
-                <button class="step-button" type="button" data-control="speed" data-delta="-0.1" aria-label="속도 0.1 감소">−</button>
+              <div class="stepper vertical-stepper">
+                <button class="step-button step-increase" type="button" data-control="speed" data-delta="0.1" aria-label="속도 0.1 증가">＋</button>
                 <output id="speedValue" aria-live="polite">0.3</output>
-                <button class="step-button" type="button" data-control="speed" data-delta="0.1" aria-label="속도 0.1 증가">＋</button>
+                <button class="step-button step-decrease" type="button" data-control="speed" data-delta="-0.1" aria-label="속도 0.1 감소">−</button>
               </div>
             </section>
           </div>
@@ -151,7 +151,7 @@
 
           <div class="table-wrap">
             <table>
-              <thead><tr><th>구간</th><th>시작</th><th>종료</th><th>지속시간</th><th>속도</th><th>페이스</th><th>경사</th><th>거리</th><th>상태</th></tr></thead>
+              <thead><tr><th>구간</th><th>지속시간</th><th>속도</th><th>경사</th><th>거리</th><th>시작</th><th>종료</th><th>페이스</th><th>상태</th></tr></thead>
               <tbody id="segmentTableBody"></tbody>
             </table>
             <div id="emptyLog" class="empty-log"><strong>표시할 구간이 없습니다</strong><span>START를 누른 뒤 속도와 경사를 10초 이상 유지해 주세요.</span></div>

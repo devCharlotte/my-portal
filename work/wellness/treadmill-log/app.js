@@ -915,13 +915,13 @@
       if (segment.pending) row.classList.add('is-pending');
       row.innerHTML = `
         <td data-label="구간">${index + 1}</td>
-        <td data-label="시작">${formatKstTime(segment.startAt)}</td>
-        <td data-label="종료">${endLabel}</td>
-        <td data-label="지속시간">${formatDuration(durationSec)}</td>
+        <td data-label="지속시간"><strong>${formatDuration(durationSec)}</strong></td>
         <td data-label="속도"><strong>${segment.speed.toFixed(1)} km/h</strong></td>
-        <td data-label="페이스">${formatPace(segment.speed)}/km</td>
         <td data-label="경사">${segment.incline.toFixed(1)}%</td>
         <td data-label="거리">${distance.toFixed(3)} km</td>
+        <td data-label="시작">${formatKstTime(segment.startAt)}</td>
+        <td data-label="종료">${endLabel}</td>
+        <td data-label="페이스">${formatPace(segment.speed)}/km</td>
         <td data-label="상태">${status}</td>`;
       els.segmentTableBody.appendChild(row);
     });
