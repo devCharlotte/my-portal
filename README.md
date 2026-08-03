@@ -23,6 +23,7 @@
 
 #### [Work Portal](https://devcharlotte.github.io/my-portal/work/)
 
+* [My APK Extension](https://devcharlotte.github.io/my-portal/work/my-apk-extension/)
 * [Workspace](https://devcharlotte.github.io/my-portal/work/workspace/)
 * [Research](https://devcharlotte.github.io/my-portal/work/research/)
 * [Teaching Assistant](https://devcharlotte.github.io/my-portal/work/teaching-assistant/)
@@ -30,6 +31,25 @@
 * [Newspaper](https://devcharlotte.github.io/my-portal/work/newspaper/)
 * [Coursework](https://devcharlotte.github.io/my-portal/work/coursework/)
 * [Instructor](https://devcharlotte.github.io/my-portal/work/instructor/)
+
+
+#### [My APK Extension](https://devcharlotte.github.io/my-portal/work/my-apk-extension/)
+
+* [My Tab Customizer](https://devcharlotte.github.io/my-portal/work/my-apk-extension/my-tab-customizer/) — Created Jun 16, 2026
+  * Chrome 탭 이름과 아이콘 변경
+  * 자주 사용하는 탭 카테고리 저장·선택·삭제
+  * 같은 카테고리의 탭 그룹화
+  * 변경한 탭 이름, 아이콘 및 그룹 상태 복원
+  * Chrome Extension ZIP 제공
+* [A Few Minutes Later](https://devcharlotte.github.io/my-portal/work/my-apk-extension/a-few-minutes-later/) — Created Jun 17, 2026
+  * 현재 시각을 기준으로 몇 분 후 울릴 Android 알람 생성
+  * `AlarmClock.ACTION_SET_ALARM` intent를 사용하는 Android APK
+  * Simple Pink, Strawberry 및 기존 버전 APK 제공
+* [Claude Corner Console](https://devcharlotte.github.io/my-portal/work/my-apk-extension/claude-corner-console/) — Created Jul 1, 2026
+  * claude.ai 사용량 화면의 세션 및 주간 사용량 표시
+  * Claude Code 명령어 검색, 복사 및 채팅창 삽입
+  * 명령어 추가·수정·삭제와 브라우저 로컬 저장
+  * Chrome Extension ZIP 제공
 
 
 #### [Workspace](https://devcharlotte.github.io/my-portal/work/workspace/)
@@ -56,12 +76,6 @@
   * 이미지 입력 기반 이미지 토큰 수 추정
   * Words, Lines, Images, Bytes 통계 표시
   * 입력 내용 초기화 및 계산 결과 복사
-* [My Tab Customizer](https://devcharlotte.github.io/my-portal/work/workspace/my-tab-customizer/) — Created Jun 16, 2026
-  * Chrome 탭 별칭 변경
-  * 기존 사이트 아이콘 유지 또는 사용자 지정 아이콘 적용
-  * 탭 카테고리 저장·선택·삭제
-  * 같은 카테고리의 탭 그룹화
-  * 변경한 탭 이름, 아이콘 및 그룹 상태 복원
 
 
 #### [Research](https://devcharlotte.github.io/my-portal/work/research/)
@@ -75,7 +89,8 @@
   * 자주 사용하는 연구 스크립트 명령 확인
   * `hard-full-pipeline.sh` 실행 명령 제공
 * [Research Workspace](https://devcharlotte.github.io/my-portal/work/research/research-workspace/)
-  * 연구용 
+  * 연구 진행용 메인 공간
+
 
 #### [Teaching Assistant](https://devcharlotte.github.io/my-portal/work/teaching-assistant/)
 
@@ -84,14 +99,22 @@
   * 글자 크기 조절, 전체 삭제, Focus mode 및 Fullscreen
   * 현재 브라우저에 작성 내용 자동 저장
 * [LMS](https://devcharlotte.github.io/my-portal/work/teaching-assistant/lms/) — Created May 18, 2026
-  * 대학교 LMS 
+  * 대학교 LMS
 * [SS Portal](https://devcharlotte.github.io/my-portal/work/teaching-assistant/ss-portal/) — Created May 18, 2026
-  * 대학교 Portal 
+  * 대학교 Portal
 
 <a id="wellness"></a>
 
 #### [Wellness](https://devcharlotte.github.io/my-portal/work/wellness/)
 
+* [Running Session Log](https://devcharlotte.github.io/my-portal/work/wellness/treadmill-log/)
+  * 러닝 세션 START 및 STOP
+  * 속도 0.3–20.0 km/h, 경사 0.0–16.0%를 0.1 단위로 조절
+  * 변경한 속도와 경사를 10초 이상 유지하면 하나의 구간으로 기록
+  * 구간별 시작·종료 시각, 지속시간, 속도, Pace, 경사 및 거리 저장
+  * 이전 세션 누적과 현재 세션 요약 표시
+  * 일별·주별·월별 성장 Dashboard
+  * AES-256-GCM 암호화 로컬 저장, `.runlog` 백업 및 CSV 내보내기
 * [Pilates/Yoga Counter](https://devcharlotte.github.io/my-portal/work/wellness/my-pilates-and-yoga-counter/) — Created Apr 17, 2026
   * Slow, Medium, Fast 운동 간격 선택
   * 목표 횟수와 현재 횟수 표시
@@ -99,7 +122,7 @@
 * [Cafeteria](https://devcharlotte.github.io/my-portal/work/wellness/cafeteria/) — Created May 18, 2026
   * 학식 냠
 * [Ebook](https://devcharlotte.github.io/my-portal/work/wellness/ebook/) — Created May 18, 2026
-  * 도서관 Ebook 
+  * 도서관 Ebook
 * [Healthy Eyes](https://devcharlotte.github.io/my-portal/work/wellness/healthy-eyes/) — Created May 18, 2026
   * 멀리 보기, 좌우·상하·대각선 안구 이동 및 원형 추적 운동
   * 선택 운동 및 5가지 운동 자동 진행
@@ -109,11 +132,12 @@
   * Yoga·Pilates·Recovery Ring·Magic Circle 205개 동작
   * Auto Sequence Builder, quick preset, 즐겨찾기, 상세 Teaching Guide
   * Sequence 편집·복원·저장, Timer, Voice guide, Calendar, Story export
-* [A Few Minutes Later](https://devcharlotte.github.io/my-portal/work/wellness/my-a-few-minutes-later/) — Created Jun 17, 2026
-  * 현재 시각을 기준으로 몇 분 후 울릴 Android 알람 생성
-  * `AlarmClock.ACTION_SET_ALARM` intent를 사용하는 Android APK 제공
-  * Android용 APK
-  
+* [Summer Routine](https://devcharlotte.github.io/my-portal/work/wellness/summer-routine/)
+  * 요일별 루틴을 시간순으로 표시하는 Weekly Timetable
+  * PC 브라우저 Desktop notification
+  * 오늘 남은 루틴을 Galaxy 시계의 일회성 알람으로 추가
+  * 미완성~~
+
 
 #### [Newspaper](https://devcharlotte.github.io/my-portal/work/newspaper/)
 
@@ -136,14 +160,27 @@
 
 #### [Coursework](https://devcharlotte.github.io/my-portal/work/coursework/)
 
-* 수업 발표 자료 관리
+* 수업 및 랩미팅 발표 자료 관리
 * [Computer Graphics Presentation Papers](https://devcharlotte.github.io/my-portal/work/coursework/computer-graphics/) — Created Jun 15, 2026
-* VOCA 및 CodeTalker 발표 자료 열람
+  * VOCA 및 CodeTalker 발표 자료 열람
+  * 비밀번호를 입력해 암호화된 발표 자료 열기
+* [Lab Journal Meeting](https://devcharlotte.github.io/my-portal/work/coursework/lab-journal-meeting/) — Created Jun 23, 2026
+  * 연도와 발표 자료 선택
+  * 비밀번호를 입력해 암호화된 랩미팅 자료 열기
+  * 논문 원문 바로가기
 
 
 #### [Instructor](https://devcharlotte.github.io/my-portal/work/instructor/) — Created Jun 23, 2026
 
-* 강사 업무용 챕터
+* [major1-exam](https://devcharlotte.github.io/my-portal/work/instructor/major1-exam/) — Updated Jul 21, 2026
+  * 전공1 수강생용 기출문제집
+  * 접근 키를 입력해 암호화된 자료 열기
+  * 주차별 학습 단원 분류와 회독 기록 동기화
+* [major4-exam](https://devcharlotte.github.io/my-portal/work/instructor/major4-exam/) — Updated Jul 21, 2026
+  * 전공4 수강생용 기출문제집
+  * 접근 키를 입력해 암호화된 자료 열기
+  * 주차별 학습 단원 분류와 회독 기록 동기화
+
 
 ---
 
@@ -177,7 +214,7 @@
   * Camera를 이용한 네 장의 사진 촬영
   * 원하는 Cut만 반복 재촬영
   * Frame color와 문구 설정
-  * 완성 결과를 PNG, JPG로
+  * 완성 결과를 PNG 또는 JPG로 저장
 * [My Vote](https://devcharlotte.github.io/my-portal/game/games/my-vote/) — Created Jun 3, 2026
   * 선거 이름, 후보자 및 개표실 비밀번호 설정
   * 투표용지 발급, 기표 및 투표함 제출
