@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+<meta name="referrer" content="no-referrer" />
+<title>major4-exam · Instructor</title>
+<link rel="stylesheet" href="../../shared.css" />
+<style>
+  body { overflow-x: hidden; }
+
+  .center {
+    min-height: calc(100vh - 90px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px 60px;
+  }
+  .wrap { width: min(560px, 100%); display: grid; gap: 14px; }
+
+  .gate { padding: clamp(26px, 5vw, 40px); position: relative; overflow: hidden; }
+  .gate::after {
+    content: ""; position: absolute; right: -80px; top: -95px;
+    width: 230px; height: 230px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(255,143,199,0.38), rgba(139,215,255,0.34));
+    pointer-events: none;
+  }
+  .eyebrow {
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 12px; border-radius: 999px;
+    background: rgba(255,255,255,0.66); border: 1px solid var(--my-line);
+    color: var(--my-muted); font-size: 0.84rem; margin-bottom: 14px;
+  }
+  .gate h1 {
+    position: relative; z-index: 1; margin: 0 0 6px;
+    font-size: clamp(1.8rem, 5.5vw, 2.5rem);
+    line-height: 1.08; letter-spacing: -0.045em; color: #172033;
+  }
+  .gate .sub { position: relative; z-index: 1; margin: 0 0 22px; color: var(--my-muted); font-size: 0.94rem; line-height: 1.6; }
+
+  .picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .picker button {
+    font: inherit; font-size: 0.86rem; cursor: pointer;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--my-line); background: rgba(255,255,255,0.6);
+    color: var(--my-muted); transition: all 140ms ease;
+  }
+  .picker button[aria-pressed="true"] { background: #172033; border-color: #172033; color: #fff; }
+
+  .field { position: relative; z-index: 1; display: flex; gap: 9px; align-items: stretch; }
+  .keybox { position: relative; flex: 1; }
+  #pw {
+    width: 100%; height: 52px;
+    padding: 0 44px 0 15px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 1rem; letter-spacing: 0.08em;
+    color: var(--my-ink);
+    border: 1px solid var(--my-line); border-radius: 15px;
+    background: rgba(255,255,255,0.86);
+    outline: none; transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+  #pw::placeholder { letter-spacing: 0.05em; color: #a8b0c0; }
+  #pw:focus { border-color: var(--my-pink); box-shadow: 0 0 0 4px rgba(255,143,199,0.18); }
+  #reveal {
+    position: absolute; right: 6px; top: 6px; width: 40px; height: 40px;
+    display: grid; place-items: center; cursor: pointer;
+    border: 0; border-radius: 11px; background: transparent;
+    font-size: 1.05rem; line-height: 1; opacity: 0.55;
+  }
+  #reveal:hover { opacity: 1; background: rgba(120,144,180,0.1); }
+  #go {
+    font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap;
+    padding: 0 22px; height: 52px; border: 0; border-radius: 15px;
+    background: #172033; color: #fff;
+    transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+  }
+  #go:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(23,32,51,0.24); }
+  #go:disabled { opacity: 0.45; cursor: progress; }
+
+  #msg { position: relative; z-index: 1; margin-top: 13px; min-height: 20px; font-size: 0.88rem; color: var(--my-muted); }
+  #msg.error { color: #d1355f; }
+
+  .hint {
+    position: relative; z-index: 1; margin-top: 18px; padding-top: 16px;
+    border-top: 1px dashed var(--my-line);
+    font-size: 0.8rem; line-height: 1.65; color: #8b93a3;
+  }
+
+  /* ── 뷰어 ── */
+  #viewer { position: fixed; inset: 0; z-index: 60; background: #fff; display: none; flex-direction: column; }
+  #viewer.on { display: flex; }
+  .vbar {
+    flex: none; display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-bottom: 1px solid var(--my-line);
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .vbar button {
+    font: inherit; font-size: 0.84rem; cursor: pointer;
+    padding: 8px 13px; border-radius: 999px;
+    border: 1px solid var(--my-line); background: rgba(255,255,255,0.8); color: var(--my-ink);
+  }
+  .vbar button:hover { background: #fff; box-shadow: 0 8px 18px rgba(94,120,160,0.14); }
+  .vbar .name {
+    margin-left: auto; font-size: 0.82rem; color: var(--my-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #docFrame { flex: 1; width: 100%; border: 0; }
+
+  @media (max-width: 560px) {
+    .field { flex-direction: column; }
+    #go { height: 48px; }
+    .vbar .name { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body class="myworkspace-soft">
+
+  <nav class="myworkspace-topnav">
+    <a class="myworkspace-home" href="../">← Instructor</a>
+    <span class="myworkspace-date">Last updated Jul 21, 2026</span>
+  </nav>
+
+  <div id="gateView" class="center">
+    <div class="wrap">
+      <div class="myworkspace-card gate">
+        <div class="eyebrow">🔒 잠긴 자료</div>
+        <h1>major4-exam</h1>
+        <p class="sub">
+          선생님의 전공4 강의 수강생에게만 제공되는 접근 키를 입력해야 열립니다.<br />
+          해당 자료는 주기적으로 업데이트되며<br />
+          수강생들의 편의를 위해 주차별 학습 단원 기준으로 분류되어 있습니다.<br />
+          중간고사와 기말고사는 해당 자료의 문제 유형 기반으로 출제됩니다.<br />
+          자료에 접근한 후 회독 체크 버튼을 사용하여 학습하고 동기화 버튼을 눌러두면<br />
+          다른 디바이스로 접속해도 학습 기록이 남아 있습니다
+        </p>
+
+        <div class="picker" id="picker" hidden></div>
+
+        <div class="field">
+          <div class="keybox">
+            <input id="pw" type="password" inputmode="text"
+                   placeholder="비밀번호"
+                   autocomplete="off" autocapitalize="off"
+                   autocorrect="off" spellcheck="false" />
+            <button id="reveal" type="button" aria-label="비밀번호 보기">👁</button>
+          </div>
+          <button id="go" type="button">열기</button>
+        </div>
+
+        <div id="msg" role="status" aria-live="polite"></div>
+
+        <p class="hint">
+          대소문자와 공백은 구분하지 않습니다.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewer">
+    <div class="vbar">
+      <button id="closeBtn" type="button">← 잠그기</button>
+      <button id="printBtn" type="button">🖨 인쇄</button>
+      <span class="name" id="viewName"></span>
+    </div>
+    <iframe id="docFrame" title="문서"></iframe>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ── 문서 목록 ─────────────────────────────────────────────
+     자료를 추가하려면 여기에 한 줄만 더 넣으면 됩니다.
+     { id, title, file }  ← file 은 encrypt.py 로 만든 .enc
+  ──────────────────────────────────────────────────────────── */
+  /* DOCS:BEGIN — manage.py 가 관리하는 구간입니다. 직접 고쳐도 되지만
+     manage.py 를 쓰면 암호화와 목록 등록이 한 번에 됩니다. */
+  const DOCS = [
+    { id: "major4", title: "Major 4", file: "major4.enc", type: "text/html" },
+  ];
+  /* DOCS:END */
+
+  const MAGIC = "JHE1";
+  const FLAG_GZIP = 0x01;
+  const IDLE_LOCK_MS = 30 * 60 * 1000;   // 30분 미조작 시 자동 잠금
+
+  const $ = (id) => document.getElementById(id);
+  const gateView = $("gateView"), viewer = $("viewer"), picker = $("picker");
+  const pwEl = $("pw"), goEl = $("go"), msgEl = $("msg"), frame = $("docFrame"), viewName = $("viewName");
+
+  let current = DOCS[0];
+  let blobUrl = null;
+  let fails = 0;
+  let idleTimer = null;
+
+  /* encrypt.py 의 normalize() 와 반드시 동일하게 유지 */
+  const normalize = (s) => s.replace(/[\s\-_]/g, "").toUpperCase();
+
+  const setMsg = (t, isErr) => { msgEl.textContent = t; msgEl.classList.toggle("error", !!isErr); };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* ── 문서가 2개 이상일 때만 선택 칩 노출 ── */
+  if (DOCS.length > 1) {
+    picker.hidden = false;
+    DOCS.forEach((d, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = d.title;
+      b.setAttribute("aria-pressed", String(i === 0));
+      b.addEventListener("click", () => {
+        current = d;
+        [...picker.children].forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+        setMsg("");
+      });
+      picker.appendChild(b);
+    });
+  }
+
+  /* ── 뷰어 잠그기 ── */
+  function lock() {
+    if (blobUrl) { URL.revokeObjectURL(blobUrl); blobUrl = null; }
+    frame.removeAttribute("src");
+    viewer.classList.remove("on");
+    gateView.style.display = "flex";
+    clearTimeout(idleTimer);
+    pwEl.value = "";
+    setMsg("");
+    goEl.disabled = false;
+  }
+
+  function resetIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => { lock(); setMsg("30분간 조작이 없어 다시 잠갔습니다."); }, IDLE_LOCK_MS);
+  }
+
+  /* ── 키 유도 ── */
+  async function deriveKey(password, salt, iterations) {
+    const base = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+      base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  }
+
+  async function gunzip(buffer) {
+    if (typeof DecompressionStream === "undefined") {
+      const e = new Error("NOGZIP"); e.code = "NOGZIP"; throw e;
+    }
+    const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return new Response(stream).arrayBuffer();
+  }
+
+  async function unlock() {
+    const raw = pwEl.value;
+    if (!raw.trim()) { setMsg("비밀번호를 입력하세요.", true); pwEl.focus(); return; }
+    if (!crypto?.subtle) {
+      setMsg("이 브라우저는 복호화를 지원하지 않습니다. HTTPS 환경에서 열어 주세요.", true);
+      return;
+    }
+
+    goEl.disabled = true;
+    setMsg("확인 중…");
+
+    try {
+      const resp = await fetch(current.file, { cache: "no-store" });
+      if (!resp.ok) { const e = new Error("FILE"); e.code = "FILE"; throw e; }
+      const ab = await resp.arrayBuffer();
+      const buf = new Uint8Array(ab);
+
+      if (new TextDecoder().decode(buf.subarray(0, 4)) !== MAGIC) {
+        const e = new Error("FORMAT"); e.code = "FORMAT"; throw e;
+      }
+      const flags = buf[4];
+      const iterations = new DataView(ab).getUint32(5, false);
+      const salt = buf.slice(9, 25);
+      const iv   = buf.slice(25, 37);
+      const data = buf.slice(37);
+
+      const key = await deriveKey(normalize(raw), salt, iterations);
+      // 키가 틀리면 GCM 인증 태그 검증 실패로 여기서 예외가 납니다.
+      let plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+      if (flags & FLAG_GZIP) plain = await gunzip(plain);
+
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      const mime = current.type === "text/html" ? "text/html;charset=utf-8"
+                                        : (current.type || "application/octet-stream");
+      blobUrl = URL.createObjectURL(new Blob([plain], { type: mime }));
+      frame.src = blobUrl;
+      viewName.textContent = current.title;
+      document.getElementById("printBtn").style.display =
+        current.type === "text/html" ? "" : "none";
+
+      fails = 0;
+      pwEl.value = "";
+      setMsg("");
+      gateView.style.display = "none";
+      viewer.classList.add("on");
+      resetIdle();
+    } catch (err) {
+      if (err?.code === "FILE") {
+        setMsg("암호화된 파일을 불러오지 못했습니다. (" + current.file + ")", true);
+      } else if (err?.code === "FORMAT") {
+        setMsg("파일 형식을 인식할 수 없습니다. encrypt.py로 다시 만들어 주세요.", true);
+      } else if (err?.code === "NOGZIP") {
+        setMsg("브라우저가 오래되어 압축을 풀 수 없습니다. 최신 Chrome·Safari·Firefox를 사용해 주세요.", true);
+      } else {
+        // 무차별 대입 속도를 늦추기 위한 점증 지연
+        fails += 1;
+        const wait = Math.min(8000, 400 * 2 ** (fails - 1));
+        setMsg(`비밀번호가 올바르지 않습니다. (${fails}회 실패)`, true);
+        await sleep(wait);
+      }
+      goEl.disabled = false;
+      pwEl.focus();
+      pwEl.select();
+    }
+  }
+
+  goEl.addEventListener("click", unlock);
+  pwEl.addEventListener("keydown", (e) => { if (e.key === "Enter") unlock(); });
+  $("reveal").addEventListener("click", () => {
+    const show = pwEl.type === "password";
+    pwEl.type = show ? "text" : "password";
+    $("reveal").textContent = show ? "🙈" : "👁";
+    pwEl.focus();
+  });
+
+  $("closeBtn").addEventListener("click", lock);
+  $("printBtn").addEventListener("click", () => {
+    try { frame.contentWindow.focus(); frame.contentWindow.print(); }
+    catch { window.print(); }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && viewer.classList.contains("on")) lock();
+  });
+  ["mousemove", "keydown", "click", "scroll", "touchstart"].forEach((ev) =>
+    window.addEventListener(ev, () => { if (viewer.classList.contains("on")) resetIdle(); }, { passive: true })
+  );
+  window.addEventListener("pagehide", () => { if (blobUrl) URL.revokeObjectURL(blobUrl); });
+
+  pwEl.focus();
+})();
+</script>
+</body>
+</html>

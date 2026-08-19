@@ -180,6 +180,10 @@
   * 전공4 수강생용 기출문제집
   * 접근 키를 입력해 암호화된 자료 열기
   * 주차별 학습 단원 분류와 회독 기록 동기화
+* [major total](https://devcharlotte.github.io/my-portal/work/instructor/major-total/) — Updated Aug 19, 2026
+  * 접근 키를 입력해 암호화된 자료 열기
+  * 문제 풀이 · 모의고사 · 오답노트 · 용어카드 · 개념정리 · 암기표 · 계산훈련
+  * 프로필별 진도 기록과 내보내기/불러오기
 
 
 ---
