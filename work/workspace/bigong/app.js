@@ -295,22 +295,85 @@
       item.progressLine.setLatLngs(item.points.slice(0,upto+1).map(p=>[p.lat,p.lon]));
     });
   }
-  function windowScene(home,destination,progress,phase){
+  const WINDOW_MEDIA={
+    takeoffDay:[
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/9c/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm.720p.vp9.webm',start:8,label:'TAKEOFF · CITY'},
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/5/55/20230509_RCTP_Taoyuan_airport_takeoff.webm/20230509_RCTP_Taoyuan_airport_takeoff.webm.720p.vp9.webm',start:4,label:'TAKEOFF · COAST'}
+    ],
+    takeoffDusk:[
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/94/Takeoff_From_Oakland_International_Airport_(OAK).webm/Takeoff_From_Oakland_International_Airport_(OAK).webm.720p.vp9.webm',start:5,label:'TAKEOFF · SUNSET'},
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/9c/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm.720p.vp9.webm',start:36,label:'CLIMB · SUNSET'}
+    ],
+    cruiseClouds:[
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/2/2d/Flight_over_clouds.webm/Flight_over_clouds.webm.720p.vp9.webm',start:0,label:'ABOVE CLOUDS'},
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/94/Takeoff_From_Oakland_International_Airport_(OAK).webm/Takeoff_From_Oakland_International_Airport_(OAK).webm.720p.vp9.webm',start:118,label:'BAY & CLOUDS'},
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/9c/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm.720p.vp9.webm',start:122,label:'HIGH ALTITUDE'}
+    ],
+    cruiseLand:[
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/1/1f/View_of_Lombok_Island_from_air,_Flight_IU_762,_4_July_2024.webm/View_of_Lombok_Island_from_air,_Flight_IU_762,_4_July_2024.webm.720p.vp9.webm',start:0,label:'ISLAND AERIAL'},
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/9c/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm/Takeoff_From_Harry_Reid_International_Airport_in_Las_Vegas.webm.720p.vp9.webm',start:70,label:'CITY AERIAL'},
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/9/94/Takeoff_From_Oakland_International_Airport_(OAK).webm/Takeoff_From_Oakland_International_Airport_(OAK).webm.720p.vp9.webm',start:168,label:'COAST AERIAL'}
+    ],
+    approach:[
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/1/13/Plane_landing_at_Tangier_airport_over_Sidi_Kacem_beach.webm/Plane_landing_at_Tangier_airport_over_Sidi_Kacem_beach.webm.720p.vp9.webm',start:4,label:'APPROACH · COAST'},
+      {url:'https://upload.wikimedia.org/wikipedia/commons/transcoded/d/df/Flight_landing.webm/Flight_landing.webm.720p.vp9.webm',start:0,label:'FINAL APPROACH'}
+    ]
+  };
+  function pickMedia(list,bucket,seed=0){return list[Math.abs((bucket||0)+(seed||0))%list.length]}
+  function routeSeed(home,destination){return [...`${home.code}${destination.code}`].reduce((a,c)=>a+c.charCodeAt(0),0)}
+  function windowMediaInfo(home,destination,progress,durationMinutes){
     const pos=routePosition(home,destination,progress), land=isLandAt(pos.lat,pos.lon), hour=localSolarHour(pos.lon);
     const light=hour<5||hour>=20?'night':hour<7?'dawn':hour>=17?'dusk':'day';
     const surface=land===true?'land':land===false?'ocean':'clouds';
-    const phaseKey=progress<.08?'takeoff':progress<.2?'climb':progress<.82?'cruise':progress<.96?'descent':'landing';
+    const elapsed=Math.max(0,(durationMinutes||50)*progress);
+    const bucket=Math.floor(elapsed/2);
+    const seed=routeSeed(home,destination);
+    let media;
+    if(progress<.08){
+      media=pickMedia(light==='dusk'||light==='night'?WINDOW_MEDIA.takeoffDusk:WINDOW_MEDIA.takeoffDay,bucket,seed);
+    } else if(progress>.86){
+      media=pickMedia(WINDOW_MEDIA.approach,bucket,seed);
+    } else if(surface==='land'){
+      media=pickMedia(WINDOW_MEDIA.cruiseLand,bucket,seed);
+    } else {
+      media=pickMedia(WINDOW_MEDIA.cruiseClouds,bucket,seed);
+    }
+    return {pos,land,hour,light,surface,bucket,media,key:`${media.url}|${media.start}|${light}|${bucket}`};
+  }
+
+  function windowScene(home,destination,progress,phase,durationMinutes){
+    const info=windowMediaInfo(home,destination,progress,durationMinutes),{pos,land,hour,light,surface,media,key}=info;
     const coord=`${Math.abs(pos.lat).toFixed(1)}°${pos.lat>=0?'N':'S'} · ${Math.abs(normalizeLon(pos.lon)).toFixed(1)}°${normalizeLon(pos.lon)>=0?'E':'W'}`;
     const localHour=Math.floor(hour), localMinute=Math.round((hour-localHour)*60)%60;
-    return `<div class="window-view ${light} ${surface} ${phaseKey}" id="routeWindow" data-progress="${progress}">
-      <div class="window-meta"><span>${phase.toUpperCase()}</span><span>${coord}</span></div>
-      <div class="aircraft-window"><div class="window-frame"><div class="window-glass">
-        <div class="sky-glow"></div><div class="stars-layer"></div><div class="sun-disc"></div>
-        <div class="cloud-layer cloud-layer--far"></div><div class="horizon-layer"></div><div class="ground-layer"></div><div class="city-lights"></div><div class="cloud-layer cloud-layer--near"></div>
-        <div class="wing"><span></span></div>
+    const tint=light==='night'?'window-video--night':light==='dawn'?'window-video--dawn':light==='dusk'?'window-video--dusk':'';
+    return `<div class="window-view real-window ${light} ${surface}" id="routeWindow" data-scene-key="${esc(key)}" data-progress="${progress}">
+      <div class="window-meta"><span id="windowPhase">${phase.toUpperCase()}</span><span id="windowCoord">${coord}</span></div>
+      <div class="aircraft-window real-aircraft-window"><div class="window-frame"><div class="window-glass real-window-glass">
+        <video class="window-video ${tint}" id="windowVideo" autoplay muted loop playsinline preload="metadata" data-start="${media.start}" aria-label="Airplane window ambience">
+          <source src="${media.url}" type="video/webm">
+        </video>
+        <div class="window-video-vignette"></div>
       </div></div></div>
-      <div class="window-status"><span>SIMULATED · ROUTE-SYNCED</span><b>${land===true?'OVER LAND':land===false?'OVER OCEAN':'EN ROUTE'}</b><span>LOCAL ${String(localHour).padStart(2,'0')}:${String(localMinute).padStart(2,'0')}</span></div>
+      <div class="window-status"><span>WINDOW VIEW</span><b id="windowSceneLabel">${media.label}</b><span id="windowLocal">LOCAL ${String(localHour).padStart(2,'0')}:${String(localMinute).padStart(2,'0')}</span></div>
     </div>`;
+  }
+  function activateWindowVideo(){
+    const video=$('windowVideo'); if(!video)return;
+    const start=Math.max(0,Number(video.dataset.start)||0);
+    const seek=()=>{try{if(Number.isFinite(video.duration)&&video.duration>start+1)video.currentTime=start;}catch{} video.play().catch(()=>{});};
+    if(video.readyState>=1)seek(); else video.addEventListener('loadedmetadata',seek,{once:true});
+  }
+  function updateWindowTelemetry(home,destination,progress,phase,durationMinutes){
+    const host=$('routeWindow'); if(!host)return false;
+    const info=windowMediaInfo(home,destination,progress,durationMinutes);
+    if(host.dataset.sceneKey!==info.key)return false;
+    host.dataset.progress=String(progress);
+    const {pos,land,hour,media}=info;
+    const coord=`${Math.abs(pos.lat).toFixed(1)}°${pos.lat>=0?'N':'S'} · ${Math.abs(normalizeLon(pos.lon)).toFixed(1)}°${normalizeLon(pos.lon)>=0?'E':'W'}`;
+    const localHour=Math.floor(hour), localMinute=Math.round((hour-localHour)*60)%60;
+    const p=$('windowPhase'),c=$('windowCoord'),l=$('windowLocal'),label=$('windowSceneLabel');
+    if(p)p.textContent=phase.toUpperCase(); if(c)c.textContent=coord; if(l)l.textContent=`LOCAL ${String(localHour).padStart(2,'0')}:${String(localMinute).padStart(2,'0')}`; if(label)label.textContent=media.label;
+    return true;
   }
 
   function header(){
@@ -413,13 +476,13 @@
     const {s,remaining,progress,phase,altitude}=snap;
     if(!s.pausedAt && remaining<=0) return completeFlight();
     destroyRouteMaps();
-    const visual=state.flightView==='window'?windowScene(s.home,s.destination,progress,phase):routeMap(s.home,s.destination,progress,false);
+    const visual=state.flightView==='window'?windowScene(s.home,s.destination,progress,phase,s.durationMinutes):routeMap(s.home,s.destination,progress,false);
     app.innerHTML=`<div class="flight-screen">
       <header class="flight-toolbar"><div class="flight-identity"><span class="live-dot"></span><b>${s.home.code} → ${s.destination.code}</b><span>${intentLabel(s.intent)}</span></div><div class="flight-controls"><button data-action="theme">${state.theme==='dark'?'☀':'☾'}<span>Theme</span></button><button data-action="audio" class="${state.audioEnabled?'active':''}">${state.audioEnabled?'🔊':'🔇'}<span>Audio</span></button><button data-action="pause" class="pause-control">${s.pausedAt?'▶':'Ⅱ'}<span>${s.pausedAt?'Resume':'Pause'}</span></button></div></header>
       <main class="flight-cockpit"><section class="flight-visual-panel"><div class="visual-tabs"><button data-flight-view="map" class="${state.flightView==='map'?'active':''}">MAP</button><button data-flight-view="window" class="${state.flightView==='window'?'active':''}">WINDOW</button></div><div class="flight-visual-stage">${visual}</div></section><section class="timer-panel"><div class="phase-line"><span id="flightPhase">${phase}</span><span id="flightPercent">${Math.round(progress*100)}%</span></div><div class="timer-display" id="flightTimer">${fmtClock(remaining/1000)}</div><div id="pausedBadge">${s.pausedAt?'<div class="paused-badge">PAUSED — arrival time moves with you</div>':''}</div><div class="progress-rail"><span id="flightProgress" style="width:${progress*100}%"></span></div><div class="flight-metrics"><div><small>ARRIVAL</small><b id="metricArrival">${fmtTime(s.endsAt)}</b></div><div><small>ALTITUDE</small><b id="metricAltitude">${Math.max(0,altitude).toLocaleString()} ft</b></div><div><small>DISTANCE</small><b>${fmtDist(haversineKm(s.home,s.destination))}</b></div></div>${s.outcome?`<div class="flight-intent"><small>ON THIS FLIGHT</small><p>${esc(s.outcome)}</p></div>`:''}</section></main>
       <footer class="flight-footer"><div class="volume-wrap"><span>Cabin</span><input id="volume" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div><button data-action="end-flight">End flight</button></footer>
     </div>`;
-    bindCommon(); bindFlight(); if(state.flightView==='map')initRouteMaps();
+    bindCommon(); bindFlight(); if(state.flightView==='map')initRouteMaps(); else activateWindowVideo();
   }
   function updateFlightTelemetry(){
     if(state.screen!=='flight')return;
@@ -429,7 +492,10 @@
     const timer=$('flightTimer'), phaseEl=$('flightPhase'), pct=$('flightPercent'), rail=$('flightProgress'), arrival=$('metricArrival'), alt=$('metricAltitude'), paused=$('pausedBadge');
     if(timer)timer.textContent=fmtClock(remaining/1000); if(phaseEl)phaseEl.textContent=phase; if(pct)pct.textContent=`${Math.round(progress*100)}%`; if(rail)rail.style.width=`${progress*100}%`; if(arrival)arrival.textContent=fmtTime(s.endsAt); if(alt)alt.textContent=`${Math.max(0,altitude).toLocaleString()} ft`; if(paused)paused.innerHTML=s.pausedAt?'<div class="paused-badge">PAUSED — arrival time moves with you</div>':'';
     if(state.flightView==='map')updateRouteMaps(progress);
-    else { const stage=document.querySelector('.flight-visual-stage'); if(stage)stage.innerHTML=windowScene(s.home,s.destination,progress,phase); }
+    else {
+      const sameScene=updateWindowTelemetry(s.home,s.destination,progress,phase,s.durationMinutes);
+      if(!sameScene){const stage=document.querySelector('.flight-visual-stage');if(stage){stage.classList.add('window-switching');setTimeout(()=>{stage.innerHTML=windowScene(s.home,s.destination,progress,phase,s.durationMinutes);activateWindowVideo();stage.classList.remove('window-switching');},180);}}
+    }
   }
 
   function renderLanded(){
