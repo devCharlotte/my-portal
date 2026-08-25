@@ -120,6 +120,36 @@
       text-align: right;
     }
 
+    .section-title-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .bigong-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 11px;
+      border-radius: 999px;
+      border: 1px solid var(--my-line);
+      background: linear-gradient(135deg, rgba(139,215,255,0.30), rgba(255,143,199,0.20), rgba(199,183,255,0.24));
+      color: var(--my-ink);
+      box-shadow: 0 8px 18px rgba(94,120,160,0.10);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 900;
+      white-space: nowrap;
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .bigong-link:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 11px 22px rgba(94,120,160,0.14);
+    }
+
     .name-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -626,7 +656,10 @@
         <div class="myworkspace-card pomodoro" aria-label="cafe pomodoro">
           <div class="section-title">
             <h2>카공 뽀모도로</h2>
-            <span id="timerSettingLabel">25분 집중 · 5분 쉬기</span>
+            <div class="section-title-actions">
+              <a class="bigong-link" href="../bigong/" title="비행하듯 집중하는 비공 열기">✈️ 비공</a>
+              <span id="timerSettingLabel">25분 집중 · 5분 쉬기</span>
+            </div>
           </div>
           <div class="timer-face">
             <div>
