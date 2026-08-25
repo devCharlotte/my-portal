@@ -86,6 +86,7 @@
     { name:'Work', sub:'Build · analyze · ship' },
     { name:'Create', sub:'Write · design · explore' }
   ];
+  const COUNTRIES = [...new Set(AIRPORTS.map(a=>a.country))].sort((a,b)=>a.localeCompare(b,'en'));
   const KEYS = {
     home:'bigong.home.v1', session:'bigong.session.v1', history:'bigong.history.v1', theme:'bigong.theme.v1'
   };
@@ -114,6 +115,11 @@
     return AIRPORTS.filter(a=>a.code!==home.code).map(airport=>({airport,distance:haversineKm(home,airport)}))
       .sort((a,b)=>Math.abs(a.distance-target)-Math.abs(b.distance-target)).slice(0,count);
   };
+  const validDestination = (home, destination, minutes) => {
+    if(destination && destination.code !== home.code && airportByCode(destination.code)) return airportByCode(destination.code);
+    return recommendDestinations(home, minutes, 1)[0]?.airport || AIRPORTS.find(a=>a.code!==home.code);
+  };
+  const airportsInCountry = (country, home) => AIRPORTS.filter(a=>a.country===country && a.code!==home.code);
   const mapPoint = a => ({x:((a.lon+180)/360)*1000, y:((90-a.lat)/180)*480});
   const interpolatePoint = (a,b,p) => {
     const t=Math.max(0,Math.min(1,p)), cx=(a.x+b.x)/2, arc=Math.min(110,Math.max(35,Math.abs(b.x-a.x)*.11)), cy=Math.min(a.y,b.y)-arc, mt=1-t;
@@ -137,6 +143,8 @@
     home:safeRead(KEYS.home,null) || airportByCode('ICN'),
     homeConfirmed:Boolean(safeRead(KEYS.home,null)),
     destination:airportByCode('HND'),
+    destinationMode:'time',
+    destinationCountry:'Japan',
     duration:50,
     customDuration:'',
     intent:'Study',
@@ -151,6 +159,8 @@
     picker:null,
     locating:false
   };
+  state.destination=validDestination(state.home,state.destination,50);
+  state.destinationCountry=state.destination?.country || 'Japan';
   if (state.session?.status === 'active') state.screen='flight';
 
   function effectiveDuration(){
@@ -201,11 +211,16 @@
   }
 
   function renderSetup(){
-    const d=effectiveDuration(), st=stats(), recs=recommendDestinations(state.home,d,4), distance=haversineKm(state.home,state.destination);
+    const d=effectiveDuration();
+    state.destination=validDestination(state.home,state.destination,d);
+    if(!state.destinationCountry || !COUNTRIES.includes(state.destinationCountry)) state.destinationCountry=state.destination.country;
+    const st=stats(), recs=recommendDestinations(state.home,d,4);
+    const countryAirports=airportsInCountry(state.destinationCountry,state.home);
+    const distance=haversineKm(state.home,state.destination);
     app.innerHTML=`<div class="app-shell">${header()}
       <main>
         <section class="hero shell">
-          <div class="hero-copy"><span class="eyebrow">MY WORKSPACE · FOCUS FLIGHT</span><h1>비행하듯<br><em>몰입하는 시간.</em></h1><p>집중 시간을 하나의 비행으로 바꿉니다. 출발 공항과 목적지를 고르고 탑승권을 찢는 순간부터 착륙할 때까지 한 가지 일에만 머물러 보세요.</p>
+          <div class="hero-copy"><span class="eyebrow">MY WORKSPACE · FOCUS FLIGHT</span><h1>비행하듯<br><em>몰입하는 시간.</em></h1><p>출발 공항과 목적지 혹은 비행 시간을 정해서 탑승한 순간부터 착륙까지 집중하기!</p>
             <div class="hero-trust"><span><i class="dot"></i>No account</span><span><i class="dot"></i>Local-only history</span><span><i class="dot"></i>Refresh-safe timer</span></div>
           </div>
           <div class="hero-visual">${routeMap(state.home,state.destination,.42,true)}<div class="hero-card"><small>NEXT FLIGHT</small><div><b>${state.home.code}</b><span>✈</span><b>${state.destination.code}</b></div><span>${d} min · ${state.intent}</span></div></div>
@@ -225,42 +240,55 @@
               <div class="intent-grid">${INTENTS.map(x=>`<button data-intent="${x.name}" class="${state.intent===x.name?'selected':''}"><b>${x.name}</b><small>${x.sub}</small></button>`).join('')}</div>
               <label class="outcome-input"><span>한 줄 목표 <small>optional</small></span><input id="outcome" maxlength="120" value="${esc(state.outcome)}" placeholder="예: 논문 Methods 수정 끝내기"></label>
             </section>
-            <section class="planner-card planner-card--destination"><div class="card-step"><span>04</span><div><small>DESTINATION</small><h3>집중이 도착할 곳을 골라요.</h3></div></div>
-              <div class="selected-destination"><div><span class="airport-code-large">${state.destination.code}</span><div><b>${esc(state.destination.city)}</b><small>${esc(state.destination.country)}</small></div></div><button class="button button--small" data-action="pick-destination">All airports⌄</button></div>
-              <div class="destination-list">${recs.map(({airport,distance})=>`<button data-destination="${airport.code}" class="${state.destination.code===airport.code?'selected':''}"><span><b>${airport.code}</b><small>${esc(airport.city)}</small></span><em>${fmtDist(distance)}</em></button>`).join('')}</div>
+            <section class="planner-card planner-card--destination"><div class="card-step"><span>04</span><div><small>DESTINATION</small><h3>목적지를 정해요.</h3></div></div>
+              <div class="destination-mode-tabs">
+                <button type="button" data-destination-mode="time" class="${state.destinationMode==='time'?'selected':''}">비행 시간으로 추천</button>
+                <button type="button" data-destination-mode="country" class="${state.destinationMode==='country'?'selected':''}">나라 직접 선택</button>
+              </div>
+              <div class="selected-destination"><div><span class="airport-code-large">${state.destination.code}</span><div><b>${esc(state.destination.city)}</b><small>${esc(state.destination.country)} · ${esc(state.destination.name)}</small></div></div><button class="button button--small" data-action="pick-destination">전체 공항⌄</button></div>
+              ${state.destinationMode==='time'
+                ? `<p class="destination-helper">${d}분 비행에 어울리는 목적지를 자동으로 추천합니다.</p><div class="destination-list">${recs.map(({airport,distance})=>`<button data-destination="${airport.code}" class="${state.destination.code===airport.code?'selected':''}"><span><b>${airport.code}</b><small>${esc(airport.city)}</small></span><em>${fmtDist(distance)}</em></button>`).join('')}</div>`
+                : `<div class="country-picker"><label><span>나라</span><select id="destinationCountry">${COUNTRIES.map(country=>`<option value="${esc(country)}" ${state.destinationCountry===country?'selected':''}>${esc(country)}</option>`).join('')}</select></label></div><div class="destination-list">${countryAirports.length?countryAirports.map(airport=>`<button data-country-airport="${airport.code}" class="${state.destination.code===airport.code?'selected':''}"><span><b>${airport.code}</b><small>${esc(airport.city)}</small></span><em>${esc(airport.name)}</em></button>`).join(''):'<div class="empty-state">이 나라에는 출발지와 다른 공항이 없습니다.</div>'}</div>`}
             </section>
           </div>
-          <section class="ready-bar"><div><span class="eyebrow">READY FOR DEPARTURE</span><div class="ready-route"><b>${state.homeConfirmed?state.home.code:'---'}</b><span></span><b class="plane-text">✈</b><span></span><b>${state.destination.code}</b></div><p>${d} min · ${state.intent}${state.outcome.trim()?` · ${esc(state.outcome.trim())}`:''} · ${fmtDist(distance)}</p></div><button class="button button--takeoff" data-action="boarding">✈ Prepare boarding pass</button></section>
+          <section class="ready-bar"><div><span class="eyebrow">READY FOR DEPARTURE</span><div class="ready-route"><b>${state.homeConfirmed?state.home.code:'---'}</b><span></span><b class="plane-text">✈</b><span></span><b>${state.destination.code}</b></div><p>${d} min · ${state.intent}${state.outcome.trim()?` · ${esc(state.outcome.trim())}`:''} · ${fmtDist(distance)}</p></div><button class="button button--takeoff" data-action="boarding">✈ 탑승권 준비</button></section>
         </section>
 
         <section class="feature-section shell" id="how"><div class="section-kicker"><span class="eyebrow">Designed around transitions</span><h2>집중에도 출발과 비행 그리고 도착이 있어요.</h2><p>숫자만 줄어드는 타이머 대신 진행을 공간적으로 보여줘서 자꾸 남은 시간을 확인하는 행동을 줄입니다.</p></div>
-          <div class="feature-grid"><article><span>01</span><div class="feature-icon">🛫</div><h3>Commit before takeoff</h3><p>시간과 목표를 먼저 정하고 탑승권을 찢을 때 타이머가 시작됩니다.</p></article><article><span>02</span><div class="feature-icon">✈️</div><h3>Read progress spatially</h3><p>비행 경로와 단계, ETA로 세션의 진행을 한눈에 확인할 수 있습니다.</p></article><article><span>03</span><div class="feature-icon">🎧</div><h3>Generated cabin ambience</h3><p>Web Audio API로 생성한 저정보량 cabin noise를 선택적으로 사용할 수 있습니다.</p></article><article><span>04</span><div class="feature-icon">🛬</div><h3>Finish with an arrival</h3><p>완료한 비행은 브라우저에 저장되어 누적 시간과 streak에 반영됩니다.</p></article></div>
+          <div class="feature-grid"><article><span>01</span><div class="feature-icon">🛫</div><h3>Boarding</h3><p>출발 전 탑승권을 확인하면 탑승 수속이 완료됩니다.</p></article><article><span>02</span><div class="feature-icon">✈️</div><h3>Read progress spatially</h3><p>비행 경로와 단계, ETA로 세션의 진행을 한눈에 확인할 수 있습니다.</p></article><article><span>03</span><div class="feature-icon">🎧</div><h3>Generated cabin ambience</h3><p>Web Audio API로 생성한 저정보량 cabin noise를 선택적으로 사용할 수 있습니다.</p></article><article><span>04</span><div class="feature-icon">🛬</div><h3>Finish with an arrival</h3><p>완료한 비행은 브라우저에 저장되어 누적 시간과 streak에 반영됩니다.</p></article></div>
         </section>
         <section class="guide-section shell"><div class="section-kicker"><span class="eyebrow">Flight lengths</span><h2>할 일 크기에 맞춰 노선을 선택하세요.</h2></div><div class="guide-grid"><article><b>15–25 min</b><h3>Short hop</h3><p>짧은 문제 풀이, 읽기, 정리용.</p></article><article><b>50 min</b><h3>Regional</h3><p>수업 복습이나 한 단위 작업용.</p></article><article><b>90 min</b><h3>Deep route</h3><p>코딩·논문·분석 같은 깊은 작업용.</p></article><article><b>120–180 min</b><h3>Long haul</h3><p>긴 작업을 담는 컨테이너로 사용하되 필요하면 미세 휴식을 포함하세요.</p></article></div></section>
-        <section class="faq-section shell"><div class="section-kicker"><span class="eyebrow">FAQ</span><h2>비공은 브라우저 안에서 어떻게 동작하나요?</h2></div><div class="faq-grid">
-          <details open><summary>로그인이 필요한가요?</summary><p>아니요. 공항, 현재 세션, 완료 기록은 현재 브라우저의 localStorage에만 저장됩니다.</p></details>
-          <details><summary>위치는 왜 사용하나요?</summary><p>현재 좌표와 내장 공항 목록의 거리를 브라우저에서 계산해 가장 가까운 공항을 추천하기 위해서입니다.</p></details>
-          <details><summary>새로고침해도 타이머가 유지되나요?</summary><p>네. 종료 시각을 저장하기 때문에 새로고침 후에도 남은 시간을 다시 계산합니다.</p></details>
-          <details><summary>실제 항공편을 추적하나요?</summary><p>아니요. 공항 좌표는 실제지만 비행기 위치는 집중 진행률을 시각화한 것입니다.</p></details>
-        </div></section>
-        <section class="privacy-section"><div class="shell privacy-inner"><div><span class="eyebrow">Privacy architecture</span><h2>집중 기록은 포탈 밖으로 나가지 않습니다.</h2></div><div class="privacy-points"><p><b>Local-only.</b> 홈 공항과 세션·완료 기록은 브라우저 저장소에만 남습니다.</p><p><b>Location without upload.</b> 좌표 비교는 브라우저 내부에서만 수행됩니다.</p><p><b>Static by design.</b> 별도 서버나 계정 데이터베이스가 필요하지 않습니다.</p></div></div></section>
       </main>
-      <footer class="site-footer shell"><div class="brand"><span class="brand-mark">✈</span><span>비공 <small class="brand-en">BIGONG</small></span></div><p>비행하듯 몰입하는 나만의 집중 포탈.</p><span>${new Date().getFullYear()}</span></footer>
     </div>`;
     bindCommon(); bindSetup();
   }
 
   function renderBoarding(){
     const d=effectiveDuration(), now=Date.now(), eta=now+d*60000;
-    const flightNumber=`BG ${String((state.home.code.charCodeAt(0)*17+state.destination.code.charCodeAt(0)*7+d)%900+100)}`;
-    app.innerHTML=`<div class="boarding-screen"><header class="minimal-nav shell"><button class="brand" data-action="home"><span class="brand-mark">✈</span><span>비공 <small class="brand-en">BIGONG</small></span></button><button class="button button--ghost" data-action="edit">← Edit flight</button></header>
-      <main class="boarding-wrap shell"><div class="boarding-intro"><span class="eyebrow">Boarding ritual</span><h1>마지막 결정은 탑승입니다.</h1><p>탑승권을 찢는 순간 타이머가 시작되고, 이번 비행의 목표가 끝까지 함께 표시됩니다.</p></div>
-      <section class="boarding-pass"><div class="pass-main"><div class="pass-top"><div><span class="brand-mark">✈</span><b>BIGONG · 비공</b></div><span>BOARDING PASS</span></div>
-      <div class="pass-route"><div><small>FROM</small><strong>${state.home.code}</strong><span>${esc(state.home.city)}</span></div><div class="pass-route-line"><span></span><b class="plane-text">✈</b><span></span></div><div><small>TO</small><strong>${state.destination.code}</strong><span>${esc(state.destination.city)}</span></div></div>
-      <div class="pass-data"><div><small>FLIGHT</small><b>${flightNumber}</b></div><div><small>BOARDING</small><b>${fmtTime(now)}</b></div><div><small>ARRIVAL</small><b>${fmtTime(eta)}</b></div><div><small>FOCUS</small><b>${d} min</b></div><div><small>MODE</small><b>${state.intent}</b></div><div><small>GATE</small><b>${state.destination.code[0]}${d%18+1}</b></div></div>
-      ${state.outcome.trim()?`<div class="pass-intent"><small>INTENT FOR THIS FLIGHT</small><p>${esc(state.outcome.trim())}</p></div>`:''}</div>
-      <div class="pass-stub"><div class="barcode"></div><span>${state.home.code}</span><b>✈</b><span>${state.destination.code}</span><small>${flightNumber}</small></div></section>
-      <button class="tear-button" data-action="takeoff">🛫 Tear pass & take off</button><p class="keyboard-hint">Takeoff 후: Space 일시정지 · P Pure mode · M cabin ambience</p></main></div>`;
+    state.destination=validDestination(state.home,state.destination,d);
+    const flightNumber=`OZ ${String((state.home.code.charCodeAt(0)*17+state.destination.code.charCodeAt(0)*7+d)%800+100)}`;
+    const gate=`${state.destination.code[0]}${d%18+1}`;
+    app.innerHTML=`<div class="boarding-screen"><header class="minimal-nav shell"><button class="brand" data-action="home"><span class="brand-mark">✈</span><span>비공 <small class="brand-en">BIGONG</small></span></button><button class="button button--ghost" data-action="edit">← 비행 수정</button></header>
+      <main class="boarding-wrap shell"><div class="boarding-intro"><span class="eyebrow">BOARDING</span><h1>탑승권을 확인해 주세요.</h1><p>탑승권을 확인하면 탑승 수속이 완료됩니다.</p></div>
+      <section class="boarding-pass asiana-pass">
+        <div class="asiana-side"><span class="asiana-wordmark">ASIANA<br>AIRLINES</span><span class="focus-mark">FOCUS<br>FLIGHT</span></div>
+        <div class="pass-main">
+          <div class="pass-top"><div><b>ASIANA AIRLINES</b><small>BOARDING PASS · BUSINESS</small></div><span>비공 FOCUS FLIGHT</span></div>
+          <div class="pass-passenger"><small>PASSENGER NAME</small><b>SEONG JOON HEE</b></div>
+          <div class="pass-route"><div><small>FROM</small><strong>${state.home.code}</strong><span>${esc(state.home.city)}</span></div><div class="pass-route-line"><span></span><b class="plane-text">✈</b><span></span></div><div><small>TO</small><strong>${state.destination.code}</strong><span>${esc(state.destination.city)}</span></div></div>
+          <div class="pass-data asiana-data"><div><small>FLIGHT</small><b>${flightNumber}</b></div><div><small>DATE</small><b>${new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short'}).format(now).toUpperCase()}</b></div><div><small>BOARDING</small><b>${fmtTime(now)}</b></div><div><small>ARRIVAL</small><b>${fmtTime(eta)}</b></div><div><small>GATE</small><b>${gate}</b></div><div><small>SEAT</small><b class="seat-value">7A</b></div></div>
+          <div class="pass-class-row"><span>BUSINESS CLASS</span><span>${d} MIN FOCUS</span><span>${state.intent.toUpperCase()}</span></div>
+          ${state.outcome.trim()?`<div class="pass-intent"><small>THIS FLIGHT'S GOAL</small><p>${esc(state.outcome.trim())}</p></div>`:''}
+        </div>
+        <div class="pass-stub">
+          <div class="stub-airline">ASIANA AIRLINES</div>
+          <div class="stub-route"><b>${state.home.code}</b><span>✈</span><b>${state.destination.code}</b></div>
+          <div class="stub-passenger"><small>PASSENGER</small><b>SEONG JOON HEE</b></div>
+          <div class="stub-info"><span><small>FLIGHT</small><b>${flightNumber}</b></span><span><small>SEAT</small><b>7A</b></span><span><small>GATE</small><b>${gate}</b></span></div>
+          <div class="barcode"></div>
+        </div>
+      </section>
+      <button class="tear-button" data-action="takeoff">탑승권 확인 · 탑승하기</button><p class="keyboard-hint">탑승 후: Space 일시정지 · P Pure mode · M cabin ambience</p></main></div>`;
     bindCommon();
     document.querySelector('[data-action="edit"]').onclick=()=>{state.screen='setup';render();};
     document.querySelector('[data-action="takeoff"]').onclick=takeOff;
@@ -311,10 +339,19 @@
     const a=airportByCode(code); if(!a)return;
     if(state.picker==='home'){
       state.home=a;state.homeConfirmed=true;save(KEYS.home,a);
-      if(state.destination.code===a.code) state.destination=recommendDestinations(a,effectiveDuration(),1)[0].airport;
+      if(state.destinationMode==='country'){
+        const choices=airportsInCountry(state.destinationCountry,a);
+        state.destination=choices.find(x=>x.code===state.destination?.code) || choices[0] || recommendDestinations(a,effectiveDuration(),1)[0]?.airport;
+      } else {
+        state.destination=recommendDestinations(a,effectiveDuration(),1)[0]?.airport || validDestination(a,state.destination,effectiveDuration());
+      }
+      state.destination=validDestination(a,state.destination,effectiveDuration());
+      state.destinationCountry=state.destination.country;
     } else {
-      if(a.code===state.home.code){showToast('Destination must be different from home.');return;}
+      if(a.code===state.home.code){showToast('출발지와 다른 목적지를 선택해 주세요.');return;}
       state.destination=a;
+      state.destinationCountry=a.country;
+      state.destinationMode='country';
     }
     closePicker(); render();
   }
@@ -328,13 +365,52 @@
     document.querySelector('[data-action="pick-destination"]').onclick=()=>{state.picker='destination';renderPicker();};
     document.querySelector('[data-action="locate"]')?.addEventListener('click',detectNearest);
     document.querySelector('[data-action="boarding"]').onclick=openBoarding;
-    document.querySelectorAll('[data-duration]').forEach(x=>x.onclick=()=>{state.duration=Number(x.dataset.duration);state.customDuration='';render();});
+    document.querySelectorAll('[data-destination-mode]').forEach(x=>x.onclick=()=>{
+      state.destinationMode=x.dataset.destinationMode;
+      if(state.destinationMode==='time'){
+        state.destination=recommendDestinations(state.home,effectiveDuration(),1)[0]?.airport || validDestination(state.home,state.destination,effectiveDuration());
+        state.destinationCountry=state.destination.country;
+      } else {
+        state.destinationCountry=state.destination?.country || state.destinationCountry || 'Japan';
+        const choices=airportsInCountry(state.destinationCountry,state.home);
+        state.destination=choices.find(a=>a.code===state.destination?.code) || choices[0] || recommendDestinations(state.home,effectiveDuration(),1)[0]?.airport;
+      }
+      render();
+    });
+    document.querySelectorAll('[data-duration]').forEach(x=>x.onclick=()=>{
+      state.duration=Number(x.dataset.duration);state.customDuration='';
+      if(state.destinationMode==='time') state.destination=recommendDestinations(state.home,effectiveDuration(),1)[0]?.airport || state.destination;
+      state.destination=validDestination(state.home,state.destination,effectiveDuration());
+      state.destinationCountry=state.destination.country;
+      render();
+    });
     document.querySelectorAll('[data-intent]').forEach(x=>x.onclick=()=>{state.intent=x.dataset.intent;render();});
-    document.querySelectorAll('[data-destination]').forEach(x=>x.onclick=()=>{state.destination=airportByCode(x.dataset.destination);render();});
+    document.querySelectorAll('[data-destination]').forEach(x=>x.onclick=()=>{
+      const a=airportByCode(x.dataset.destination); if(!a)return;
+      state.destination=a;state.destinationCountry=a.country;render();
+    });
+    document.querySelectorAll('[data-country-airport]').forEach(x=>x.onclick=()=>{
+      const a=airportByCode(x.dataset.countryAirport); if(!a)return;
+      state.destination=a;state.destinationCountry=a.country;render();
+    });
+    $('destinationCountry')?.addEventListener('change',e=>{
+      state.destinationCountry=e.target.value;
+      const choices=airportsInCountry(state.destinationCountry,state.home);
+      state.destination=choices[0] || recommendDestinations(state.home,effectiveDuration(),1)[0]?.airport;
+      state.destination=validDestination(state.home,state.destination,effectiveDuration());
+      render();
+    });
     $('customDuration').oninput=e=>{state.customDuration=e.target.value; updateReadyWithoutRender();};
-    $('customDuration').onchange=e=>{state.customDuration=e.target.value;render();};
+    $('customDuration').onchange=e=>{
+      state.customDuration=e.target.value;
+      if(state.destinationMode==='time') state.destination=recommendDestinations(state.home,effectiveDuration(),1)[0]?.airport || state.destination;
+      state.destination=validDestination(state.home,state.destination,effectiveDuration());
+      state.destinationCountry=state.destination.country;
+      render();
+    };
     $('outcome').oninput=e=>{state.outcome=e.target.value;};
   }
+
   function updateReadyWithoutRender(){ /* input stays responsive; recommendations refresh on change */ }
 
   function detectNearest(){
@@ -342,7 +418,13 @@
     state.locating=true;render();
     navigator.geolocation.getCurrentPosition(pos=>{
       const a=nearestAirport(pos.coords.latitude,pos.coords.longitude);state.home=a;state.homeConfirmed=true;state.locating=false;save(KEYS.home,a);
-      if(state.destination.code===a.code)state.destination=recommendDestinations(a,effectiveDuration(),1)[0].airport;
+      if(state.destinationMode==='time') state.destination=recommendDestinations(a,effectiveDuration(),1)[0]?.airport;
+      else {
+        const choices=airportsInCountry(state.destinationCountry,a);
+        state.destination=choices.find(x=>x.code===state.destination?.code) || choices[0] || recommendDestinations(a,effectiveDuration(),1)[0]?.airport;
+      }
+      state.destination=validDestination(a,state.destination,effectiveDuration());
+      state.destinationCountry=state.destination.country;
       render();showToast(`${a.code} 공항을 가장 가까운 공항으로 선택했습니다.`);
     },()=>{state.locating=false;render();showToast('위치 권한을 사용할 수 없습니다. 공항을 직접 선택해 주세요.');},{enableHighAccuracy:false,timeout:8000,maximumAge:300000});
   }
@@ -351,13 +433,15 @@
     state.customDuration=$('customDuration')?.value ?? state.customDuration;
     const d=effectiveDuration();
     if(!state.homeConfirmed){showToast('먼저 출발 공항을 확인해 주세요.');return;}
+    state.destination=validDestination(state.home,state.destination,d);
+    if(!state.destination){showToast('목적지 공항을 선택해 주세요.');return;}
     if(state.destination.code===state.home.code){showToast('출발지와 다른 목적지를 선택해 주세요.');return;}
     if(d<5||d>180){showToast('집중 시간은 5–180분이어야 합니다.');return;}
     state.screen='board';render();
   }
   function takeOff(){
     const startedAt=Date.now(), d=effectiveDuration();
-    state.session={id:`BG-${startedAt.toString(36)}`,home:state.home,destination:state.destination,durationMinutes:d,intent:state.intent,outcome:state.outcome.trim(),startedAt,endsAt:startedAt+d*60000,pausedAt:null,accumulatedPauseMs:0,status:'active'};
+    state.session={id:`OZ-${startedAt.toString(36)}`,home:state.home,destination:state.destination,durationMinutes:d,intent:state.intent,outcome:state.outcome.trim(),startedAt,endsAt:startedAt+d*60000,pausedAt:null,accumulatedPauseMs:0,status:'active'};
     save(KEYS.session,state.session);state.screen='flight';render();startTicker();
   }
   function startTicker(){ clearInterval(tickTimer); if(state.screen==='flight') tickTimer=setInterval(()=>{if(state.screen==='flight')renderFlight();},500); }
