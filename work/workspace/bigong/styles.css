@@ -253,12 +253,6 @@ a { color: inherit; text-decoration: none; }
 .audio-slider input { width: 150px; accent-color: #6bb9ff; }
 .end-flight { border: 0; background: transparent; color: #788ca2; cursor: pointer; font-size: 10px; }
 .end-flight:hover { color: #ff9a9a; }
-.flight-screen--pure { display: block; position: relative; }
-.flight-screen--pure .flight-cockpit { width: 100%; min-height: 100vh; display: grid; place-items: center; padding: 0; }
-.flight-screen--pure .timer-panel { min-height: 100vh; width: min(900px, 92vw); border: 0; background: transparent; text-align: center; padding: 20px; }
-.flight-screen--pure .phase-line, .flight-screen--pure .flight-metrics, .flight-screen--pure .flight-intent { max-width: 620px; width: 100%; margin-left: auto; margin-right: auto; }
-.flight-screen--pure .timer-display { font-size: clamp(76px, 15vw, 180px); margin: 34px 0 40px; }
-.exit-pure { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); border: 0; background: transparent; color: #5d7187; font-size: 9px; cursor: pointer; }
 
 .landing-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-top: 60px; padding-bottom: 60px; }
 .landing-orbit { width: 82px; height: 82px; border-radius: 50%; display: grid; place-items: center; color: var(--accent); border: 1px solid var(--line); background: var(--surface); margin-bottom: 22px; box-shadow: var(--shadow); }
@@ -854,7 +848,7 @@ body {
 .brand-en { font-size:.63em; color:var(--muted); letter-spacing:.08em; }
 .icon-glyph { font-size:18px; line-height:1; }
 .feature-icon { font-size:28px; color:var(--accent); margin-top:9px; }
-.flight-controls button, .exit-pure { cursor:pointer; }
+.flight-controls button { cursor:pointer; }
 .volume-wrap { display:flex; align-items:center; gap:8px; }
 .volume-wrap input { width:90px; accent-color:#8bd7ff; }
 .hero-trust .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); display:inline-block; }
@@ -1036,4 +1030,48 @@ body {
 :root { --mono: var(--font-main); }
 html, body, body *, button, input, select, textarea, option, summary {
   font-family: var(--font-main) !important;
+}
+
+/* v3: simplified planner and larger flight-log counters */
+.mini-stats span {
+  min-width: 126px;
+  padding: 14px 16px;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 2px;
+  font-size: 13px;
+}
+.mini-stats span b {
+  font-family: var(--font-main) !important;
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+.mini-stats span small {
+  grid-column: 2;
+  font-size: 11px;
+  line-height: 1.1;
+  font-weight: 800;
+}
+.planner-head { min-height: 82px; }
+.intent-grid button b { font-size: 12px; line-height: 1.25; }
+.country-picker label { grid-template-columns: 42px 1fr; }
+.country-picker input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.70);
+  color: var(--text);
+  font: 800 13px var(--font-main);
+  outline: none;
+}
+:root[data-theme="dark"] .country-picker input { background: rgba(255,255,255,.07); }
+@media (max-width: 680px) {
+  .mini-stats { width: 100%; display: grid; grid-template-columns: repeat(3,1fr); }
+  .mini-stats span { min-width: 0; padding: 12px 10px; }
+  .mini-stats span b { font-size: 22px; }
+  .mini-stats span small { font-size: 9px; }
 }

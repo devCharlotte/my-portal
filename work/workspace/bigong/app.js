@@ -82,11 +82,20 @@
   ];
   const DURATION_PRESETS = [15, 25, 50, 90, 120, 180];
   const INTENTS = [
-    { name:'Study', sub:'Read · review · solve' },
-    { name:'Work', sub:'Build · analyze · ship' },
-    { name:'Create', sub:'Write · design · explore' }
+    { name:'Study', label:'STUDY ON A FLIGHT', sub:'Read · review · solve' },
+    { name:'Work', label:'WORK ON A FLIGHT', sub:'Build · analyze · ship' },
+    { name:'Create', label:'CREATE ON A FLIGHT', sub:'Write · design · explore' }
   ];
   const COUNTRIES = [...new Set(AIRPORTS.map(a=>a.country))].sort((a,b)=>a.localeCompare(b,'en'));
+  const COUNTRY_ALIASES = {
+    '대한민국':'South Korea','한국':'South Korea','일본':'Japan','중국':'China','홍콩':'Hong Kong','대만':'Taiwan','싱가포르':'Singapore',
+    '태국':'Thailand','말레이시아':'Malaysia','필리핀':'Philippines','베트남':'Vietnam','인도':'India','인도네시아':'Indonesia',
+    '아랍에미리트':'United Arab Emirates','UAE':'United Arab Emirates','카타르':'Qatar','튀르키예':'Türkiye','터키':'Türkiye',
+    '영국':'United Kingdom','프랑스':'France','네덜란드':'Netherlands','독일':'Germany','스페인':'Spain','이탈리아':'Italy','스위스':'Switzerland',
+    '오스트리아':'Austria','덴마크':'Denmark','스웨덴':'Sweden','노르웨이':'Norway','핀란드':'Finland','그리스':'Greece','포르투갈':'Portugal',
+    '미국':'United States','캐나다':'Canada','멕시코':'Mexico','호주':'Australia','뉴질랜드':'New Zealand','브라질':'Brazil','아르헨티나':'Argentina',
+    '칠레':'Chile','페루':'Peru','콜롬비아':'Colombia','남아프리카공화국':'South Africa','남아공':'South Africa','이집트':'Egypt','에티오피아':'Ethiopia','케냐':'Kenya'
+  };
   const KEYS = {
     home:'bigong.home.v1', session:'bigong.session.v1', history:'bigong.history.v1', theme:'bigong.theme.v1'
   };
@@ -120,6 +129,17 @@
     return recommendDestinations(home, minutes, 1)[0]?.airport || AIRPORTS.find(a=>a.code!==home.code);
   };
   const airportsInCountry = (country, home) => AIRPORTS.filter(a=>a.country===country && a.code!==home.code);
+  const intentLabel = name => INTENTS.find(x=>x.name===name)?.label || String(name||'').toUpperCase();
+  const resolveCountryName = value => {
+    const raw=String(value||'').trim();
+    if(!raw) return null;
+    const direct=COUNTRIES.find(c=>c.toLowerCase()===raw.toLowerCase());
+    if(direct) return direct;
+    const aliasKey=Object.keys(COUNTRY_ALIASES).find(k=>k.toLowerCase()===raw.toLowerCase());
+    return aliasKey ? COUNTRY_ALIASES[aliasKey] : null;
+  };
+  const countryAliasFor = country => Object.entries(COUNTRY_ALIASES).find(([,v])=>v===country)?.[0] || '';
+
   const mapPoint = a => ({x:((a.lon+180)/360)*1000, y:((90-a.lat)/180)*480});
   const interpolatePoint = (a,b,p) => {
     const t=Math.max(0,Math.min(1,p)), cx=(a.x+b.x)/2, arc=Math.min(110,Math.max(35,Math.abs(b.x-a.x)*.11)), cy=Math.min(a.y,b.y)-arc, mt=1-t;
@@ -150,7 +170,6 @@
     intent:'Study',
     outcome:'',
     theme:safeRead(KEYS.theme,'light'),
-    pure:false,
     audioEnabled:false,
     volume:.22,
     session:safeRead(KEYS.session,null),
@@ -206,7 +225,7 @@
   function header(){
     return `<header class="top-nav shell">
       <a class="brand" href="./" data-action="home"><span class="brand-mark">✈</span><span>비공 <small class="brand-en">BIGONG</small></span></a>
-      <nav><a href="#planner">Flight planner</a><a href="#how">How it works</a><a class="portal-back" href="../">← <span>Workspace</span></a><button class="theme-switch" type="button" data-action="theme" aria-label="Theme">${state.theme==='dark'?'☀':'☾'}</button></nav>
+      <nav><a href="#planner">Flight planner</a><a class="portal-back" href="../">← <span>Workspace</span></a><button class="theme-switch" type="button" data-action="theme" aria-label="Theme">${state.theme==='dark'?'☀':'☾'}</button></nav>
     </header>`;
   }
 
@@ -217,27 +236,29 @@
     const st=stats(), recs=recommendDestinations(state.home,d,4);
     const countryAirports=airportsInCountry(state.destinationCountry,state.home);
     const distance=haversineKm(state.home,state.destination);
+    const countryOptions=COUNTRIES.map(country=>{
+      const alias=countryAliasFor(country);
+      return `<option value="${esc(country)}">${alias?esc(alias):esc(country)}</option>${alias?`<option value="${esc(alias)}">${esc(country)}</option>`:''}`;
+    }).join('');
     app.innerHTML=`<div class="app-shell">${header()}
       <main>
         <section class="hero shell">
-          <div class="hero-copy"><span class="eyebrow">MY WORKSPACE · FOCUS FLIGHT</span><h1>비행하듯<br><em>몰입하는 시간.</em></h1><p>출발 공항과 목적지 혹은 비행 시간을 정해서 탑승한 순간부터 착륙까지 집중하기!</p>
-            <div class="hero-trust"><span><i class="dot"></i>No account</span><span><i class="dot"></i>Local-only history</span><span><i class="dot"></i>Refresh-safe timer</span></div>
-          </div>
-          <div class="hero-visual">${routeMap(state.home,state.destination,.42,true)}<div class="hero-card"><small>NEXT FLIGHT</small><div><b>${state.home.code}</b><span>✈</span><b>${state.destination.code}</b></div><span>${d} min · ${state.intent}</span></div></div>
+          <div class="hero-copy"><span class="eyebrow">${intentLabel(state.intent)}</span><h1>비행하듯<br><em>몰입하는 시간.</em></h1><p>출발 공항과 목적지 혹은 비행 시간을 정해서 탑승한 순간부터 착륙까지 집중하기!</p></div>
+          <div class="hero-visual">${routeMap(state.home,state.destination,.42,true)}<div class="hero-card"><small>NEXT FLIGHT</small><div><b>${state.home.code}</b><span>✈</span><b>${state.destination.code}</b></div><span>${d} min · ${intentLabel(state.intent)}</span></div></div>
         </section>
 
         <section class="planner-section shell" id="planner">
-          <div class="planner-head"><div><span class="eyebrow">비공 Flight planner</span><h2>출발 전에 오늘의 집중을 정해요.</h2></div><div class="mini-stats"><span>🏆 <b>${st.sessions}</b><small>flights</small></span><span>⏱ <b>${st.totalMinutes}</b><small>minutes</small></span><span>🔥 <b>${st.streak}</b><small>day streak</small></span></div></div>
+          <div class="planner-head"><div><span class="eyebrow">FLIGHT LOG</span></div><div class="mini-stats"><span>🏆 <b>${st.sessions}</b><small>flights</small></span><span>⏱ <b>${st.totalMinutes}</b><small>minutes</small></span><span>🔥 <b>${st.streak}</b><small>day streak</small></span></div></div>
           <div class="planner-grid">
             <section class="planner-card planner-card--home"><div class="card-step"><span>01</span><div><small>HOME AIRPORT</small><h3>어디에서 출발할까요?</h3></div></div>
-              ${state.homeConfirmed?`<div class="selected-airport"><div class="airport-badge">${state.home.code}</div><div><b>${esc(state.home.city)}</b><span>${esc(state.home.name)}</span></div><button class="button button--small" data-action="pick-home">Change</button></div>`:`<div class="home-actions"><button class="button button--primary" data-action="locate" ${state.locating?'disabled':''}>⌖ ${state.locating?'Finding nearest…':'가까운 공항 찾기'}</button><button class="button" data-action="pick-home">⌕ 직접 선택</button></div><p class="privacy-note">📍 위치 정보는 브라우저 밖으로 전송하지 않습니다.</p>`}
+              ${state.homeConfirmed?`<div class="selected-airport"><div class="airport-badge">${state.home.code}</div><div><b>${esc(state.home.city)}</b><span>${esc(state.home.name)}</span></div><button class="button button--small" data-action="pick-home">Change</button></div>`:`<div class="home-actions"><button class="button button--primary" data-action="locate" ${state.locating?'disabled':''}>⌖ ${state.locating?'Finding nearest…':'가까운 공항 찾기'}</button><button class="button" data-action="pick-home">⌕ 직접 선택</button></div>`}
             </section>
-            <section class="planner-card"><div class="card-step"><span>02</span><div><small>FOCUS DURATION</small><h3>얼마나 비행할까요?</h3></div></div>
+            <section class="planner-card"><div class="card-step"><span>02</span><div><small>FLIGHT TIME</small><h3>얼마나 비행할까요?</h3></div></div>
               <div class="duration-grid">${DURATION_PRESETS.map(m=>`<button data-duration="${m}" class="${!state.customDuration&&state.duration===m?'selected':''}">${m}<small>min</small></button>`).join('')}</div>
               <label class="custom-duration"><span>Custom</span><input id="customDuration" type="number" min="5" max="180" value="${esc(state.customDuration)}" placeholder="5–180"><span>minutes</span></label>
             </section>
-            <section class="planner-card"><div class="card-step"><span>03</span><div><small>INTENT</small><h3>오늘 좌석의 목적은?</h3></div></div>
-              <div class="intent-grid">${INTENTS.map(x=>`<button data-intent="${x.name}" class="${state.intent===x.name?'selected':''}"><b>${x.name}</b><small>${x.sub}</small></button>`).join('')}</div>
+            <section class="planner-card"><div class="card-step"><span>03</span><div><small>ON BOARD</small><h3>오늘은 어떤 비행인가요?</h3></div></div>
+              <div class="intent-grid">${INTENTS.map(x=>`<button data-intent="${x.name}" class="${state.intent===x.name?'selected':''}"><b>${x.label}</b><small>${x.sub}</small></button>`).join('')}</div>
               <label class="outcome-input"><span>한 줄 목표 <small>optional</small></span><input id="outcome" maxlength="120" value="${esc(state.outcome)}" placeholder="예: 논문 Methods 수정 끝내기"></label>
             </section>
             <section class="planner-card planner-card--destination"><div class="card-step"><span>04</span><div><small>DESTINATION</small><h3>목적지를 정해요.</h3></div></div>
@@ -247,17 +268,12 @@
               </div>
               <div class="selected-destination"><div><span class="airport-code-large">${state.destination.code}</span><div><b>${esc(state.destination.city)}</b><small>${esc(state.destination.country)} · ${esc(state.destination.name)}</small></div></div><button class="button button--small" data-action="pick-destination">전체 공항⌄</button></div>
               ${state.destinationMode==='time'
-                ? `<p class="destination-helper">${d}분 비행에 어울리는 목적지를 자동으로 추천합니다.</p><div class="destination-list">${recs.map(({airport,distance})=>`<button data-destination="${airport.code}" class="${state.destination.code===airport.code?'selected':''}"><span><b>${airport.code}</b><small>${esc(airport.city)}</small></span><em>${fmtDist(distance)}</em></button>`).join('')}</div>`
-                : `<div class="country-picker"><label><span>나라</span><select id="destinationCountry">${COUNTRIES.map(country=>`<option value="${esc(country)}" ${state.destinationCountry===country?'selected':''}>${esc(country)}</option>`).join('')}</select></label></div><div class="destination-list">${countryAirports.length?countryAirports.map(airport=>`<button data-country-airport="${airport.code}" class="${state.destination.code===airport.code?'selected':''}"><span><b>${airport.code}</b><small>${esc(airport.city)}</small></span><em>${esc(airport.name)}</em></button>`).join(''):'<div class="empty-state">이 나라에는 출발지와 다른 공항이 없습니다.</div>'}</div>`}
+                ? `<div class="destination-list">${recs.map(({airport,distance})=>`<button data-destination="${airport.code}" class="${state.destination.code===airport.code?'selected':''}"><span><b>${airport.code}</b><small>${esc(airport.city)}</small></span><em>${fmtDist(distance)}</em></button>`).join('')}</div>`
+                : `<div class="country-picker"><label><span>나라</span><input id="destinationCountrySearch" list="countryOptions" value="${esc(countryAliasFor(state.destinationCountry)||state.destinationCountry)}" placeholder="국가명 검색 · 일본 / Japan"><datalist id="countryOptions">${countryOptions}</datalist></label></div><div class="destination-list">${countryAirports.length?countryAirports.map(airport=>`<button data-country-airport="${airport.code}" class="${state.destination.code===airport.code?'selected':''}"><span><b>${airport.code}</b><small>${esc(airport.city)}</small></span><em>${esc(airport.name)}</em></button>`).join(''):'<div class="empty-state">이 나라에는 출발지와 다른 공항이 없습니다.</div>'}</div>`}
             </section>
           </div>
-          <section class="ready-bar"><div><span class="eyebrow">READY FOR DEPARTURE</span><div class="ready-route"><b>${state.homeConfirmed?state.home.code:'---'}</b><span></span><b class="plane-text">✈</b><span></span><b>${state.destination.code}</b></div><p>${d} min · ${state.intent}${state.outcome.trim()?` · ${esc(state.outcome.trim())}`:''} · ${fmtDist(distance)}</p></div><button class="button button--takeoff" data-action="boarding">✈ 탑승권 준비</button></section>
+          <section class="ready-bar"><div><span class="eyebrow">READY FOR DEPARTURE</span><div class="ready-route"><b>${state.homeConfirmed?state.home.code:'---'}</b><span></span><b class="plane-text">✈</b><span></span><b>${state.destination.code}</b></div><p>${d} min · ${intentLabel(state.intent)}${state.outcome.trim()?` · ${esc(state.outcome.trim())}`:''} · ${fmtDist(distance)}</p></div><button class="button button--takeoff" data-action="boarding">✈ 탑승권 준비</button></section>
         </section>
-
-        <section class="feature-section shell" id="how"><div class="section-kicker"><span class="eyebrow">Designed around transitions</span><h2>집중에도 출발과 비행 그리고 도착이 있어요.</h2><p>숫자만 줄어드는 타이머 대신 진행을 공간적으로 보여줘서 자꾸 남은 시간을 확인하는 행동을 줄입니다.</p></div>
-          <div class="feature-grid"><article><span>01</span><div class="feature-icon">🛫</div><h3>Boarding</h3><p>출발 전 탑승권을 확인하면 탑승 수속이 완료됩니다.</p></article><article><span>02</span><div class="feature-icon">✈️</div><h3>Read progress spatially</h3><p>비행 경로와 단계, ETA로 세션의 진행을 한눈에 확인할 수 있습니다.</p></article><article><span>03</span><div class="feature-icon">🎧</div><h3>Generated cabin ambience</h3><p>Web Audio API로 생성한 저정보량 cabin noise를 선택적으로 사용할 수 있습니다.</p></article><article><span>04</span><div class="feature-icon">🛬</div><h3>Finish with an arrival</h3><p>완료한 비행은 브라우저에 저장되어 누적 시간과 streak에 반영됩니다.</p></article></div>
-        </section>
-        <section class="guide-section shell"><div class="section-kicker"><span class="eyebrow">Flight lengths</span><h2>할 일 크기에 맞춰 노선을 선택하세요.</h2></div><div class="guide-grid"><article><b>15–25 min</b><h3>Short hop</h3><p>짧은 문제 풀이, 읽기, 정리용.</p></article><article><b>50 min</b><h3>Regional</h3><p>수업 복습이나 한 단위 작업용.</p></article><article><b>90 min</b><h3>Deep route</h3><p>코딩·논문·분석 같은 깊은 작업용.</p></article><article><b>120–180 min</b><h3>Long haul</h3><p>긴 작업을 담는 컨테이너로 사용하되 필요하면 미세 휴식을 포함하세요.</p></article></div></section>
       </main>
     </div>`;
     bindCommon(); bindSetup();
@@ -271,13 +287,13 @@
     app.innerHTML=`<div class="boarding-screen"><header class="minimal-nav shell"><button class="brand" data-action="home"><span class="brand-mark">✈</span><span>비공 <small class="brand-en">BIGONG</small></span></button><button class="button button--ghost" data-action="edit">← 비행 수정</button></header>
       <main class="boarding-wrap shell"><div class="boarding-intro"><span class="eyebrow">BOARDING</span><h1>탑승권을 확인해 주세요.</h1><p>탑승권을 확인하면 탑승 수속이 완료됩니다.</p></div>
       <section class="boarding-pass asiana-pass">
-        <div class="asiana-side"><span class="asiana-wordmark">ASIANA<br>AIRLINES</span><span class="focus-mark">FOCUS<br>FLIGHT</span></div>
+        <div class="asiana-side"><span class="asiana-wordmark">ASIANA<br>AIRLINES</span><span class="focus-mark">BIGONG</span></div>
         <div class="pass-main">
-          <div class="pass-top"><div><b>ASIANA AIRLINES</b><small>BOARDING PASS · BUSINESS</small></div><span>비공 FOCUS FLIGHT</span></div>
+          <div class="pass-top"><div><b>ASIANA AIRLINES</b><small>BOARDING PASS · BUSINESS</small></div><span>BIGONG</span></div>
           <div class="pass-passenger"><small>PASSENGER NAME</small><b>SEONG JOON HEE</b></div>
           <div class="pass-route"><div><small>FROM</small><strong>${state.home.code}</strong><span>${esc(state.home.city)}</span></div><div class="pass-route-line"><span></span><b class="plane-text">✈</b><span></span></div><div><small>TO</small><strong>${state.destination.code}</strong><span>${esc(state.destination.city)}</span></div></div>
           <div class="pass-data asiana-data"><div><small>FLIGHT</small><b>${flightNumber}</b></div><div><small>DATE</small><b>${new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short'}).format(now).toUpperCase()}</b></div><div><small>BOARDING</small><b>${fmtTime(now)}</b></div><div><small>ARRIVAL</small><b>${fmtTime(eta)}</b></div><div><small>GATE</small><b>${gate}</b></div><div><small>SEAT</small><b class="seat-value">7A</b></div></div>
-          <div class="pass-class-row"><span>BUSINESS CLASS</span><span>${d} MIN FOCUS</span><span>${state.intent.toUpperCase()}</span></div>
+          <div class="pass-class-row"><span>BUSINESS CLASS</span><span>${d} MIN FOCUS</span><span>${intentLabel(state.intent)}</span></div>
           ${state.outcome.trim()?`<div class="pass-intent"><small>THIS FLIGHT'S GOAL</small><p>${esc(state.outcome.trim())}</p></div>`:''}
         </div>
         <div class="pass-stub">
@@ -288,7 +304,7 @@
           <div class="barcode"></div>
         </div>
       </section>
-      <button class="tear-button" data-action="takeoff">탑승권 확인 · 탑승하기</button><p class="keyboard-hint">탑승 후: Space 일시정지 · P Pure mode · M cabin ambience</p></main></div>`;
+      <button class="tear-button" data-action="takeoff">탑승권 확인 · 탑승하기</button><p class="keyboard-hint">Space pause / resume · M cabin ambience</p></main></div>`;
     bindCommon();
     document.querySelector('[data-action="edit"]').onclick=()=>{state.screen='setup';render();};
     document.querySelector('[data-action="takeoff"]').onclick=takeOff;
@@ -300,18 +316,17 @@
     if(!s.pausedAt && remaining<=0) return completeFlight();
     const phase=progress<.06?'Taxi & takeoff':progress<.18?'Climb':progress<.82?'Cruise':progress<.95?'Descent':'Final approach';
     const altitude=progress<.12?Math.round(35000*(progress/.12)):progress>.88?Math.round(35000*((1-progress)/.12)):35000;
-    const pure=state.pure;
-    app.innerHTML=`<div class="flight-screen ${pure?'flight-screen--pure':''}">
-      ${pure?'':`<header class="flight-toolbar"><div class="flight-identity"><span class="live-dot"></span><b>${s.home.code} → ${s.destination.code}</b><span>${s.intent}</span></div><div class="flight-controls"><button data-action="theme">${state.theme==='dark'?'☀':'☾'}<span>Theme</span></button><button data-action="audio" class="${state.audioEnabled?'active':''}">${state.audioEnabled?'🔊':'🔇'}<span>Audio</span></button><button data-action="fullscreen">⛶<span>Full</span></button><button data-action="pure">◎<span>Pure</span></button><button data-action="pause" class="pause-control">${s.pausedAt?'▶':'Ⅱ'}<span>${s.pausedAt?'Resume':'Pause'}</span></button></div></header>`}
-      <main class="flight-cockpit">${pure?'':`<section class="flight-map-panel">${routeMap(s.home,s.destination,progress,false)}</section>`}<section class="timer-panel"><div class="phase-line"><span>${phase}</span><span>${Math.round(progress*100)}%</span></div><div class="timer-display">${fmtClock(remaining/1000)}</div>${s.pausedAt?'<div class="paused-badge">PAUSED — arrival time moves with you</div>':''}<div class="progress-rail"><span style="width:${progress*100}%"></span></div><div class="flight-metrics"><div><small>ARRIVAL</small><b>${fmtTime(s.endsAt)}</b></div><div><small>ALTITUDE</small><b>${Math.max(0,altitude).toLocaleString()} ft</b></div><div><small>DISTANCE</small><b>${fmtDist(haversineKm(s.home,s.destination))}</b></div></div>${s.outcome?`<div class="flight-intent"><small>STAY WITH ONE INTENT</small><p>${esc(s.outcome)}</p></div>`:''}</section>${pure?'<button class="exit-pure" data-action="exit-pure">Esc 또는 클릭으로 Pure mode 종료</button>':''}</main>
-      ${pure?'':`<footer class="flight-footer"><div class="volume-wrap"><span>Cabin</span><input id="volume" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div><button data-action="end-flight">End flight</button></footer>`}
+    app.innerHTML=`<div class="flight-screen">
+      <header class="flight-toolbar"><div class="flight-identity"><span class="live-dot"></span><b>${s.home.code} → ${s.destination.code}</b><span>${intentLabel(s.intent)}</span></div><div class="flight-controls"><button data-action="theme">${state.theme==='dark'?'☀':'☾'}<span>Theme</span></button><button data-action="audio" class="${state.audioEnabled?'active':''}">${state.audioEnabled?'🔊':'🔇'}<span>Audio</span></button><button data-action="pause" class="pause-control">${s.pausedAt?'▶':'Ⅱ'}<span>${s.pausedAt?'Resume':'Pause'}</span></button></div></header>
+      <main class="flight-cockpit"><section class="flight-map-panel">${routeMap(s.home,s.destination,progress,false)}</section><section class="timer-panel"><div class="phase-line"><span>${phase}</span><span>${Math.round(progress*100)}%</span></div><div class="timer-display">${fmtClock(remaining/1000)}</div>${s.pausedAt?'<div class="paused-badge">PAUSED — arrival time moves with you</div>':''}<div class="progress-rail"><span style="width:${progress*100}%"></span></div><div class="flight-metrics"><div><small>ARRIVAL</small><b>${fmtTime(s.endsAt)}</b></div><div><small>ALTITUDE</small><b>${Math.max(0,altitude).toLocaleString()} ft</b></div><div><small>DISTANCE</small><b>${fmtDist(haversineKm(s.home,s.destination))}</b></div></div>${s.outcome?`<div class="flight-intent"><small>ON THIS FLIGHT</small><p>${esc(s.outcome)}</p></div>`:''}</section></main>
+      <footer class="flight-footer"><div class="volume-wrap"><span>Cabin</span><input id="volume" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div><button data-action="end-flight">End flight</button></footer>
     </div>`;
     bindCommon(); bindFlight();
   }
 
   function renderLanded(){
     const f=state.lastFlight; if(!f){state.screen='setup';return render();}
-    app.innerHTML=`<main class="landing-page shell"><div class="landing-orbit">🛬</div><span class="eyebrow">Safe arrival</span><h1>착륙했습니다.</h1><p class="lede">방해 없이 끝낸 한 블록이 비행 기록에 추가되었습니다.</p><section class="landing-ticket"><div class="landing-route"><div><small>FROM</small><strong>${f.home.code}</strong><span>${esc(f.home.city)}</span></div><b class="plane-text">✈</b><div><small>TO</small><strong>${f.destination.code}</strong><span>${esc(f.destination.city)}</span></div></div><div class="ticket-grid"><div><small>FOCUS</small><b>${f.durationMinutes} min</b></div><div><small>MODE</small><b>${f.intent}</b></div><div><small>ARRIVED</small><b>${fmtTime(f.completedAt)}</b></div><div><small>FLIGHT</small><b>${f.id.slice(-6).toUpperCase()}</b></div></div>${f.outcome?`<div class="outcome-review"><small>YOUR INTENT</small><p>${esc(f.outcome)}</p></div>`:''}</section><div class="landing-actions"><button class="button button--primary" data-action="again">↻ Fly again</button><button class="button" data-action="share">⇧ Share result</button><button class="button button--ghost" data-action="new">Plan a new route</button></div></main>`;
+    app.innerHTML=`<main class="landing-page shell"><div class="landing-orbit">🛬</div><span class="eyebrow">Safe arrival</span><h1>착륙했습니다.</h1><p class="lede">방해 없이 끝낸 한 블록이 비행 기록에 추가되었습니다.</p><section class="landing-ticket"><div class="landing-route"><div><small>FROM</small><strong>${f.home.code}</strong><span>${esc(f.home.city)}</span></div><b class="plane-text">✈</b><div><small>TO</small><strong>${f.destination.code}</strong><span>${esc(f.destination.city)}</span></div></div><div class="ticket-grid"><div><small>FOCUS</small><b>${f.durationMinutes} min</b></div><div><small>MODE</small><b>${intentLabel(f.intent)}</b></div><div><small>ARRIVED</small><b>${fmtTime(f.completedAt)}</b></div><div><small>FLIGHT</small><b>${f.id.slice(-6).toUpperCase()}</b></div></div>${f.outcome?`<div class="outcome-review"><small>YOUR INTENT</small><p>${esc(f.outcome)}</p></div>`:''}</section><div class="landing-actions"><button class="button button--primary" data-action="again">↻ Fly again</button><button class="button" data-action="share">⇧ Share result</button><button class="button button--ghost" data-action="new">Plan a new route</button></div></main>`;
     document.querySelector('[data-action="again"]').onclick=()=>{state.home=f.home;state.destination=f.destination;state.duration=f.durationMinutes;state.customDuration='';state.intent=f.intent;state.outcome=f.outcome;state.screen='board';render();};
     document.querySelector('[data-action="new"]').onclick=()=>{state.screen='setup';render();};
     document.querySelector('[data-action="share"]').onclick=shareResult;
@@ -358,7 +373,7 @@
 
   function bindCommon(){
     document.querySelectorAll('[data-action="theme"]').forEach(x=>x.onclick=toggleTheme);
-    document.querySelectorAll('[data-action="home"]').forEach(x=>x.onclick=e=>{e.preventDefault();state.screen='setup';state.pure=false;render();});
+    document.querySelectorAll('[data-action="home"]').forEach(x=>x.onclick=e=>{e.preventDefault();state.screen='setup';render();});
   }
   function bindSetup(){
     document.querySelector('[data-action="pick-home"]').onclick=()=>{state.picker='home';renderPicker();};
@@ -393,13 +408,19 @@
       const a=airportByCode(x.dataset.countryAirport); if(!a)return;
       state.destination=a;state.destinationCountry=a.country;render();
     });
-    $('destinationCountry')?.addEventListener('change',e=>{
-      state.destinationCountry=e.target.value;
-      const choices=airportsInCountry(state.destinationCountry,state.home);
-      state.destination=choices[0] || recommendDestinations(state.home,effectiveDuration(),1)[0]?.airport;
+    const countrySearch=$('destinationCountrySearch');
+    const applyCountrySearch=()=>{
+      if(!countrySearch)return;
+      const resolved=resolveCountryName(countrySearch.value);
+      if(!resolved){showToast('검색한 국가를 찾지 못했습니다. 한글 또는 영문 국가명을 입력해 주세요.');return;}
+      state.destinationCountry=resolved;
+      const choices=airportsInCountry(resolved,state.home);
+      state.destination=choices.find(a=>a.code===state.destination?.code) || choices[0] || recommendDestinations(state.home,effectiveDuration(),1)[0]?.airport;
       state.destination=validDestination(state.home,state.destination,effectiveDuration());
       render();
-    });
+    };
+    countrySearch?.addEventListener('change',applyCountrySearch);
+    countrySearch?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCountrySearch();}});
     $('customDuration').oninput=e=>{state.customDuration=e.target.value; updateReadyWithoutRender();};
     $('customDuration').onchange=e=>{
       state.customDuration=e.target.value;
@@ -452,20 +473,17 @@
   }
   function endFlight(){
     if(!confirm('완료 기록에 추가하지 않고 이 비행을 종료할까요?'))return;
-    localStorage.removeItem(KEYS.session);state.session=null;state.pure=false;stopAudio();state.screen='setup';clearInterval(tickTimer);render();
+    localStorage.removeItem(KEYS.session);state.session=null;stopAudio();state.screen='setup';clearInterval(tickTimer);render();
   }
   function completeFlight(){
     const s=state.session;if(!s)return;
     const completed={id:s.id,homeCode:s.home.code,destinationCode:s.destination.code,durationMinutes:s.durationMinutes,intent:s.intent,outcome:s.outcome,completedAt:Date.now()};
     state.history=[completed,...state.history.filter(x=>x.id!==completed.id)].slice(0,500);save(KEYS.history,state.history);localStorage.removeItem(KEYS.session);
-    state.lastFlight={...completed,home:s.home,destination:s.destination};state.session=null;state.pure=false;stopAudio();state.screen='landed';clearInterval(tickTimer);navigator.vibrate?.([180,80,180]);render();
+    state.lastFlight={...completed,home:s.home,destination:s.destination};state.session=null;stopAudio();state.screen='landed';clearInterval(tickTimer);navigator.vibrate?.([180,80,180]);render();
   }
   function bindFlight(){
     document.querySelector('[data-action="pause"]')?.addEventListener('click',togglePause);
     document.querySelector('[data-action="audio"]')?.addEventListener('click',toggleAudio);
-    document.querySelector('[data-action="fullscreen"]')?.addEventListener('click',toggleFullscreen);
-    document.querySelector('[data-action="pure"]')?.addEventListener('click',()=>{state.pure=true;renderFlight();});
-    document.querySelector('[data-action="exit-pure"]')?.addEventListener('click',()=>{state.pure=false;renderFlight();});
     document.querySelector('[data-action="end-flight"]')?.addEventListener('click',endFlight);
     $('volume')?.addEventListener('input',e=>{state.volume=Number(e.target.value);setAudioVolume(state.volume);});
   }
@@ -491,7 +509,6 @@
   }
   function stopAudio(){audio?.stop();state.audioEnabled=false;}
   function setAudioVolume(v){audio?.setVolume(v);}
-  async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{showToast('전체 화면을 사용할 수 없습니다.');}}
   async function shareResult(){
     const f=state.lastFlight;if(!f)return;const text=`비공: ${f.durationMinutes}분 집중 — ${f.home.code} → ${f.destination.code} · ${f.intent}`;
     if(navigator.share){try{await navigator.share({title:'비공 landing',text});return;}catch{}}
@@ -506,9 +523,7 @@
     if(state.screen!=='flight')return;
     if(['INPUT','TEXTAREA'].includes(e.target?.tagName))return;
     if(e.key===' '){e.preventDefault();togglePause();}
-    if(e.key.toLowerCase()==='p'){state.pure=!state.pure;renderFlight();}
     if(e.key.toLowerCase()==='m')toggleAudio();
-    if(e.key==='Escape'&&state.pure){state.pure=false;renderFlight();}
   });
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.screen==='flight')renderFlight();});
   if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
