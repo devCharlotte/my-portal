@@ -105,6 +105,10 @@
   let tickTimer = null;
   let toastTimer = null;
   let audio = null;
+  let routeMapSeq = 0;
+  let routeMaps = [];
+  let landMask = null;
+  fetch('./landmask.bin').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>{ landMask=new Uint8Array(b); }).catch(()=>{});
 
   const safeRead = (key, fallback) => {
     try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
@@ -140,15 +144,41 @@
   };
   const countryAliasFor = country => Object.entries(COUNTRY_ALIASES).find(([,v])=>v===country)?.[0] || '';
 
-  const mapPoint = a => ({x:((a.lon+180)/360)*1000, y:((90-a.lat)/180)*480});
-  const interpolatePoint = (a,b,p) => {
-    const t=Math.max(0,Math.min(1,p)), cx=(a.x+b.x)/2, arc=Math.min(110,Math.max(35,Math.abs(b.x-a.x)*.11)), cy=Math.min(a.y,b.y)-arc, mt=1-t;
-    return {x:mt*mt*a.x+2*mt*t*cx+t*t*b.x, y:mt*mt*a.y+2*mt*t*cy+t*t*b.y};
+  const normalizeLon = lon => ((lon + 540) % 360) - 180;
+  const greatCirclePoints = (a,b,steps=120) => {
+    const lat1=toRad(a.lat), lon1=toRad(a.lon), lat2=toRad(b.lat), lon2=toRad(b.lon);
+    const v1=[Math.cos(lat1)*Math.cos(lon1),Math.cos(lat1)*Math.sin(lon1),Math.sin(lat1)];
+    const v2=[Math.cos(lat2)*Math.cos(lon2),Math.cos(lat2)*Math.sin(lon2),Math.sin(lat2)];
+    const dot=Math.max(-1,Math.min(1,v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2]));
+    const omega=Math.acos(dot), sinOmega=Math.sin(omega);
+    const out=[];
+    for(let i=0;i<=steps;i++){
+      const t=i/steps;
+      let x,y,z;
+      if(sinOmega<1e-8){ x=v1[0]+t*(v2[0]-v1[0]); y=v1[1]+t*(v2[1]-v1[1]); z=v1[2]+t*(v2[2]-v1[2]); }
+      else { const s1=Math.sin((1-t)*omega)/sinOmega, s2=Math.sin(t*omega)/sinOmega; x=s1*v1[0]+s2*v2[0]; y=s1*v1[1]+s2*v2[1]; z=s1*v1[2]+s2*v2[2]; }
+      const lat=Math.atan2(z,Math.hypot(x,y))*180/Math.PI;
+      let lon=Math.atan2(y,x)*180/Math.PI;
+      if(out.length){ const prev=out[out.length-1].lon; while(lon-prev>180)lon-=360; while(lon-prev<-180)lon+=360; }
+      out.push({lat,lon});
+    }
+    return out;
   };
-  const routePath = (a,b) => {
-    const cx=(a.x+b.x)/2, arc=Math.min(110,Math.max(35,Math.abs(b.x-a.x)*.11)), cy=Math.min(a.y,b.y)-arc;
-    return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+  const routePosition = (a,b,progress) => {
+    const points=greatCirclePoints(a,b,160), p=Math.max(0,Math.min(1,progress))*(points.length-1), i=Math.min(points.length-2,Math.floor(p)), f=p-i;
+    return {lat:points[i].lat+(points[i+1].lat-points[i].lat)*f, lon:points[i].lon+(points[i+1].lon-points[i].lon)*f};
   };
+  const bearingBetween = (a,b) => {
+    const p1=toRad(a.lat), p2=toRad(b.lat), dl=toRad(normalizeLon(b.lon-a.lon));
+    const y=Math.sin(dl)*Math.cos(p2), x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+    return (Math.atan2(y,x)*180/Math.PI+360)%360;
+  };
+  const isLandAt = (lat,lon) => {
+    if(!landMask || landMask.length!==64800) return null;
+    const row=Math.max(0,Math.min(179,Math.floor(lat+90))), col=Math.max(0,Math.min(359,Math.floor(normalizeLon(lon)+180)));
+    return landMask[row*360+col]===1;
+  };
+  const localSolarHour = lon => ((new Date().getUTCHours()+new Date().getUTCMinutes()/60+normalizeLon(lon)/15)%24+24)%24;
   const esc = (s='') => String(s).replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const fmtClock = seconds => {
     const s=Math.max(0,Math.floor(seconds)), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
@@ -172,6 +202,7 @@
     theme:safeRead(KEYS.theme,'light'),
     audioEnabled:false,
     volume:.22,
+    flightView:'map',
     session:safeRead(KEYS.session,null),
     history:safeRead(KEYS.history,[]),
     lastFlight:null,
@@ -207,18 +238,78 @@
   function toggleTheme(){ state.theme=state.theme==='dark'?'light':'dark'; applyTheme(); render(); }
   function planeIcon(){ return '✈'; }
 
+  function loadLeaflet(){
+    if(window.L)return Promise.resolve(window.L);
+    if(window.__bigongLeafletPromise)return window.__bigongLeafletPromise;
+    window.__bigongLeafletPromise=new Promise((resolve,reject)=>{
+      if(!document.getElementById('leafletCss')){ const link=document.createElement('link'); link.id='leafletCss'; link.rel='stylesheet'; link.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(link); }
+      const script=document.createElement('script'); script.src='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'; script.async=true;
+      script.onload=()=>{ initRouteMaps(); resolve(window.L); };
+      script.onerror=()=>reject(new Error('Leaflet unavailable'));
+      document.head.appendChild(script);
+    });
+    return window.__bigongLeafletPromise;
+  }
+  function destroyRouteMaps(){
+    routeMaps.forEach(item=>{ try{ item.map.remove(); }catch{} });
+    routeMaps=[];
+  }
   function routeMap(home,destination,progress=.42,compact=false){
-    const a=mapPoint(home), b=mapPoint(destination), p=interpolatePoint(a,b,progress), angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI, path=routePath(a,b);
-    return `<div class="route-map ${compact?'route-map--compact':''}" aria-label="Route from ${esc(home.city)} to ${esc(destination.city)}">
-      <svg viewBox="0 0 1000 480" role="img" aria-hidden="true">
-        <g class="grid-lines">${[120,240,360,480,600,720,840].map(x=>`<line x1="${x}" y1="35" x2="${x}" y2="445"/>`).join('')}${[100,190,280,370].map(y=>`<line x1="40" y1="${y}" x2="960" y2="${y}"/>`).join('')}</g>
-        <path class="continent-shape" d="M92 136l62-53 82 9 51 39-19 46-66 18-20 52-56 14-44-63zM285 318l47-36 45 27 7 76-39 60-28-61zM469 116l57-38 88 15 37 46-47 20-36 67-60 4-44-48zM560 245l50-31 48 18 35 79-22 104-66-14-50-85zM683 113l81-30 120 33 56 59-39 40-102-6-63 31-58-49zM816 322l67-32 68 24 14 58-41 52-72-8-45-47z"/>
-        <path class="route-base" d="${path}"/><path class="route-line" d="${path}" pathLength="100" stroke-dasharray="${Math.max(.5,progress*100)} 100"/>
-        <circle class="airport-dot" cx="${a.x}" cy="${a.y}" r="7"/><circle class="airport-dot airport-dot--destination" cx="${b.x}" cy="${b.y}" r="7"/>
-        <g transform="translate(${p.x} ${p.y}) rotate(${angle})" class="plane-marker"><text>✈</text></g>
-      </svg>
+    const id=`bigongMap${++routeMapSeq}`;
+    return `<div class="route-map ${compact?'route-map--compact':''}" data-route-map id="${id}" data-home="${home.code}" data-destination="${destination.code}" data-progress="${progress}">
+      <div class="map-canvas" aria-label="Map route from ${esc(home.city)} to ${esc(destination.city)}"></div>
+      <div class="map-fallback" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
       <div class="route-city route-city--from"><b>${home.code}</b><span>${esc(home.city)}</span></div>
       <div class="route-city route-city--to"><b>${destination.code}</b><span>${esc(destination.city)}</span></div>
+    </div>`;
+  }
+  function initRouteMaps(){
+    if(!window.L) return;
+    document.querySelectorAll('[data-route-map]').forEach(host=>{
+      const home=airportByCode(host.dataset.home), destination=airportByCode(host.dataset.destination), canvas=host.querySelector('.map-canvas');
+      if(!home||!destination||!canvas)return;
+      const compact=host.classList.contains('route-map--compact'), progress=Number(host.dataset.progress||0);
+      const points=greatCirclePoints(home,destination,140), latlngs=points.map(p=>[p.lat,p.lon]);
+      const map=L.map(canvas,{zoomControl:!compact,attributionControl:true,dragging:!compact,scrollWheelZoom:false,doubleClickZoom:!compact,boxZoom:!compact,keyboard:!compact,touchZoom:!compact,worldCopyJump:true,preferCanvas:true});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
+      const route=L.polyline(latlngs,{color:'#879bb5',weight:3,opacity:.55,dashArray:'7 8'}).addTo(map);
+      const upto=Math.max(1,Math.floor(progress*(points.length-1))+1);
+      const progressLine=L.polyline(latlngs.slice(0,upto+1),{color:'#ff8fc7',weight:4,opacity:.96}).addTo(map);
+      L.circleMarker([home.lat,home.lon],{radius:5,weight:2,color:'#ffffff',fillColor:'#8bd7ff',fillOpacity:1}).addTo(map);
+      L.circleMarker([destination.lat,destination.lon],{radius:5,weight:2,color:'#ffffff',fillColor:'#c7b7ff',fillOpacity:1}).addTo(map);
+      const pos=routePosition(home,destination,progress), ahead=routePosition(home,destination,Math.min(1,progress+.01)), heading=bearingBetween(pos,ahead);
+      const icon=L.divIcon({className:'leaflet-plane-wrap',html:`<span class="leaflet-plane" style="--heading:${heading}deg">✈</span>`,iconSize:[34,34],iconAnchor:[17,17]});
+      const marker=L.marker([pos.lat,pos.lon],{icon,interactive:false}).addTo(map);
+      map.fitBounds(route.getBounds(),{padding:compact?[24,24]:[46,46],maxZoom:compact?4:5});
+      host.classList.add('map-ready');
+      routeMaps.push({map,host,home,destination,points,marker,progressLine});
+      setTimeout(()=>map.invalidateSize(),0);
+    });
+  }
+  function updateRouteMaps(progress){
+    routeMaps.forEach(item=>{
+      const pos=routePosition(item.home,item.destination,progress), ahead=routePosition(item.home,item.destination,Math.min(1,progress+.01)), heading=bearingBetween(pos,ahead);
+      item.marker.setLatLng([pos.lat,pos.lon]);
+      const inner=item.marker.getElement()?.querySelector('.leaflet-plane'); if(inner) inner.style.setProperty('--heading',`${heading}deg`);
+      const upto=Math.max(1,Math.floor(progress*(item.points.length-1))+1);
+      item.progressLine.setLatLngs(item.points.slice(0,upto+1).map(p=>[p.lat,p.lon]));
+    });
+  }
+  function windowScene(home,destination,progress,phase){
+    const pos=routePosition(home,destination,progress), land=isLandAt(pos.lat,pos.lon), hour=localSolarHour(pos.lon);
+    const light=hour<5||hour>=20?'night':hour<7?'dawn':hour>=17?'dusk':'day';
+    const surface=land===true?'land':land===false?'ocean':'clouds';
+    const phaseKey=progress<.08?'takeoff':progress<.2?'climb':progress<.82?'cruise':progress<.96?'descent':'landing';
+    const coord=`${Math.abs(pos.lat).toFixed(1)}°${pos.lat>=0?'N':'S'} · ${Math.abs(normalizeLon(pos.lon)).toFixed(1)}°${normalizeLon(pos.lon)>=0?'E':'W'}`;
+    const localHour=Math.floor(hour), localMinute=Math.round((hour-localHour)*60)%60;
+    return `<div class="window-view ${light} ${surface} ${phaseKey}" id="routeWindow" data-progress="${progress}">
+      <div class="window-meta"><span>${phase.toUpperCase()}</span><span>${coord}</span></div>
+      <div class="aircraft-window"><div class="window-frame"><div class="window-glass">
+        <div class="sky-glow"></div><div class="stars-layer"></div><div class="sun-disc"></div>
+        <div class="cloud-layer cloud-layer--far"></div><div class="horizon-layer"></div><div class="ground-layer"></div><div class="city-lights"></div><div class="cloud-layer cloud-layer--near"></div>
+        <div class="wing"><span></span></div>
+      </div></div></div>
+      <div class="window-status"><span>SIMULATED · ROUTE-SYNCED</span><b>${land===true?'OVER LAND':land===false?'OVER OCEAN':'EN ROUTE'}</b><span>LOCAL ${String(localHour).padStart(2,'0')}:${String(localMinute).padStart(2,'0')}</span></div>
     </div>`;
   }
 
@@ -276,7 +367,7 @@
         </section>
       </main>
     </div>`;
-    bindCommon(); bindSetup();
+    bindCommon(); bindSetup(); initRouteMaps();
   }
 
   function renderBoarding(){
@@ -310,18 +401,35 @@
     document.querySelector('[data-action="takeoff"]').onclick=takeOff;
   }
 
-  function renderFlight(){
-    const s=state.session; if(!s){state.screen='setup';return render();}
+  function getFlightSnapshot(){
+    const s=state.session; if(!s)return null;
     const now=Date.now(), remaining=s.pausedAt?Math.max(0,s.endsAt-s.pausedAt):Math.max(0,s.endsAt-now), total=s.durationMinutes*60000, progress=Math.max(0,Math.min(1,1-remaining/total));
-    if(!s.pausedAt && remaining<=0) return completeFlight();
     const phase=progress<.06?'Taxi & takeoff':progress<.18?'Climb':progress<.82?'Cruise':progress<.95?'Descent':'Final approach';
     const altitude=progress<.12?Math.round(35000*(progress/.12)):progress>.88?Math.round(35000*((1-progress)/.12)):35000;
+    return {s,now,remaining,total,progress,phase,altitude};
+  }
+  function renderFlight(){
+    const snap=getFlightSnapshot(); if(!snap){state.screen='setup';return render();}
+    const {s,remaining,progress,phase,altitude}=snap;
+    if(!s.pausedAt && remaining<=0) return completeFlight();
+    destroyRouteMaps();
+    const visual=state.flightView==='window'?windowScene(s.home,s.destination,progress,phase):routeMap(s.home,s.destination,progress,false);
     app.innerHTML=`<div class="flight-screen">
       <header class="flight-toolbar"><div class="flight-identity"><span class="live-dot"></span><b>${s.home.code} → ${s.destination.code}</b><span>${intentLabel(s.intent)}</span></div><div class="flight-controls"><button data-action="theme">${state.theme==='dark'?'☀':'☾'}<span>Theme</span></button><button data-action="audio" class="${state.audioEnabled?'active':''}">${state.audioEnabled?'🔊':'🔇'}<span>Audio</span></button><button data-action="pause" class="pause-control">${s.pausedAt?'▶':'Ⅱ'}<span>${s.pausedAt?'Resume':'Pause'}</span></button></div></header>
-      <main class="flight-cockpit"><section class="flight-map-panel">${routeMap(s.home,s.destination,progress,false)}</section><section class="timer-panel"><div class="phase-line"><span>${phase}</span><span>${Math.round(progress*100)}%</span></div><div class="timer-display">${fmtClock(remaining/1000)}</div>${s.pausedAt?'<div class="paused-badge">PAUSED — arrival time moves with you</div>':''}<div class="progress-rail"><span style="width:${progress*100}%"></span></div><div class="flight-metrics"><div><small>ARRIVAL</small><b>${fmtTime(s.endsAt)}</b></div><div><small>ALTITUDE</small><b>${Math.max(0,altitude).toLocaleString()} ft</b></div><div><small>DISTANCE</small><b>${fmtDist(haversineKm(s.home,s.destination))}</b></div></div>${s.outcome?`<div class="flight-intent"><small>ON THIS FLIGHT</small><p>${esc(s.outcome)}</p></div>`:''}</section></main>
+      <main class="flight-cockpit"><section class="flight-visual-panel"><div class="visual-tabs"><button data-flight-view="map" class="${state.flightView==='map'?'active':''}">MAP</button><button data-flight-view="window" class="${state.flightView==='window'?'active':''}">WINDOW</button></div><div class="flight-visual-stage">${visual}</div></section><section class="timer-panel"><div class="phase-line"><span id="flightPhase">${phase}</span><span id="flightPercent">${Math.round(progress*100)}%</span></div><div class="timer-display" id="flightTimer">${fmtClock(remaining/1000)}</div><div id="pausedBadge">${s.pausedAt?'<div class="paused-badge">PAUSED — arrival time moves with you</div>':''}</div><div class="progress-rail"><span id="flightProgress" style="width:${progress*100}%"></span></div><div class="flight-metrics"><div><small>ARRIVAL</small><b id="metricArrival">${fmtTime(s.endsAt)}</b></div><div><small>ALTITUDE</small><b id="metricAltitude">${Math.max(0,altitude).toLocaleString()} ft</b></div><div><small>DISTANCE</small><b>${fmtDist(haversineKm(s.home,s.destination))}</b></div></div>${s.outcome?`<div class="flight-intent"><small>ON THIS FLIGHT</small><p>${esc(s.outcome)}</p></div>`:''}</section></main>
       <footer class="flight-footer"><div class="volume-wrap"><span>Cabin</span><input id="volume" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div><button data-action="end-flight">End flight</button></footer>
     </div>`;
-    bindCommon(); bindFlight();
+    bindCommon(); bindFlight(); if(state.flightView==='map')initRouteMaps();
+  }
+  function updateFlightTelemetry(){
+    if(state.screen!=='flight')return;
+    const snap=getFlightSnapshot(); if(!snap)return;
+    const {s,remaining,progress,phase,altitude}=snap;
+    if(!s.pausedAt && remaining<=0) return completeFlight();
+    const timer=$('flightTimer'), phaseEl=$('flightPhase'), pct=$('flightPercent'), rail=$('flightProgress'), arrival=$('metricArrival'), alt=$('metricAltitude'), paused=$('pausedBadge');
+    if(timer)timer.textContent=fmtClock(remaining/1000); if(phaseEl)phaseEl.textContent=phase; if(pct)pct.textContent=`${Math.round(progress*100)}%`; if(rail)rail.style.width=`${progress*100}%`; if(arrival)arrival.textContent=fmtTime(s.endsAt); if(alt)alt.textContent=`${Math.max(0,altitude).toLocaleString()} ft`; if(paused)paused.innerHTML=s.pausedAt?'<div class="paused-badge">PAUSED — arrival time moves with you</div>':'';
+    if(state.flightView==='map')updateRouteMaps(progress);
+    else { const stage=document.querySelector('.flight-visual-stage'); if(stage)stage.innerHTML=windowScene(s.home,s.destination,progress,phase); }
   }
 
   function renderLanded(){
@@ -465,7 +573,7 @@
     state.session={id:`OZ-${startedAt.toString(36)}`,home:state.home,destination:state.destination,durationMinutes:d,intent:state.intent,outcome:state.outcome.trim(),startedAt,endsAt:startedAt+d*60000,pausedAt:null,accumulatedPauseMs:0,status:'active'};
     save(KEYS.session,state.session);state.screen='flight';render();startTicker();
   }
-  function startTicker(){ clearInterval(tickTimer); if(state.screen==='flight') tickTimer=setInterval(()=>{if(state.screen==='flight')renderFlight();},500); }
+  function startTicker(){ clearInterval(tickTimer); if(state.screen==='flight') tickTimer=setInterval(updateFlightTelemetry,500); }
   function togglePause(){
     const s=state.session;if(!s)return;const now=Date.now();
     if(s.pausedAt){const paused=now-s.pausedAt;s.endsAt+=paused;s.accumulatedPauseMs+=paused;s.pausedAt=null;}else{s.pausedAt=now;}
@@ -485,6 +593,7 @@
     document.querySelector('[data-action="pause"]')?.addEventListener('click',togglePause);
     document.querySelector('[data-action="audio"]')?.addEventListener('click',toggleAudio);
     document.querySelector('[data-action="end-flight"]')?.addEventListener('click',endFlight);
+    document.querySelectorAll('[data-flight-view]').forEach(btn=>btn.addEventListener('click',()=>{ const next=btn.dataset.flightView; if(next===state.flightView)return; state.flightView=next; renderFlight(); }));
     $('volume')?.addEventListener('input',e=>{state.volume=Number(e.target.value);setAudioVolume(state.volume);});
   }
 
@@ -515,7 +624,7 @@
     try{await navigator.clipboard.writeText(text);showToast('결과를 클립보드에 복사했습니다.');}catch{showToast(text);}
   }
   function render(){
-    clearInterval(tickTimer); applyTheme();
+    clearInterval(tickTimer); destroyRouteMaps(); applyTheme();
     if(state.screen==='setup')renderSetup(); else if(state.screen==='board')renderBoarding(); else if(state.screen==='flight'){renderFlight();startTicker();} else renderLanded();
   }
 
@@ -525,8 +634,8 @@
     if(e.key===' '){e.preventDefault();togglePause();}
     if(e.key.toLowerCase()==='m')toggleAudio();
   });
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.screen==='flight')renderFlight();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.screen==='flight')updateFlightTelemetry();});
   if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 
-  applyTheme(); render();
+  applyTheme(); render(); loadLeaflet().catch(()=>{});
 })();
