@@ -388,20 +388,9 @@ try {
             & $Adb start-server 2>$null | Out-Null
 
             $ScriptPath = $PSCommandPath
-            $QuotedScriptPath = '"' + $ScriptPath + '"'
+            $MonitorArgs = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $ScriptPath + '" -Mode monitor'
 
-            Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @(
-                "-NoLogo",
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-WindowStyle",
-                "Hidden",
-                "-File",
-                $QuotedScriptPath,
-                "-Mode",
-                "monitor"
-            )
+            Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList $MonitorArgs
 
             Show-Info @"
 Ready.
