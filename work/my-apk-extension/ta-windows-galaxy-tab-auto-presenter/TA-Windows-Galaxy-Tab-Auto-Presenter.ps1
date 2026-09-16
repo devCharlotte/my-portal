@@ -1,19 +1,24 @@
 param(
-    [ValidateSet("start", "monitor", "status", "stop")]
-    [string]$Mode = "start"
+    [ValidateSet("install","monitor","start","status","uninstall")]
+    [string]$Mode = "install"
 )
 
 $ErrorActionPreference = "Stop"
 
+$AppId = "TA-Windows-Galaxy-Tab-Auto-Presenter"
 $AppName = "TA Windows Galaxy Tab Auto Presenter"
-$WorkRoot = Join-Path $env:TEMP "TA-Windows-Galaxy-Tab-Auto-Presenter"
-$RuntimeRoot = Join-Path $WorkRoot "runtime"
+$InstallRoot = Join-Path $env:LOCALAPPDATA $AppId
+$InstalledScript = Join-Path $InstallRoot "TA-Windows-Galaxy-Tab-Auto-Presenter.ps1"
+$RuntimeRoot = Join-Path $InstallRoot "runtime"
 $ScrcpyHome = Join-Path $RuntimeRoot "scrcpy-win64-v4.1"
 $ScrcpyZip = Join-Path $RuntimeRoot "scrcpy-win64-v4.1.zip"
 $Scrcpy = Join-Path $ScrcpyHome "scrcpy.exe"
 $Adb = Join-Path $ScrcpyHome "adb.exe"
-$LogDir = Join-Path $WorkRoot "logs"
+$LogDir = Join-Path $InstallRoot "logs"
 $LogFile = Join-Path $LogDir "presenter.log"
+
+$RunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+$PowerShellExe = Join-Path $PSHOME "powershell.exe"
 
 $ScrcpyUrl = "https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-win64-v4.1.zip"
 $ScrcpySha256 = "5b12172b3264b2889f4583ee64752ce832e29bc8b1089dca81093459697165db"
@@ -56,7 +61,8 @@ function Stop-OldPresenterProcesses {
                 $_.CommandLine -match "TA-Windows-Galaxy-Tab-Auto-Presenter" -or
                 $_.CommandLine -match "TA_Windows_Galaxy_Tab_Auto_Presenter" -or
                 $_.CommandLine -match "FlexcilAutoPresenter" -or
-                $_.CommandLine -match "FlexcilUSBPresenter"
+                $_.CommandLine -match "FlexcilUSBPresenter" -or
+                $_.CommandLine -match "FlexcilUSBOneClick"
             )
         } |
         ForEach-Object {
@@ -65,6 +71,30 @@ function Stop-OldPresenterProcesses {
 
     Get-Process -Name "scrcpy" -ErrorAction SilentlyContinue |
         Stop-Process -Force -ErrorAction SilentlyContinue
+}
+
+function Remove-OldAutoStartEntries {
+    foreach ($Name in @(
+        "FlexcilAutoPresenter",
+        "FlexcilUSBPresenter",
+        "FlexcilUSBOneClick",
+        "TA_Windows_Galaxy_Tab_Auto_Presenter",
+        "TA-Windows-Galaxy-Tab-Auto-Presenter"
+    )) {
+        Remove-ItemProperty -Path $RunKey -Name $Name -Force -ErrorAction SilentlyContinue
+    }
+
+    $Startup = [Environment]::GetFolderPath([Environment+SpecialFolder]::Startup)
+
+    foreach ($Name in @(
+        "FlexcilAutoPresenter.vbs",
+        "FlexcilUSBPresenter.vbs",
+        "Flexcil USB OneClick.vbs",
+        "TA_Windows_Galaxy_Tab_Auto_Presenter.vbs",
+        "TA-Windows-Galaxy-Tab-Auto-Presenter.vbs"
+    )) {
+        Remove-Item (Join-Path $Startup $Name) -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Ensure-Scrcpy {
@@ -77,6 +107,7 @@ function Ensure-Scrcpy {
     if (Test-Path $ScrcpyZip) {
         try {
             $ExistingHash = (Get-FileHash -Path $ScrcpyZip -Algorithm SHA256).Hash.ToLowerInvariant()
+
             if ($ExistingHash -ne $ScrcpySha256) {
                 Remove-Item $ScrcpyZip -Force -ErrorAction SilentlyContinue
             }
@@ -92,6 +123,7 @@ function Ensure-Scrcpy {
 
         if (Test-Path $Curl) {
             & $Curl -L --fail --silent --show-error $ScrcpyUrl -o $ScrcpyZip
+
             if (($LASTEXITCODE -eq 0) -and (Test-Path $ScrcpyZip)) {
                 $Downloaded = $true
             }
@@ -132,6 +164,40 @@ function Ensure-Scrcpy {
         Unblock-File -ErrorAction SilentlyContinue
 }
 
+function Register-AutoStart {
+    New-Item -Path $RunKey -Force | Out-Null
+
+    $Command = '"' + $PowerShellExe + '" -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $InstalledScript + '" -Mode monitor'
+
+    New-ItemProperty `
+        -Path $RunKey `
+        -Name $AppId `
+        -Value $Command `
+        -PropertyType String `
+        -Force |
+        Out-Null
+}
+
+function Start-Monitor {
+    $Existing = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.CommandLine -and
+            $_.CommandLine -match "TA-Windows-Galaxy-Tab-Auto-Presenter\.ps1" -and
+            $_.CommandLine -match "Mode monitor"
+        }
+
+    if ($Existing) {
+        return
+    }
+
+    $Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $InstalledScript + '" -Mode monitor'
+
+    Start-Process `
+        -FilePath $PowerShellExe `
+        -WindowStyle Hidden `
+        -ArgumentList $Arguments
+}
+
 function Get-DeviceLines {
     try {
         & $Adb start-server 2>$null | Out-Null
@@ -148,6 +214,7 @@ function Has-Unauthorized {
             return $true
         }
     }
+
     return $false
 }
 
@@ -224,27 +291,38 @@ function Start-Presentation([string]$Serial, [string]$Model) {
         "--window-title=Flexcil-Presentation"
     )
 
-    $Process = Start-Process -FilePath $Scrcpy -WorkingDirectory $ScrcpyHome -ArgumentList $Arguments -PassThru
+    try {
+        $Process = Start-Process `
+            -FilePath $Scrcpy `
+            -WorkingDirectory $ScrcpyHome `
+            -ArgumentList $Arguments `
+            -PassThru
 
-    Write-Log "scrcpy started. PID=$($Process.Id), model=$Model, serial=$Serial"
+        Write-Log "scrcpy started. PID=$($Process.Id), model=$Model, serial=$Serial"
 
-    Start-Sleep -Milliseconds 1800
+        Start-Sleep -Milliseconds 1800
 
-    if (-not (Get-Process -Id $Process.Id -ErrorAction SilentlyContinue)) {
-        Write-Log "scrcpy exited during startup."
-        return $false
+        if (-not (Get-Process -Id $Process.Id -ErrorAction SilentlyContinue)) {
+            Write-Log "scrcpy exited during startup."
+            return $null
+        }
+
+        Open-Flexcil $Serial
+        return $Process.Id
     }
-
-    Open-Flexcil $Serial
-    return $true
+    catch {
+        Write-Log "scrcpy start failed: $($_.Exception.Message)"
+        return $null
+    }
 }
 
 function Run-Monitor {
     Add-Forms
+    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
     $Mutex = New-Object System.Threading.Mutex(
         $false,
-        "Local\TA-Windows-Galaxy-Tab-Auto-Presenter-v6"
+        "Local\TA-Windows-Galaxy-Tab-Auto-Presenter-v7"
     )
 
     if (-not $Mutex.WaitOne(0, $false)) {
@@ -253,15 +331,23 @@ function Run-Monitor {
 
     Write-Log "Monitor started."
 
-    $ConnectedSerial = $null
-    $Started = $false
-    $EverConnected = $false
+    $Connected = $false
+    $CurrentSerial = $null
+    $PresentationPid = $null
     $UnauthorizedShown = $false
 
     while ($true) {
         if (-not ((Test-Path $Adb) -and (Test-Path $Scrcpy))) {
-            Write-Log "Runtime missing. Monitor exits."
-            exit 2
+            Write-Log "Runtime missing. Attempting self-repair."
+
+            try {
+                Ensure-Scrcpy
+            }
+            catch {
+                Write-Log "Self-repair failed: $($_.Exception.Message)"
+                Start-Sleep -Seconds 5
+                continue
+            }
         }
 
         if (Has-Unauthorized) {
@@ -276,6 +362,13 @@ function Run-Monitor {
                 ) | Out-Null
             }
 
+            if ($Connected) {
+                Write-Log "Tablet authorization lost."
+                $Connected = $false
+                $CurrentSerial = $null
+                $PresentationPid = $null
+            }
+
             Start-Sleep -Seconds 1
             continue
         }
@@ -284,31 +377,35 @@ function Run-Monitor {
         $Tablet = Get-GalaxyTablet
 
         if (-not $Tablet) {
-            if ($EverConnected) {
-                Write-Log "Tablet disconnected. Closing ADB server and monitor."
+            if ($Connected) {
+                Write-Log "Tablet disconnected."
+
+                if ($PresentationPid) {
+                    Stop-Process -Id $PresentationPid -Force -ErrorAction SilentlyContinue
+                }
+
+                $Connected = $false
+                $CurrentSerial = $null
+                $PresentationPid = $null
+
                 & $Adb kill-server 2>$null | Out-Null
-                exit 0
+                Start-Sleep -Milliseconds 700
             }
 
             Start-Sleep -Seconds 1
             continue
         }
 
-        $EverConnected = $true
+        if ((-not $Connected) -or ($Tablet.Serial -ne $CurrentSerial)) {
+            $Connected = $true
+            $CurrentSerial = $Tablet.Serial
+            $PresentationPid = $null
 
-        if ($Tablet.Serial -ne $ConnectedSerial) {
-            $ConnectedSerial = $Tablet.Serial
-            $Started = $false
             Write-Log "Tablet connected. model=$($Tablet.Model), serial=$($Tablet.Serial)"
-        }
 
-        if (-not $Started) {
-            $Started = $true
-            $Ok = Start-Presentation -Serial $Tablet.Serial -Model $Tablet.Model
-
-            if (-not $Ok) {
-                Write-Log "Presentation startup failed. Reconnect USB-C before retrying."
-            }
+            $PresentationPid = Start-Presentation `
+                -Serial $Tablet.Serial `
+                -Model $Tablet.Model
         }
 
         Start-Sleep -Seconds 1
@@ -321,18 +418,40 @@ function Show-Status {
     Write-Host "TA Windows Galaxy Tab Auto Presenter - STATUS"
     Write-Host "============================================================"
     Write-Host ""
-    Write-Host "WorkRoot : $WorkRoot"
-    Write-Host "scrcpy   : $(Test-Path $Scrcpy)"
-    Write-Host "adb      : $(Test-Path $Adb)"
+    Write-Host "InstallRoot : $InstallRoot"
+    Write-Host "Installed   : $(Test-Path $InstalledScript)"
+    Write-Host "scrcpy      : $(Test-Path $Scrcpy)"
+    Write-Host "adb         : $(Test-Path $Adb)"
+
+    $RunValue = Get-ItemPropertyValue -Path $RunKey -Name $AppId -ErrorAction SilentlyContinue
+    Write-Host "AutoStart   : $([bool]$RunValue)"
     Write-Host ""
 
+    Write-Host "[Monitor process]"
+    $Monitors = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.CommandLine -and
+            $_.CommandLine -match "TA-Windows-Galaxy-Tab-Auto-Presenter\.ps1" -and
+            $_.CommandLine -match "Mode monitor"
+        }
+
+    if ($Monitors) {
+        $Monitors | ForEach-Object {
+            Write-Host "RUNNING PID=$($_.ProcessId)"
+        }
+    }
+    else {
+        Write-Host "NOT RUNNING"
+    }
+
+    Write-Host ""
     Write-Host "[ADB]"
     if (Test-Path $Adb) {
         & $Adb start-server 2>$null | Out-Null
         & $Adb devices -l
     }
     else {
-        Write-Host "Runtime not prepared yet."
+        Write-Host "adb.exe not found"
     }
 
     Write-Host ""
@@ -347,7 +466,7 @@ function Show-Status {
     Write-Host ""
     Write-Host "[Recent log]"
     if (Test-Path $LogFile) {
-        Get-Content $LogFile -Tail 60
+        Get-Content $LogFile -Tail 80
     }
     else {
         Write-Host "No log yet."
@@ -357,48 +476,48 @@ function Show-Status {
     Read-Host "Press Enter to close"
 }
 
-function Stop-Presenter {
-    Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.ProcessId -ne $PID -and
-            $_.CommandLine -and
-            $_.CommandLine -match "TA-Windows-Galaxy-Tab-Auto-Presenter\.ps1" -and
-            $_.CommandLine -match "monitor"
-        } |
-        ForEach-Object {
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-        }
-
-    Get-Process -Name "scrcpy" -ErrorAction SilentlyContinue |
-        Stop-Process -Force -ErrorAction SilentlyContinue
+function Uninstall-Presenter {
+    Stop-OldPresenterProcesses
 
     if (Test-Path $Adb) {
         & $Adb kill-server 2>$null | Out-Null
     }
 
-    Show-Info "Presenter stopped and ADB server closed."
+    Remove-ItemProperty -Path $RunKey -Name $AppId -Force -ErrorAction SilentlyContinue
+    Remove-Item $InstallRoot -Recurse -Force -ErrorAction SilentlyContinue
+
+    Show-Info "TA Windows Galaxy Tab Auto Presenter was removed."
 }
 
 try {
     switch ($Mode) {
-        "start" {
+        "install" {
             Stop-OldPresenterProcesses
+            Remove-OldAutoStartEntries
+
+            New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
+            New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+
+            if (-not $PSCommandPath) {
+                throw "Installer script path is unavailable."
+            }
+
+            [System.IO.File]::Copy($PSCommandPath, $InstalledScript, $true)
+
             Ensure-Scrcpy
-
-            & $Adb start-server 2>$null | Out-Null
-
-            $ScriptPath = $PSCommandPath
-            $MonitorArgs = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $ScriptPath + '" -Mode monitor'
-
-            Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList $MonitorArgs
+            Register-AutoStart
+            Start-Monitor
 
             Show-Info @"
-Ready.
+Installed successfully.
 
-Connect the Galaxy Tab S7+ by USB-C.
-If Android asks for USB debugging permission, tap Allow.
+From now on:
+- It starts automatically when Windows signs in.
+- You can disconnect and reconnect the Galaxy Tab at any time.
+- The same installation continues working after the PC is restarted.
+- scrcpy v4.1 is stored under LocalAppData and does not need to be downloaded again.
 
-The presentation window will open automatically.
+If Android asks for USB debugging permission after reconnecting, tap Allow.
 "@
         }
 
@@ -406,12 +525,18 @@ The presentation window will open automatically.
             Run-Monitor
         }
 
+        "start" {
+            Stop-OldPresenterProcesses
+            Start-Monitor
+            Show-Info "Presenter monitor is running."
+        }
+
         "status" {
             Show-Status
         }
 
-        "stop" {
-            Stop-Presenter
+        "uninstall" {
+            Uninstall-Presenter
         }
     }
 }
