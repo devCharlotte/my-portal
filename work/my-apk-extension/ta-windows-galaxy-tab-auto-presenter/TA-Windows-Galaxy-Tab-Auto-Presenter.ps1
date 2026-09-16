@@ -388,6 +388,7 @@ try {
             & $Adb start-server 2>$null | Out-Null
 
             $ScriptPath = $PSCommandPath
+            $QuotedScriptPath = '"' + $ScriptPath + '"'
 
             Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @(
                 "-NoLogo",
@@ -397,7 +398,7 @@ try {
                 "-WindowStyle",
                 "Hidden",
                 "-File",
-                $ScriptPath,
+                $QuotedScriptPath,
                 "-Mode",
                 "monitor"
             )
