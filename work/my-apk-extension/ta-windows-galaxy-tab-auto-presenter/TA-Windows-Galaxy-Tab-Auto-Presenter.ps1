@@ -16,6 +16,7 @@ $Scrcpy = Join-Path $ScrcpyHome "scrcpy.exe"
 $Adb = Join-Path $ScrcpyHome "adb.exe"
 $LogDir = Join-Path $InstallRoot "logs"
 $LogFile = Join-Path $LogDir "presenter.log"
+$HeartbeatFile = Join-Path $InstallRoot "monitor.heartbeat"
 
 $RunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 $PowerShellExe = Join-Path $PSHOME "powershell.exe"
@@ -347,7 +348,7 @@ function Run-Monitor {
 
     $Mutex = New-Object System.Threading.Mutex(
         $false,
-        "Local\TA-Windows-Galaxy-Tab-Auto-Presenter-v9"
+        "Local\\TA-Windows-Galaxy-Tab-Auto-Presenter-v10"
     )
 
     if (-not $Mutex.WaitOne(0, $false)) {
@@ -359,9 +360,12 @@ function Run-Monitor {
     $Connected = $false
     $CurrentSerial = $null
     $PresentationPid = $null
+    $LaunchAttempts = 0
     $UnauthorizedShown = $false
 
     while ($true) {
+        Set-Content -Path $HeartbeatFile -Value ([DateTime]::UtcNow.Ticks) -Encoding ASCII -Force
+
         if (-not ((Test-Path $Adb) -and (Test-Path $Scrcpy))) {
             Write-Log "Runtime missing. Attempting self-repair."
 
@@ -389,9 +393,15 @@ function Run-Monitor {
 
             if ($Connected) {
                 Write-Log "Tablet authorization lost."
+
+                if ($PresentationPid) {
+                    Stop-Process -Id $PresentationPid -Force -ErrorAction SilentlyContinue
+                }
+
                 $Connected = $false
                 $CurrentSerial = $null
                 $PresentationPid = $null
+                $LaunchAttempts = 0
             }
 
             Start-Sleep -Seconds 1
@@ -408,14 +418,12 @@ function Run-Monitor {
                 if ($PresentationPid) {
                     Stop-Process -Id $PresentationPid -Force -ErrorAction SilentlyContinue
                 }
-
-                $Connected = $false
-                $CurrentSerial = $null
-                $PresentationPid = $null
-
-                & $Adb kill-server 2>$null | Out-Null
-                Start-Sleep -Milliseconds 700
             }
+
+            $Connected = $false
+            $CurrentSerial = $null
+            $PresentationPid = $null
+            $LaunchAttempts = 0
 
             Start-Sleep -Seconds 1
             continue
@@ -425,15 +433,49 @@ function Run-Monitor {
             $Connected = $true
             $CurrentSerial = $Tablet.Serial
             $PresentationPid = $null
+            $LaunchAttempts = 0
 
             Write-Log "Tablet connected. model=$($Tablet.Model), serial=$($Tablet.Serial)"
+        }
+
+        $PresentationAlive = $false
+
+        if ($PresentationPid) {
+            $PresentationAlive = [bool](
+                Get-Process -Id $PresentationPid -ErrorAction SilentlyContinue
+            )
+        }
+
+        if ((-not $PresentationAlive) -and ($LaunchAttempts -lt 2)) {
+            $LaunchAttempts++
 
             $PresentationPid = Start-Presentation `
                 -Serial $Tablet.Serial `
                 -Model $Tablet.Model
+
+            if (-not $PresentationPid) {
+                Write-Log "Presentation launch attempt $LaunchAttempts failed."
+                Start-Sleep -Seconds 2
+            }
         }
 
         Start-Sleep -Seconds 1
+    }
+}
+
+function Get-MonitorHealthy {
+    if (-not (Test-Path $HeartbeatFile)) {
+        return $false
+    }
+
+    try {
+        $Ticks = [Int64](Get-Content $HeartbeatFile -ErrorAction Stop | Select-Object -First 1)
+        $HeartbeatUtc = New-Object DateTime($Ticks, [DateTimeKind]::Utc)
+        $Age = [DateTime]::UtcNow - $HeartbeatUtc
+        return ($Age.TotalSeconds -lt 5)
+    }
+    catch {
+        return $false
     }
 }
 
@@ -541,8 +583,17 @@ try {
 
             Ensure-Scrcpy
             Register-AutoStart
-            Create-DesktopShortcuts
             Start-Monitor
+            Start-Sleep -Milliseconds 1200
+
+            if (-not (Get-MonitorHealthy)) {
+                Start-Monitor
+                Start-Sleep -Milliseconds 1200
+            }
+
+            if (-not (Get-MonitorHealthy)) {
+                throw "Background monitor did not start correctly."
+            }
 
             Show-Info @"
 Installed successfully.
@@ -552,7 +603,6 @@ From now on:
 - You can disconnect and reconnect the Galaxy Tab at any time.
 - The same installation continues working after the PC is restarted.
 - Disconnecting and reconnecting USB-C starts a new presentation automatically.
-- Desktop shortcuts are created for manual Start, Status, and Uninstall.
 - scrcpy v4.1 is stored under LocalAppData and does not need to be downloaded again.
 
 If Android asks for USB debugging permission after reconnecting, tap Allow.
@@ -567,8 +617,18 @@ If Android asks for USB debugging permission after reconnecting, tap Allow.
             Stop-OldPresenterProcesses
             Ensure-Scrcpy
             Register-AutoStart
-            Create-DesktopShortcuts
             Start-Monitor
+            Start-Sleep -Milliseconds 1200
+
+            if (-not (Get-MonitorHealthy)) {
+                Start-Monitor
+                Start-Sleep -Milliseconds 1200
+            }
+
+            if (-not (Get-MonitorHealthy)) {
+                throw "Background monitor did not start correctly."
+            }
+
             Show-Info "Presenter monitor is running."
         }
 
