@@ -1,8 +1,8 @@
 @echo off
 setlocal
-set "SCRIPT=%TEMP%\TA-Windows-Galaxy-Tab-Auto-Presenter\TA-Windows-Galaxy-Tab-Auto-Presenter.ps1"
+set "SCRIPT=%LOCALAPPDATA%\TA-Windows-Galaxy-Tab-Auto-Presenter\TA-Windows-Galaxy-Tab-Auto-Presenter.ps1"
 if not exist "%SCRIPT%" (
-  echo Run TA-Windows-Galaxy-Tab-Auto-Presenter.cmd first.
+  echo TA Windows Galaxy Tab Auto Presenter is not installed.
   pause
   exit /b 1
 )
