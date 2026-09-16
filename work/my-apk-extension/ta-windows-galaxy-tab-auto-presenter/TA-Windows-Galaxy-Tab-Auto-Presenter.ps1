@@ -245,7 +245,7 @@ function Has-Unauthorized {
 
 function Get-GalaxyTablet {
     foreach ($Line in (Get-DeviceLines)) {
-        if ($Line -match '^([^\s:]+)\s+device\s*(.*)
+        if ($Line -match '^([^\s:]+)\s+device\s*(.*)$') {
             $Serial = $Matches[1]
 
             try {
@@ -347,7 +347,7 @@ function Run-Monitor {
 
     $Mutex = New-Object System.Threading.Mutex(
         $false,
-        "Local\TA-Windows-Galaxy-Tab-Auto-Presenter-v8"
+        "Local\TA-Windows-Galaxy-Tab-Auto-Presenter-v9"
     )
 
     if (-not $Mutex.WaitOne(0, $false)) {
